@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Globe, { type GlobeMethods } from 'react-globe.gl';
 import { Color, MeshPhongMaterial } from 'three';
 import { platePaths } from '../data/plates';
@@ -39,6 +39,31 @@ interface GlobeViewProps {
   onSelectStation: (station: SeismicStation) => void;
 }
 
+function supportsWebGL(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('webgl2', { failIfMajorPerformanceCaveat: true })
+      || canvas.getContext('webgl', { failIfMajorPerformanceCaveat: true });
+    context?.getExtension('WEBGL_lose_context')?.loseContext();
+    return Boolean(context);
+  } catch { return false; }
+}
+
+function GlobeFallback() {
+  return <div className="webgl-fallback" role="status">
+    <div className="fallback-orbit"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /></div>
+    <p className="eyebrow">MODO DE COMPATIBILIDAD</p>
+    <h2>El globo 3D necesita WebGL</h2>
+    <p>El historial, los datos y los paneles siguen disponibles. Activa la aceleración gráfica del navegador o abre Episismic en un dispositivo compatible para visualizar la Tierra.</p>
+  </div>;
+}
+
+class GlobeBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? <GlobeFallback /> : this.props.children; }
+}
+
 const cities = [
   { lat: 40.4168, lng: -3.7038, name: 'Madrid' }, { lat: 41.3874, lng: 2.1686, name: 'Barcelona' },
   { lat: 51.5072, lng: -0.1276, name: 'Londres' }, { lat: 35.6762, lng: 139.6503, name: 'Tokio' },
@@ -53,6 +78,7 @@ export function GlobeView({
 }: GlobeViewProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const globeRef = useRef<GlobeMethods | undefined>(undefined);
+  const [webglAvailable] = useState(supportsWebGL);
   const [size, setSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
   useEffect(() => {
@@ -119,7 +145,8 @@ export function GlobeView({
 
   return (
     <div className="globe-host" ref={hostRef} aria-label="Globo sísmico tridimensional">
-      <Globe
+      <GlobeBoundary>
+      {webglAvailable ? <Globe
         ref={globeRef}
         width={size.width}
         height={size.height}
@@ -185,7 +212,8 @@ export function GlobeView({
           if (label.kind === 'station') onSelectStation(label);
         }}
         animateIn
-      />
+      /> : <GlobeFallback />}
+      </GlobeBoundary>
       <div className="globe-corner-scale" aria-hidden="true">
         <span>PROFUNDIDAD</span>
         <i style={{ background: '#ff6b62' }} />0–35
