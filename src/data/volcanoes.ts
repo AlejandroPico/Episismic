@@ -1,0 +1,32 @@
+import type { Volcano } from '../types';
+
+export const volcanoes: Volcano[] = [
+  ['etna', 'Etna', 'Italia', 37.751, 14.993, 3357, 'watch'],
+  ['vesuvius', 'Vesubio', 'Italia', 40.821, 14.426, 1281, 'normal'],
+  ['teide', 'Teide', 'España', 28.272, -16.642, 3715, 'normal'],
+  ['cumbre-vieja', 'Cumbre Vieja', 'España', 28.57, -17.83, 1949, 'advisory'],
+  ['hekla', 'Hekla', 'Islandia', 63.983, -19.7, 1491, 'advisory'],
+  ['fagradalsfjall', 'Fagradalsfjall', 'Islandia', 63.893, -22.269, 385, 'watch'],
+  ['fuji', 'Fuji', 'Japón', 35.361, 138.727, 3776, 'normal'],
+  ['sakujurima', 'Sakurajima', 'Japón', 31.585, 130.657, 1117, 'watch'],
+  ['merapi', 'Merapi', 'Indonesia', -7.54, 110.446, 2930, 'watch'],
+  ['krakatau', 'Anak Krakatau', 'Indonesia', -6.102, 105.423, 157, 'advisory'],
+  ['tambora', 'Tambora', 'Indonesia', -8.25, 118, 2850, 'normal'],
+  ['ruapehu', 'Ruapehu', 'Nueva Zelanda', -39.281, 175.568, 2797, 'advisory'],
+  ['taupo', 'Taupō', 'Nueva Zelanda', -38.82, 176, 760, 'normal'],
+  ['mauna-loa', 'Mauna Loa', 'Estados Unidos', 19.475, -155.608, 4169, 'advisory'],
+  ['kilauea', 'Kīlauea', 'Estados Unidos', 19.421, -155.287, 1247, 'watch'],
+  ['st-helens', 'Monte Santa Helena', 'Estados Unidos', 46.2, -122.18, 2549, 'normal'],
+  ['popocatepetl', 'Popocatépetl', 'México', 19.023, -98.622, 5426, 'watch'],
+  ['colima', 'Volcán de Colima', 'México', 19.514, -103.62, 3820, 'advisory'],
+  ['nevado-ruiz', 'Nevado del Ruiz', 'Colombia', 4.895, -75.322, 5321, 'watch'],
+  ['cotopaxi', 'Cotopaxi', 'Ecuador', -0.683, -78.436, 5897, 'advisory'],
+  ['villarrica', 'Villarrica', 'Chile', -39.42, -71.939, 2847, 'advisory'],
+  ['lascar', 'Láscar', 'Chile', -23.37, -67.73, 5592, 'watch'],
+  ['nyiragongo', 'Nyiragongo', 'R. D. del Congo', -1.52, 29.25, 3470, 'watch'],
+  ['erebus', 'Erebus', 'Antártida', -77.53, 167.17, 3794, 'advisory'],
+  ['klyuchevskoy', 'Kliuchevskói', 'Rusia', 56.056, 160.642, 4750, 'watch'],
+].map(([id, name, country, lat, lng, elevationM, status]) => ({
+  id: String(id), name: String(name), country: String(country), lat: Number(lat),
+  lng: Number(lng), elevationM: Number(elevationM), status: status as Volcano['status'],
+}));

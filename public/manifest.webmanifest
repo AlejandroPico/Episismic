@@ -1,0 +1,18 @@
+{
+  "name": "Episismic — Observatorio sísmico mundial",
+  "short_name": "Episismic",
+  "description": "Terremotos, estaciones y tectónica en un globo 3D interactivo.",
+  "start_url": "/Episismic/",
+  "scope": "/Episismic/",
+  "display": "standalone",
+  "background_color": "#071318",
+  "theme_color": "#071318",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
