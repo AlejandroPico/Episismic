@@ -1,13 +1,6 @@
-import type { Earthquake, TimeWindow } from '../types';
+import type { Earthquake } from '../types';
 
-const FEEDS: Record<TimeWindow, string> = {
-  hour: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson',
-  day: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson',
-  week: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson',
-  month: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson',
-};
-
-interface UsgsFeature {
+export interface UsgsFeature {
   id: string;
   properties: {
     mag: number | null;
@@ -24,13 +17,15 @@ interface UsgsFeature {
     magType: string | null;
     net: string;
     type?: string;
+    cdi?: number | null;
+    mmi?: number | null;
   };
   geometry: {
     coordinates: [number, number, number];
   };
 }
 
-interface UsgsCollection {
+export interface UsgsCollection {
   metadata: { generated: number; count: number; title: string };
   features: UsgsFeature[];
 }
@@ -39,7 +34,7 @@ export function normalizeUsgsFeature(feature: UsgsFeature): Earthquake {
   const [lng, lat, depth] = feature.geometry.coordinates;
   const properties = feature.properties;
   return {
-    id: feature.id,
+    id: `usgs:${feature.id}`,
     magnitude: Number.isFinite(properties.mag) ? Number(properties.mag) : 0,
     depthKm: Number.isFinite(depth) ? Math.max(0, depth) : 0,
     place: properties.place || 'Localización por revisar',
@@ -56,22 +51,11 @@ export function normalizeUsgsFeature(feature: UsgsFeature): Earthquake {
     status: properties.status || 'automatic',
     significance: properties.sig || 0,
     magnitudeType: properties.magType || '—',
+    catalogs: ['USGS'],
+    intensity: properties.mmi ?? properties.cdi ?? null,
+    reviewCode: properties.status === 'reviewed' ? 'R' : 'A',
     kind: 'earthquake',
   };
-}
-
-export async function fetchEarthquakes(window: TimeWindow, signal?: AbortSignal): Promise<Earthquake[]> {
-  const response = await fetch(FEEDS[window], {
-    signal,
-    headers: { Accept: 'application/geo+json, application/json' },
-    cache: 'no-store',
-  });
-  if (!response.ok) throw new Error(`USGS respondió ${response.status}`);
-  const collection = (await response.json()) as UsgsCollection;
-  return collection.features
-    .filter((feature) => feature.geometry?.coordinates?.length >= 3)
-    .map(normalizeUsgsFeature)
-    .sort((a, b) => b.time - a.time);
 }
 
 export async function searchHistoricalEarthquakes(params: {

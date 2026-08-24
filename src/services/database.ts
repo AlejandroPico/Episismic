@@ -1,7 +1,7 @@
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 import schema from '../../database/schema.sql?raw';
-import type { Earthquake } from '../types';
+import type { Earthquake, SeismicStation } from '../types';
 
 const DB_NAME = 'episismic-sqlite';
 const DB_STORE = 'database';
@@ -77,8 +77,8 @@ function schedulePersist(db: Database) {
 export async function upsertEarthquakes(events: Earthquake[]): Promise<void> {
   if (!events.length) return;
   const db = await getDatabase();
-  const source = db.exec("SELECT id FROM data_sources WHERE code = 'usgs-comcat' LIMIT 1");
-  const sourceId = Number(source[0]?.values[0]?.[0] ?? 1);
+  const sources = new Map<string, number>();
+  for (const [code, id] of db.exec('SELECT code, id FROM data_sources')[0]?.values ?? []) sources.set(String(code), Number(id));
 
   const insertPhenomenon = db.prepare(`
     INSERT INTO phenomena(id, kind, source_id, external_id, occurred_at, updated_at, latitude, longitude, headline, status, significance, raw_json)
@@ -103,6 +103,8 @@ export async function upsertEarthquakes(events: Earthquake[]): Promise<void> {
   db.run('BEGIN TRANSACTION');
   try {
     for (const event of events) {
+      const sourceCode = event.catalogs.includes('USGS') ? 'usgs-comcat' : event.catalogs.includes('EMSC') ? 'emsc' : 'geofon';
+      const sourceId = sources.get(sourceCode) ?? sources.get('usgs-comcat') ?? 1;
       insertPhenomenon.run([
         event.id, sourceId, event.id, event.time, event.updated, event.lat, event.lng,
         event.place, event.status, event.significance, JSON.stringify(event),
@@ -124,6 +126,46 @@ export async function upsertEarthquakes(events: Earthquake[]): Promise<void> {
     insertPhenomenon.free();
     insertEvent.free();
     insertUpdate.free();
+  }
+  schedulePersist(db);
+}
+
+export async function upsertStations(stations: SeismicStation[]): Promise<void> {
+  if (!stations.length) return;
+  const db = await getDatabase();
+  const network = db.prepare(`
+    INSERT INTO seismic_networks(id, code, name, fdsn_station_url, restricted_status, last_catalogued_at)
+    VALUES (?, ?, ?, ?, 'open', ?)
+    ON CONFLICT(id) DO UPDATE SET name=excluded.name, fdsn_station_url=excluded.fdsn_station_url, last_catalogued_at=excluded.last_catalogued_at
+  `);
+  const station = db.prepare(`
+    INSERT INTO seismic_stations(id, network_id, code, name, country, latitude, longitude, elevation_m, site_name, start_time, end_time, restricted_status, status, metadata_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)
+    ON CONFLICT(id) DO UPDATE SET name=excluded.name, country=excluded.country, latitude=excluded.latitude, longitude=excluded.longitude,
+      elevation_m=excluded.elevation_m, site_name=excluded.site_name, start_time=excluded.start_time, end_time=excluded.end_time,
+      status=excluded.status, metadata_json=excluded.metadata_json
+  `);
+  const networks = new Set<string>();
+  db.run('BEGIN TRANSACTION');
+  try {
+    for (const item of stations) {
+      if (!networks.has(item.network)) {
+        network.run([item.network, item.network, `Red ${item.network}`, item.dataUrl.split('query?')[0], Date.now()]);
+        networks.add(item.network);
+      }
+      station.run([
+        item.id, item.network, item.code, item.name, item.country, item.lat, item.lng, item.elevationM, item.name,
+        item.startTime ? Date.parse(item.startTime) : null, item.endTime ? Date.parse(item.endTime) : null,
+        item.status, JSON.stringify(item),
+      ]);
+    }
+    db.run('COMMIT');
+  } catch (error) {
+    db.run('ROLLBACK');
+    throw error;
+  } finally {
+    network.free();
+    station.free();
   }
   schedulePersist(db);
 }

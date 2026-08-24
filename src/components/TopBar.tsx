@@ -52,7 +52,7 @@ export function TopBar({ activePanel, query, status, alertCount, historyOpen, on
       </nav>
       <div className="top-status">
         <span className={`live-dot ${status.state}`} />
-        <small>{status.state === 'live' ? 'EN DIRECTO' : status.state === 'loading' ? 'SINCRONIZANDO' : 'LOCAL'}</small>
+        <small>{status.state === 'live' ? `${status.sources?.length ?? 1}/3 FUENTES` : status.state === 'loading' ? 'SINCRONIZANDO' : 'LOCAL'}</small>
       </div>
       <button className={`history-toggle ${historyOpen ? 'active' : ''}`} onClick={onHistory} title="Historial sísmico">
         <History size={19} /><span>Historial</span>

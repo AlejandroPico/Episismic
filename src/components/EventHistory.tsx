@@ -19,6 +19,7 @@ const windows: { id: TimeWindow; label: string }[] = [
 ];
 
 export function EventHistory({ events, selected, status, timeWindow, onWindowChange, onSelect, onRefresh, onClose }: EventHistoryProps) {
+  const renderedEvents = events.slice(0, 900);
   return (
     <aside className="history-panel" aria-label="Historial sísmico">
       <header className="panel-header">
@@ -33,7 +34,7 @@ export function EventHistory({ events, selected, status, timeWindow, onWindowCha
       </header>
       <div className="status-strip">
         <span className={`live-dot ${status.state}`} />
-        <strong>{status.state === 'live' ? 'DATOS EN DIRECTO' : status.state === 'loading' ? 'ACTUALIZANDO' : status.state === 'cached' ? 'CACHÉ LOCAL' : 'SIN CONEXIÓN'}</strong>
+        <strong>{status.state === 'live' ? 'CATÁLOGOS ACTUALIZADOS' : status.state === 'loading' ? 'ACTUALIZANDO' : status.state === 'cached' ? 'CACHÉ LOCAL' : 'SIN CONEXIÓN'}</strong>
         <span>{events.length.toLocaleString('es-ES')} eventos</span>
       </div>
       <div className="segmented" aria-label="Ventana temporal">
@@ -42,7 +43,7 @@ export function EventHistory({ events, selected, status, timeWindow, onWindowCha
         ))}
       </div>
       <div className="history-list">
-        {events.map((event) => (
+        {renderedEvents.map((event) => (
           <button key={event.id} className={`event-row ${selected?.id === event.id ? 'selected' : ''}`} onClick={() => onSelect(event)}>
             <span className="magnitude-badge" style={{ '--magnitude-color': magnitudeColor(event.magnitude) } as React.CSSProperties}>
               {event.magnitude.toFixed(1)}
@@ -54,11 +55,12 @@ export function EventHistory({ events, selected, status, timeWindow, onWindowCha
             {event.tsunami ? <AlertTriangle size={15} className="tsunami-icon" aria-label="Aviso de tsunami" /> : event.magnitude >= 5 ? <Radio size={15} /> : <ChevronRight size={15} />}
           </button>
         ))}
+        {events.length > renderedEvents.length && <div className="list-limit">Mapa completo agrupado · listado limitado a los {renderedEvents.length.toLocaleString('es-ES')} eventos más recientes</div>}
         {!events.length && <div className="empty-state"><Radio size={28} /><p>No hay eventos para los filtros actuales.</p></div>}
       </div>
       <footer className="history-footer">
-        <span>Fuente principal</span>
-        <a href="https://earthquake.usgs.gov/" target="_blank" rel="noreferrer">USGS / ComCat</a>
+        <span>Fuentes activas</span>
+        <a href="https://www.seismicportal.eu/" target="_blank" rel="noreferrer">{status.sources?.join(' · ') || 'USGS · EMSC · GEOFON'}</a>
       </footer>
     </aside>
   );

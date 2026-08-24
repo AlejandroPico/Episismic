@@ -7,9 +7,8 @@ import { GlobeView } from './components/GlobeView';
 import { StationInspector } from './components/StationInspector';
 import { Timeline } from './components/Timeline';
 import { TopBar, type PanelId } from './components/TopBar';
-import { stations } from './data/stations';
-import { volcanoes } from './data/volcanoes';
 import { useEarthquakes } from './hooks/useEarthquakes';
+import { useGeodata } from './hooks/useGeodata';
 import type {
   Earthquake, Filters, MapLayerState, MapStyle, SeismicStation, ThemeMode, TimeWindow,
 } from './types';
@@ -19,7 +18,7 @@ const DEFAULT_LAYERS: MapLayerState = {
   earthquakes: true,
   stations: true,
   plates: true,
-  volcanoes: false,
+  volcanoes: true,
   labels: true,
   atmosphere: true,
   graticule: false,
@@ -35,6 +34,7 @@ function loadPreference<T>(key: string, fallback: T): T {
 export default function App() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('day');
   const { events: liveEvents, status, newEvent, refresh } = useEarthquakes(timeWindow);
+  const { stations, volcanoes, ready: geodataReady } = useGeodata();
   const [historicalEvents, setHistoricalEvents] = useState<Earthquake[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Earthquake | null>(null);
   const [selectedStation, setSelectedStation] = useState<SeismicStation | null>(null);
@@ -43,8 +43,8 @@ export default function App() {
   const [activePanel, setActivePanel] = useState<PanelId>(null);
   const [historyOpen, setHistoryOpen] = useState(() => window.innerWidth > 820);
   const [query, setQuery] = useState('');
-  const [layers, setLayers] = useState<MapLayerState>(() => loadPreference('layers', DEFAULT_LAYERS));
-  const [mapStyle, setMapStyle] = useState<MapStyle>(() => loadPreference('map-style', 'political'));
+  const [layers, setLayers] = useState<MapLayerState>(() => loadPreference('layers-v2', DEFAULT_LAYERS));
+  const [mapStyle, setMapStyle] = useState<MapStyle>(() => loadPreference('map-style-v2', 'political'));
   const [theme, setTheme] = useState<ThemeMode>(() => loadPreference('theme', 'automatic'));
   const [autoFocus, setAutoFocus] = useState(() => loadPreference('auto-focus', true));
   const [autoFocusMagnitude, setAutoFocusMagnitude] = useState(() => loadPreference('auto-focus-magnitude', 5));
@@ -65,7 +65,7 @@ export default function App() {
     if (!search) return stations;
     const matches = stations.filter((station) => `${station.id} ${station.name} ${station.country}`.toLowerCase().includes(search));
     return matches.length ? matches : stations;
-  }, [query]);
+  }, [query, stations]);
 
   const strongest = useMemo(() => visibleEvents.reduce<Earthquake | null>((max, event) => !max || event.magnitude > max.magnitude ? event : max, null), [visibleEvents]);
 
@@ -109,8 +109,8 @@ export default function App() {
     return () => window.clearInterval(interval);
   }, [theme]);
 
-  useEffect(() => { localStorage.setItem('episismic:layers', JSON.stringify(layers)); }, [layers]);
-  useEffect(() => { localStorage.setItem('episismic:map-style', JSON.stringify(mapStyle)); }, [mapStyle]);
+  useEffect(() => { localStorage.setItem('episismic:layers-v2', JSON.stringify(layers)); }, [layers]);
+  useEffect(() => { localStorage.setItem('episismic:map-style-v2', JSON.stringify(mapStyle)); }, [mapStyle]);
   useEffect(() => { localStorage.setItem('episismic:auto-focus', JSON.stringify(autoFocus)); }, [autoFocus]);
   useEffect(() => { localStorage.setItem('episismic:auto-focus-magnitude', JSON.stringify(autoFocusMagnitude)); }, [autoFocusMagnitude]);
 
@@ -168,7 +168,7 @@ export default function App() {
           <article><span>VENTANA</span><strong>{historicalEvents ? 'ARCHIVO' : ({ hour: '1 HORA', day: '24 HORAS', week: '7 DÍAS', month: '30 DÍAS' })[timeWindow]}</strong></article>
           <article><span>EVENTOS</span><strong>{visibleEvents.length.toLocaleString('es-ES')}</strong></article>
           <article><span>MÁXIMO</span><strong style={{ color: strongest ? magnitudeColor(strongest.magnitude) : undefined }}>{strongest ? formatMagnitude(strongest.magnitude) : '—'}</strong></article>
-          <article><span>ESTACIONES</span><strong>{stations.length}<small> / CATÁLOGO FDSN</small></strong></article>
+          <article><span>ESTACIONES</span><strong>{stations.length.toLocaleString('es-ES')}<small> / {geodataReady ? 'FDSN ACTIVO' : 'CARGANDO'}</small></strong></article>
         </div>
 
         {activePanel && <ControlPanel
@@ -202,8 +202,8 @@ export default function App() {
         </div>}
 
         <div className="map-attribution">
-          <span>DATOS <a href="https://earthquake.usgs.gov/" target="_blank" rel="noreferrer">USGS</a> / <a href="https://www.earthscope.org/" target="_blank" rel="noreferrer">EarthScope</a></span>
-          <span>VISUALIZACIÓN WEBGL</span>
+          <span>CATÁLOGOS <a href="https://earthquake.usgs.gov/" target="_blank" rel="noreferrer">USGS</a> / <a href="https://www.seismicportal.eu/" target="_blank" rel="noreferrer">EMSC</a> / <a href="https://geofon.gfz-potsdam.de/" target="_blank" rel="noreferrer">GEOFON</a></span>
+          <span>MAPLIBRE / PB2002 / FDSN</span>
         </div>
         <Timeline events={visibleEvents} timeWindow={timeWindow} onReset={() => focus({ lat: 22, lng: 5 }, 2.25)} />
       </main>

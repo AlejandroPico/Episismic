@@ -6,14 +6,16 @@ Episismic se divide en cuatro sistemas para evitar que el volumen de estaciones,
 
 1. **Adquisición:** adaptadores FDSN/GeoJSON/SeedLink convierten fuentes externas al dominio común.
 2. **Persistencia:** SQLite conserva el catálogo, todas las revisiones y metadatos; el navegador lo ejecuta en WebAssembly.
-3. **Dominio:** terremotos, estaciones, alertas y futuros riesgos no dependen de React ni de Three.js.
-4. **Presentación:** React administra paneles y filtros; react-globe.gl/Three.js renderiza capas WebGL.
+3. **Dominio:** terremotos, estaciones, alertas y futuros riesgos no dependen de React ni de MapLibre.
+4. **Presentación:** React administra paneles y filtros; MapLibre renderiza teselas, GeoJSON y clustering en WebGL.
 
 ## Flujo actual
 
 ```mermaid
 flowchart TD
-  A[USGS GeoJSON] --> B[Normalizador]
+  A[USGS] --> B[Fusión espacial-temporal]
+  E[EMSC] --> B
+  H[GEOFON] --> B
   B --> C[SQLite WASM]
   B --> D[Estado React]
   C --> E[Archivo local]
@@ -38,14 +40,15 @@ La web seguirá funcionando con USGS aunque ese servicio no esté disponible.
 
 ## Rendimiento
 
-- Renderizado WebGL y capas filtradas antes de llegar al globo.
-- Actualización de catálogo desacoplada a 60 segundos.
+- Cartografía por teselas y globo vectorial: no se amplía una textura global fija.
+- GeoJSON procesado en los Web Workers de MapLibre.
+- Clustering separado para terremotos, estaciones y volcanes.
+- Actualización multifuente desacoplada a 30 segundos.
 - Persistencia SQLite diferida para agrupar escrituras.
-- Catálogo histórico limitado por consulta y preparado para paginación.
-- Separación del paquete de globo en un chunk propio.
-- Adaptación de densidad por filtros y ventana temporal.
+- Listado histórico limitado a los 900 registros más recientes; el mapa conserva el conjunto completo agrupado.
+- Rótulos y radios interpolados por nivel de zoom.
 
-Próximos pasos técnicos: Web Worker para SQLite, agrupación espacial de estaciones, LOD de fallas, teselas batimétricas de alta resolución y servicio WebSocket.
+Próximos pasos técnicos: Web Worker dedicado para SQLite y servicio SeedLink/WebSocket para detecciones de forma de onda previas a los catálogos.
 
 ## Multirriesgo
 

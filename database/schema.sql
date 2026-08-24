@@ -328,4 +328,7 @@ VALUES
   ('usgs-comcat', 'USGS ComCat', 'U.S. Geological Survey', 'FDSN_EVENT', 'https://earthquake.usgs.gov/fdsnws/event/1/', 'https://earthquake.usgs.gov/', 'Dominio público de EE. UU.; comprobar productos de terceros', 10),
   ('earthscope', 'EarthScope Data Services', 'EarthScope Consortium', 'FDSN_STATION', 'https://service.earthscope.org/fdsnws/station/1/', 'https://www.earthscope.org/', 'Consultar atribución de cada red', 20),
   ('geofon', 'GEOFON', 'GFZ Potsdam', 'FDSN', 'https://geofon.gfz-potsdam.de/fdsnws/', 'https://geofon.gfz-potsdam.de/', 'CC BY 4.0 para datos GEOFON; otras redes pueden variar', 30),
-  ('ign-es', 'Red Sísmica Nacional', 'Instituto Geográfico Nacional de España', 'FDSN', 'https://www.ign.es/', 'https://www.ign.es/', 'Consultar aviso legal del IGN', 30);
+  ('ign-es', 'Red Sísmica Nacional', 'Instituto Geográfico Nacional de España', 'FDSN', 'https://www.ign.es/', 'https://www.ign.es/', 'Consultar aviso legal del IGN', 30),
+  ('emsc', 'EMSC SeismicPortal', 'European-Mediterranean Seismological Centre', 'FDSN_EVENT', 'https://www.seismicportal.eu/fdsnws/event/1/', 'https://www.seismicportal.eu/', 'CC BY 4.0', 15),
+  ('smithsonian-gvp', 'Volcanoes of the World', 'Smithsonian Global Volcanism Program', 'WFS', 'https://webservices.volcano.si.edu/geoserver/GVP-VOTW/', 'https://volcano.si.edu/', 'Consultar términos GVP', 30),
+  ('pb2002', 'PB2002 plate boundaries', 'Peter Bird / Nordpil', 'GEOJSON', NULL, 'https://github.com/fraxen/tectonicplates', 'ODC Attribution', 30);

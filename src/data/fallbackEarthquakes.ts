@@ -32,5 +32,8 @@ export const fallbackEarthquakes: Earthquake[] = [
   status: 'reviewed',
   significance: Math.round(Number(magnitude) * 100),
   magnitudeType: 'mw',
+  catalogs: ['LOCAL'],
+  intensity: null,
+  reviewCode: 'R',
   kind: 'earthquake',
 }));

@@ -35,8 +35,6 @@ const mapStyles: { id: MapStyle; name: string; description: string }[] = [
   { id: 'satellite', name: 'Satélite', description: 'Color natural global' },
   { id: 'relief', name: 'Relieve', description: 'Topografía sombreada' },
   { id: 'bathymetry', name: 'Batimetría', description: 'Lectura del fondo oceánico' },
-  { id: 'dark', name: 'Sísmico oscuro', description: 'Máximo contraste de datos' },
-  { id: 'night', name: 'Nocturno', description: 'Luces y actividad humana' },
 ];
 
 const layerDefinitions: { id: keyof MapLayerState; label: string; detail: string }[] = [
@@ -138,8 +136,9 @@ function StationsPanel({ stations, onSelectStation }: Pick<ControlPanelProps, 's
   return <section className="control-section station-catalogue">
     <h3><RadioTower size={16} /> Catálogo de estaciones</h3>
     <label className="inline-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Código, país o estación" /></label>
+    <p className="catalog-count">{results.length.toLocaleString('es-ES')} estaciones · se muestran las primeras {Math.min(results.length, 400).toLocaleString('es-ES')}</p>
     <div className="station-list">
-      {results.map((station) => <button key={station.id} onClick={() => onSelectStation(station)}>
+      {results.slice(0, 400).map((station) => <button key={station.id} onClick={() => onSelectStation(station)}>
         <span><i className={`station-status ${station.status}`} />{station.id}</span>
         <strong>{station.name}</strong><small>{station.country} · {station.elevationM} m</small>
       </button>)}
@@ -180,6 +179,7 @@ function GuidePanel() {
     <p>Episismic representa el hipocentro bajo la superficie y el epicentro sobre el globo. El color del marcador indica profundidad; su tamaño responde a la magnitud.</p>
     <h4>Frentes de onda</h4><p>La onda P aparece en azul y se propaga más deprisa. La onda S aparece con el color de severidad del evento y avanza más lentamente.</p>
     <h4>Estado del dato</h4><p><strong>Automático</strong> indica una solución rápida susceptible de revisión. <strong>Revisado</strong> indica intervención o validación posterior de la red de origen.</p>
+    <h4>Evento frente a detección</h4><p>El mapa fusiona terremotos publicados por USGS, EMSC y GEOFON. GlobalQuake también muestra disparos internos calculados directamente sobre formas de onda SeedLink; esos disparos no equivalen necesariamente a terremotos catalogados. Episismic no los fabrica: requerirán el servicio de ingesta SeedLink/WebSocket previsto.</p>
     <h4>Capas</h4><p>Combina estaciones, límites tectónicos, volcanes, retícula y nombres geográficos. Acerca el globo para separar estaciones cercanas.</p>
   </section>;
 }
@@ -188,7 +188,7 @@ function AboutPanel() {
   return <section className="control-section prose-panel">
     <h3><Info size={16} /> Acerca de Episismic</h3>
     <p>Observatorio geofísico mundial creado por Alejandro Pico. El núcleo inicial está dedicado a terremotos y se ha diseñado para incorporar volcanes, huracanes, grandes tormentas e incendios.</p>
-    <p>Los datos sísmicos mostrados proceden principalmente de servicios públicos USGS/ComCat y metadatos FDSN. La atribución concreta se conserva junto a cada registro.</p>
+    <p>Los eventos se unifican desde USGS/ComCat, EMSC y GEOFON; las estaciones proceden de catálogos FDSN y los volcanes del Smithsonian GVP. La atribución concreta se conserva junto a cada registro.</p>
     <div className="about-links">
       <a href="https://alejandropico.github.io/" target="_blank" rel="noreferrer">Portfolio <ExternalLink size={14} /></a>
       <a href="https://github.com/AlejandroPico/Episismic" target="_blank" rel="noreferrer">Código y documentación <ExternalLink size={14} /></a>

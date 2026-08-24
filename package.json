@@ -8,26 +8,21 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "sync:geodata": "node scripts/sync-geodata.mjs"
   },
   "dependencies": {
-    "@turf/helpers": "7.2.0",
-    "@turf/invariant": "7.2.0",
-    "@turf/meta": "7.2.0",
-    "@turf/rewind": "7.2.0",
     "lucide-react": "1.33.0",
+    "maplibre-gl": "5.7.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-globe.gl": "2.38.0",
-    "sql.js": "1.13.0",
-    "three": "0.185.1"
+    "sql.js": "1.13.0"
   },
   "devDependencies": {
     "@eslint/js": "9.34.0",
     "@types/react": "19.1.12",
     "@types/react-dom": "19.1.9",
     "@types/sql.js": "1.4.11",
-    "@types/three": "0.185.0",
     "@vitejs/plugin-react": "6.1.0",
     "eslint": "9.34.0",
     "eslint-plugin-react-hooks": "5.2.0",

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fallbackEarthquakes } from '../data/fallbackEarthquakes';
 import { getStoredEarthquakes, upsertEarthquakes } from '../services/database';
-import { fetchEarthquakes } from '../services/usgs';
+import { fetchCombinedEarthquakes } from '../services/catalog';
 import type { DataStatus, Earthquake, TimeWindow } from '../types';
 import { windowStart } from '../utils/format';
 
@@ -17,7 +17,7 @@ export function useEarthquakes(timeWindow: TimeWindow) {
     const timeout = window.setTimeout(() => controller.abort(), 14_000);
     if (!background) setStatus((current) => ({ ...current, state: 'loading' }));
     try {
-      const live = await fetchEarthquakes(timeWindow, controller.signal);
+      const { events: live, sources } = await fetchCombinedEarthquakes(timeWindow, controller.signal);
       const unseen = initialized.current
         ? live.find((event) => !knownUpdates.current.has(event.id) && Date.now() - event.time < 8 * 60_000)
         : null;
@@ -28,7 +28,7 @@ export function useEarthquakes(timeWindow: TimeWindow) {
       initialized.current = true;
       setEvents(live);
       setNewEvent(unseen ?? revised ?? null);
-      setStatus({ state: 'live', lastUpdated: Date.now() });
+      setStatus({ state: 'live', lastUpdated: Date.now(), sources });
       void upsertEarthquakes(live);
     } catch (error) {
       const cached = await getStoredEarthquakes(windowStart(timeWindow)).catch(() => []);
@@ -46,7 +46,7 @@ export function useEarthquakes(timeWindow: TimeWindow) {
   useEffect(() => {
     initialized.current = false;
     void refresh();
-    const interval = window.setInterval(() => void refresh(true), 60_000);
+    const interval = window.setInterval(() => void refresh(true), 30_000);
     return () => window.clearInterval(interval);
   }, [refresh]);
 

@@ -1,6 +1,6 @@
 export type TimeWindow = 'hour' | 'day' | 'week' | 'month';
 export type ThemeMode = 'automatic' | 'morning' | 'afternoon' | 'night';
-export type MapStyle = 'political' | 'satellite' | 'relief' | 'bathymetry' | 'dark' | 'night';
+export type MapStyle = 'political' | 'satellite' | 'relief' | 'bathymetry';
 export type HazardKind = 'earthquake' | 'volcano' | 'storm' | 'fire';
 
 export interface Coordinates {
@@ -24,6 +24,9 @@ export interface Earthquake extends Coordinates {
   status: string;
   significance: number;
   magnitudeType: string;
+  catalogs: string[];
+  intensity: number | null;
+  reviewCode: 'A' | 'R' | 'M';
   kind: HazardKind;
 }
 
@@ -37,6 +40,8 @@ export interface SeismicStation extends Coordinates {
   status: 'online' | 'delayed' | 'unknown';
   dataUrl: string;
   source: 'EarthScope' | 'GEOFON' | 'IGN' | 'USGS';
+  startTime?: string | null;
+  endTime?: string | null;
 }
 
 export interface Volcano extends Coordinates {
@@ -44,7 +49,11 @@ export interface Volcano extends Coordinates {
   name: string;
   country: string;
   elevationM: number;
-  status: 'normal' | 'advisory' | 'watch';
+  status: 'catalogued' | 'normal' | 'advisory' | 'watch';
+  region?: string;
+  volcanoType?: string;
+  lastEruptionYear?: number | null;
+  sourceUrl?: string;
 }
 
 export interface MapLayerState {
@@ -68,4 +77,5 @@ export interface DataStatus {
   state: 'loading' | 'live' | 'cached' | 'error';
   lastUpdated: number | null;
   message?: string;
+  sources?: string[];
 }
