@@ -393,3 +393,180 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   .event-notice { top: 58px; }
   .maplibregl-ctrl-bottom-left { bottom: 61px; }
 }
+
+/* Navegación flotante, lectura operacional y enciclopedia científica. */
+.app-shell, .app-shell.with-history { position: relative; display: block; width: 100%; height: 100%; }
+.map-stage { position: absolute; inset: 0; }
+.topbar {
+  position: fixed; z-index: 90; top: 10px; right: 10px; width: auto; height: 42px; min-height: 42px;
+  display: flex; align-items: stretch; gap: 5px; border: 0; background: transparent; box-shadow: none;
+}
+.search-control { width: 42px; min-width: 42px; display: flex; align-items: stretch; gap: 0; padding: 0; overflow: hidden; border: 1px solid var(--line-strong); color: var(--text-soft); background: var(--panel); box-shadow: 0 5px 20px rgba(0,0,0,.18); backdrop-filter: blur(14px); transition: width .22s ease; }
+.search-control.open { width: min(310px, 31vw); }
+.search-control > button { width: 40px; min-width: 40px; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.search-control > button:hover { color: var(--accent); background: var(--accent-soft); }
+.search-control label { min-width: 0; flex: 1; display: flex; }
+.search-control input { width: 100%; min-width: 160px; padding: 0 4px; font-size: 10px; }
+.search-control .search-close { width: 31px; min-width: 31px; }
+.top-tools { flex: 0 0 auto; display: flex; justify-content: flex-start; border: 1px solid var(--line-strong); background: var(--panel); box-shadow: 0 5px 20px rgba(0,0,0,.18); backdrop-filter: blur(14px); }
+.top-tools button, .history-toggle { width: 42px; min-width: 42px; height: 40px; flex: 0 0 42px; display: grid; place-items: center; padding: 0; border: 0; border-right: 1px solid var(--line); background: transparent; color: var(--text-soft); }
+.top-tools button:last-child { border-right: 0; }
+.top-tools button span, .history-toggle span { display: none; }
+.top-tools button i { top: 3px; right: 3px; min-width: 14px; height: 14px; font-size: 7px; }
+.top-status { width: 82px; flex: 0 0 82px; height: 42px; display: flex; place-items: initial; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--line-strong); background: var(--panel); box-shadow: 0 5px 20px rgba(0,0,0,.18); backdrop-filter: blur(14px); }
+.history-toggle { width: 42px; flex-basis: 42px; border: 1px solid var(--line-strong); background: var(--panel); box-shadow: 0 5px 20px rgba(0,0,0,.18); backdrop-filter: blur(14px); }
+.history-toggle.active::after, .top-tools button.active::after { bottom: -1px; }
+.summary-hud { top: 10px; left: 10px; }
+.control-panel { top: 62px; left: 10px; right: auto; width: min(420px, calc(100% - 20px)); max-height: calc(100% - 72px); }
+.history-panel { position: fixed; z-index: 35; top: 62px; right: 10px; bottom: 10px; width: 366px; border: 1px solid var(--line-strong); box-shadow: 0 10px 38px rgba(0,0,0,.24); }
+.event-notice { top: 62px; }
+.mobile-quickbar { display: none !important; }
+
+.orientation-controls { position: absolute; z-index: 18; left: 10px; bottom: 55px; display: flex; border: 1px solid rgba(210,228,226,.28); background: rgba(5,18,22,.84); box-shadow: 0 7px 24px rgba(0,0,0,.25); backdrop-filter: blur(10px); }
+.orientation-controls button { position: relative; width: 36px; height: 34px; display: grid; place-items: center; padding: 0; border: 0; border-right: 1px solid rgba(210,228,226,.2); color: #dfeceb; background: transparent; cursor: pointer; }
+.orientation-controls button:last-child { border-right: 0; }
+.orientation-controls button:hover { color: #53d6c7; background: rgba(83,214,199,.14); }
+.orientation-controls button span { position: absolute; right: 4px; bottom: 3px; color: #ffb84d; font: 700 7px/1 IBM Plex Mono, monospace; }
+.tectonic-key { display: inline-flex; align-items: center; gap: 5px; margin-left: 9px !important; }
+.tectonic-key i { width: 17px; height: 0; margin-left: 4px; border-top: 2px solid #e12834; background: none !important; }
+.tectonic-key i.plate-diffuse { border-top-color: #b11931; border-top-style: dashed; }
+
+.switch-list label.disabled { opacity: .48; cursor: not-allowed; }
+.switch-list label.disabled strong { display: flex; align-items: center; gap: 5px; }
+.switch-list label.disabled input + i { border-color: var(--line); background: rgba(120,140,140,.08); }
+.disabled-control { opacity: .42; }
+
+.event-row { min-height: 67px; }
+.event-row-heading { min-width: 0; display: flex; align-items: center; gap: 6px; }
+.event-row-heading strong { flex: 1; }
+.review-code { width: 17px; height: 17px; display: grid; place-items: center; flex: 0 0 17px; border: 1px solid var(--line-strong); color: var(--text-soft); font: 700 8px/1 IBM Plex Mono, monospace; font-style: normal; }
+.review-code.r { color: #61dca3; border-color: rgba(97,220,163,.5); }
+.event-copy em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--accent); font: 500 7px/1.2 IBM Plex Mono, monospace; font-style: normal; }
+
+.about-control-panel { width: min(570px, calc(100% - 20px)); }
+.about-identity { display: flex; align-items: center; gap: 18px; padding: 5px 0 20px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.about-identity img { width: 82px; height: 82px; flex: 0 0 82px; }
+.about-identity h3 { margin: 6px 0 5px; font: 600 25px/1 IBM Plex Mono, monospace; letter-spacing: .14em; }
+.about-identity span { color: var(--text-soft); font-size: 10px; }
+.about-principles { display: grid; grid-template-columns: repeat(3,1fr); margin: 18px 0; border: 1px solid var(--line); }
+.about-principles span { min-height: 62px; display: grid; place-items: center; align-content: center; gap: 5px; border-right: 1px solid var(--line); color: var(--text-soft); font-size: 8px; text-align: center; }
+.about-principles span:last-child { border-right: 0; }
+.about-principles strong { color: var(--accent); font: 600 13px/1 IBM Plex Mono, monospace; }
+.about-links a { min-height: 47px; padding: 8px 11px; }
+.about-links a > span { display: grid; gap: 4px; color: var(--text); }
+.about-links a small { color: var(--text-soft); font: 500 7px/1 IBM Plex Mono, monospace; letter-spacing: .1em; }
+
+.encyclopedia-panel { z-index: 75; inset: 62px 10px 10px; width: auto; max-height: none; }
+.encyclopedia-panel .panel-header { min-height: 54px; }
+.encyclopedia-panel .control-scroll { flex: 1; overflow: hidden; }
+.encyclopedia-workspace { height: 100%; min-height: 0; display: grid; grid-template-columns: 310px minmax(0,1fr); }
+.encyclopedia-index { min-width: 0; min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: color-mix(in srgb, var(--panel-solid) 82%, transparent); }
+.encyclopedia-stats { min-height: 62px; display: flex; align-items: center; gap: 10px; padding: 10px 13px; border-bottom: 1px solid var(--line); color: var(--accent); }
+.encyclopedia-stats div { display: grid; gap: 4px; }
+.encyclopedia-stats strong { color: var(--text); font-size: 11px; }
+.encyclopedia-stats small { color: var(--text-soft); font-size: 8px; }
+.encyclopedia-search { height: 39px; display: flex; align-items: center; gap: 8px; margin: 11px; padding: 0 9px; border: 1px solid var(--line-strong); color: var(--text-soft); }
+.encyclopedia-search input { width: 100%; border: 0; outline: 0; color: var(--text); background: transparent; font-size: 9px; }
+.encyclopedia-categories { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 11px 11px; border-bottom: 1px solid var(--line); }
+.encyclopedia-categories button { min-height: 25px; padding: 0 8px; border: 1px solid var(--line); color: var(--text-soft); background: transparent; font-size: 7px; cursor: pointer; }
+.encyclopedia-categories button:hover, .encyclopedia-categories button.active { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.encyclopedia-chapters { min-height: 0; flex: 1; overflow-y: auto; scrollbar-width: thin; }
+.encyclopedia-chapters > button { width: 100%; min-height: 54px; display: grid; grid-template-columns: 27px minmax(0,1fr) 15px; align-items: center; gap: 8px; padding: 7px 10px; border: 0; border-bottom: 1px solid var(--line); color: var(--text-soft); background: transparent; text-align: left; cursor: pointer; }
+.encyclopedia-chapters > button > span { color: var(--text-soft); font: 500 8px/1 IBM Plex Mono, monospace; }
+.encyclopedia-chapters > button div { min-width: 0; display: grid; gap: 4px; }
+.encyclopedia-chapters > button strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-size: 9px; }
+.encyclopedia-chapters > button small { color: var(--text-soft); font-size: 7px; }
+.encyclopedia-chapters > button:hover, .encyclopedia-chapters > button.active { color: var(--accent); background: var(--accent-soft); }
+.encyclopedia-chapters > button.active { box-shadow: inset 2px 0 var(--accent); }
+.encyclopedia-empty { padding: 20px; color: var(--text-soft); font-size: 9px; text-align: center; }
+.encyclopedia-article { min-width: 0; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.encyclopedia-article > header { padding: clamp(20px,3vw,42px) clamp(22px,4vw,62px) 24px; border-bottom: 1px solid var(--line); }
+.encyclopedia-article > header h2 { margin: 7px 0 8px; font-size: clamp(24px,3.1vw,47px); font-weight: 600; letter-spacing: -.035em; }
+.encyclopedia-article > header > p:last-child { margin: 0; color: var(--text-soft); font-size: clamp(10px,1.1vw,14px); }
+.encyclopedia-body { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.encyclopedia-body > section { min-height: 156px; padding: 24px clamp(22px,3vw,42px); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.encyclopedia-body > section:nth-child(2n) { border-right: 0; }
+.encyclopedia-body h3 { margin: 0 0 12px; color: var(--accent); font: 600 10px/1 IBM Plex Mono, monospace; letter-spacing: .06em; text-transform: uppercase; }
+.encyclopedia-body p { margin: 0; color: var(--text-soft); font-size: 11px; line-height: 1.75; }
+.encyclopedia-body .key-facts, .encyclopedia-body .encyclopedia-references { min-height: 170px; }
+.key-facts ul { display: grid; gap: 9px; padding: 0; margin: 0; list-style: none; }
+.key-facts li { position: relative; padding-left: 15px; color: var(--text-soft); font-size: 10px; line-height: 1.45; }
+.key-facts li::before { content: ""; position: absolute; top: .5em; left: 0; width: 5px; height: 5px; background: var(--warm); }
+.encyclopedia-references > div { display: grid; gap: 6px; }
+.encyclopedia-references a { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 9px; border: 1px solid var(--line); text-decoration: none; }
+.encyclopedia-references a:hover { border-color: var(--accent); background: var(--accent-soft); }
+.encyclopedia-references a span { display: grid; gap: 3px; }
+.encyclopedia-references a small { color: var(--text-soft); font: 500 7px/1 IBM Plex Mono, monospace; }
+.encyclopedia-references a strong { color: var(--text); font-size: 9px; }
+.encyclopedia-article > footer { min-height: 46px; display: flex; align-items: center; gap: 8px; padding: 10px clamp(22px,3vw,42px); color: var(--text-soft); font-size: 8px; }
+
+.scientific-diagram { margin: 0; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--accent) 4%, transparent); }
+.scientific-diagram svg { width: 100%; height: auto; max-height: 285px; display: block; color: var(--text-soft); }
+.scientific-diagram figcaption { padding: 7px 12px; border-top: 1px solid var(--line); color: var(--text-soft); font: 500 7px/1 IBM Plex Mono, monospace; text-align: right; letter-spacing: .07em; }
+.scientific-diagram text { fill: var(--text-soft); font: 600 9px IBM Plex Mono, monospace; letter-spacing: .05em; }
+.diagram-grid { fill: none; stroke: var(--line); stroke-width: .55; }
+.diagram-earth-crust { fill: #d6c79f; stroke: var(--text); stroke-width: 2; }.diagram-earth-mantle { fill: #c45d3f; stroke: #8f382d; }.diagram-earth-outer { fill: #e9a83c; stroke: #8f5b17; }.diagram-earth-inner { fill: #f1e5b8; stroke: #8f5b17; }
+.diagram-cut,.diagram-marker,.diagram-ray,.diagram-axis,.diagram-flow { fill: none; stroke: var(--text-soft); stroke-width: 1.4; }.diagram-marker { stroke-dasharray: 4 4; }.diagram-ray { stroke: var(--accent); opacity: .55; }
+.diagram-block,.diagram-device,.diagram-server,.diagram-source,.diagram-merge { fill: color-mix(in srgb,var(--accent) 12%,var(--panel-solid)); stroke: var(--line-strong); stroke-width: 1.5; }.diagram-block.warm { fill: color-mix(in srgb,var(--warm) 17%,var(--panel-solid)); }
+.diagram-arrow,.diagram-station,.diagram-signal { fill: none; stroke: var(--warm); stroke-width: 2; }.diagram-signal { stroke: var(--accent); }
+.diagram-wave,.diagram-seismo { fill: none; stroke-width: 2.2; }.diagram-wave.p { stroke: #50bfff; }.diagram-wave.s { stroke: #ff6d5f; }.diagram-seismo { stroke: var(--accent); }.diagram-seismo.mini { stroke-width: 1.4; }
+.diagram-ground { fill: color-mix(in srgb,#87725a 42%,var(--panel-solid)); stroke: #a69071; }.diagram-epicenter { fill: #ff5a64; stroke: #fff; }.diagram-focus { fill: #ffb84d; stroke: #fff; }
+.diagram-mag-bar { fill: var(--accent); opacity: .78; }.diagram-intensity { stroke: rgba(255,255,255,.35); }.diagram-intensity.i1,.diagram-intensity.i2 { fill:#67b9d1; }.diagram-intensity.i3,.diagram-intensity.i4 { fill:#65b88b; }.diagram-intensity.i5,.diagram-intensity.i6 { fill:#d5ba49; }.diagram-intensity.i7,.diagram-intensity.i8 { fill:#e4823d; }.diagram-intensity.i9,.diagram-intensity.i10,.diagram-intensity.i11,.diagram-intensity.i12 { fill:#c7424a; }
+.diagram-oceanic { fill:#174e66; stroke:#4f98af; }.diagram-continental { fill:#77674f; stroke:#b49b76; }.diagram-subduct { fill:none; stroke:#d9b17b; stroke-width:5; }.diagram-volcano { fill:#a33e36; stroke:#f0a34d; stroke-width:2; }
+.diagram-water { fill:#1c6888; opacity:.72; }.diagram-seabed { fill:none; stroke:#a98a62; stroke-width:8; }.diagram-beachball { fill:var(--panel-solid); stroke:var(--text); stroke-width:2; }.diagram-beachball-fill { fill:var(--text); opacity:.85; }.diagram-nodal { fill:none; stroke:var(--warm); stroke-width:1.2; }
+.diagram-plate { stroke:#8ca9a6; stroke-width:16; }.diagram-boundary { stroke:#e12834; stroke-width:3; stroke-dasharray:8 5; }.diagram-ridge { fill:none; stroke:var(--warm); stroke-width:3; }.diagram-alert-ring { fill:none; stroke:#ff694f; }.diagram-alert-ring.r1 { stroke-width:2; opacity:.4; }.diagram-alert-ring.r2 { stroke-width:3; opacity:.7; }.diagram-warning { fill:#c84d42; stroke:#ffc067; stroke-width:2; }
+
+@media (max-width: 900px) {
+  .topbar { top: 8px; left: 8px; right: 8px; width: auto; height: 38px; min-height: 38px; display: grid; grid-template-columns: 38px minmax(0,1fr) 24px 38px; gap: 3px; }
+  .search-control { width: 38px; min-width: 38px; height: 38px; grid-column: 1; overflow: visible; }
+  .search-control > button { width: 36px; min-width: 36px; }
+  .search-control label, .search-control .search-close { display: none; }
+  .search-control.open { position: absolute; top: 43px; left: 0; right: 0; width: 100%; height: 38px; overflow: hidden; }
+  .search-control.open label { display: flex; }
+  .search-control.open .search-close { display: grid; }
+  .search-control.open input { min-width: 0; }
+  .top-tools { min-width: 0; height: 38px; overflow-x: auto; scrollbar-width: none; }
+  .top-tools::-webkit-scrollbar { display: none; }
+  .top-tools button { width: 35px; min-width: 35px; height: 36px; flex-basis: 35px; display: grid; }
+  .top-status { width: 24px; height: 38px; flex: none; gap: 0; }
+  .top-status small { display: none; }
+  .history-toggle { width: 38px; min-width: 38px; height: 38px; display: grid; }
+  .summary-hud { top: 55px; }
+  .control-panel, .about-control-panel { position: fixed; top: 55px; right: 8px; bottom: 8px; left: 8px; width: auto; max-height: none; border: 1px solid var(--line-strong); }
+  .history-panel { inset: 55px 8px 8px; width: auto; }
+  .event-notice { top: 55px; }
+  .event-inspector, .station-inspector { bottom: 8px; max-height: calc(100% - 63px); }
+  .timeline { bottom: 8px; }
+  .orientation-controls { bottom: 53px; }
+  .encyclopedia-panel { inset: 55px 8px 8px; }
+  .encyclopedia-workspace { grid-template: 218px minmax(0,1fr) / 1fr; }
+  .encyclopedia-index { border-right: 0; border-bottom: 1px solid var(--line); }
+  .encyclopedia-stats { min-height: 47px; padding: 7px 10px; }
+  .encyclopedia-search { position: absolute; top: 61px; right: 10px; width: min(260px,46vw); margin: 0; }
+  .encyclopedia-categories { flex-wrap: nowrap; overflow-x: auto; padding: 7px 10px; }
+  .encyclopedia-categories button { white-space: nowrap; }
+  .encyclopedia-chapters { display: flex; overflow-x: auto; overflow-y: hidden; }
+  .encyclopedia-chapters > button { width: 190px; min-width: 190px; height: 94px; border-right: 1px solid var(--line); border-bottom: 0; }
+  .encyclopedia-chapters > button.active { box-shadow: inset 0 -2px var(--accent); }
+  .encyclopedia-article > header { padding: 18px 20px; }
+  .encyclopedia-body { grid-template-columns: 1fr; }
+  .encyclopedia-body > section, .encyclopedia-body > section:nth-child(2n) { min-height: 0; border-right: 0; padding: 20px; }
+  .about-identity img { width: 64px; height: 64px; flex-basis: 64px; }
+}
+
+@media (max-width: 360px) {
+  .topbar { grid-template-columns: 36px minmax(0,1fr) 20px 36px; }
+  .top-tools button { width: 29px; min-width: 29px; flex-basis: 29px; }
+  .top-status { width: 20px; }
+  .history-toggle { width: 36px; min-width: 36px; }
+  .summary-hud article { min-width: 76px; padding: 7px 8px; }
+}
+
+@media (max-width: 900px) and (max-height: 610px) and (orientation: landscape) {
+  .encyclopedia-workspace { grid-template: 1fr / 255px minmax(0,1fr); }
+  .encyclopedia-index { border-right: 1px solid var(--line); border-bottom: 0; }
+  .encyclopedia-search { position: static; width: auto; margin: 7px; }
+  .encyclopedia-categories { flex-wrap: nowrap; }
+  .encyclopedia-chapters { display: block; overflow-y: auto; }
+  .encyclopedia-chapters > button { width: 100%; min-width: 0; height: 46px; border-right: 0; border-bottom: 1px solid var(--line); }
+}

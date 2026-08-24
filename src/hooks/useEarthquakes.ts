@@ -9,6 +9,7 @@ export function useEarthquakes(timeWindow: TimeWindow) {
   const [events, setEvents] = useState<Earthquake[]>([]);
   const [status, setStatus] = useState<DataStatus>({ state: 'loading', lastUpdated: null });
   const [newEvent, setNewEvent] = useState<Earthquake | null>(null);
+  const [newEvents, setNewEvents] = useState<Earthquake[]>([]);
   const initialized = useRef(false);
   const knownUpdates = useRef(new Map<string, number>());
 
@@ -19,15 +20,16 @@ export function useEarthquakes(timeWindow: TimeWindow) {
     try {
       const { events: live, sources } = await fetchCombinedEarthquakes(timeWindow, controller.signal);
       const unseen = initialized.current
-        ? live.find((event) => !knownUpdates.current.has(event.id) && Date.now() - event.time < 8 * 60_000)
-        : null;
+        ? live.filter((event) => !knownUpdates.current.has(event.id) && Date.now() - event.time < 12 * 60_000).slice(0, 12)
+        : [];
       const revised = initialized.current
         ? live.find((event) => (knownUpdates.current.get(event.id) ?? event.updated) < event.updated && event.magnitude >= 5)
         : null;
       knownUpdates.current = new Map(live.map((event) => [event.id, event.updated]));
       initialized.current = true;
       setEvents(live);
-      setNewEvent(unseen ?? revised ?? null);
+      setNewEvents(unseen.length ? unseen : revised ? [revised] : []);
+      setNewEvent(unseen[0] ?? revised ?? null);
       setStatus({ state: 'live', lastUpdated: Date.now(), sources });
       void upsertEarthquakes(live);
     } catch (error) {
@@ -50,5 +52,5 @@ export function useEarthquakes(timeWindow: TimeWindow) {
     return () => window.clearInterval(interval);
   }, [refresh]);
 
-  return { events, status, newEvent, refresh };
+  return { events, status, newEvent, newEvents, refresh };
 }

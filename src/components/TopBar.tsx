@@ -1,6 +1,7 @@
+import { useEffect, useRef, useState } from 'react';
 import {
-  BellRing, BookOpen, Database, History, Info, Layers3, Menu, RadioTower,
-  Search, SlidersHorizontal, SunMoon, X,
+  BellRing, BookOpen, Database, History, Info, Layers3, RadioTower,
+  Search, SlidersHorizontal, X,
 } from 'lucide-react';
 import type { DataStatus } from '../types';
 
@@ -15,7 +16,6 @@ interface TopBarProps {
   onPanel: (panel: PanelId) => void;
   onQuery: (query: string) => void;
   onHistory: () => void;
-  onMenu: () => void;
 }
 
 const tools = [
@@ -28,18 +28,23 @@ const tools = [
   { id: 'about' as const, label: 'Acerca de', icon: Info },
 ];
 
-export function TopBar({ activePanel, query, status, alertCount, historyOpen, onPanel, onQuery, onHistory, onMenu }: TopBarProps) {
+export function TopBar({ activePanel, query, status, alertCount, historyOpen, onPanel, onQuery, onHistory }: TopBarProps) {
+  const [searchOpen, setSearchOpen] = useState(Boolean(query));
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (query) setSearchOpen(true); }, [query]);
+  const toggleSearch = () => {
+    setSearchOpen((open) => {
+      if (!open) window.setTimeout(() => inputRef.current?.focus(), 30);
+      return !open;
+    });
+  };
   return (
-    <header className="topbar">
-      <button className="brand" onClick={onMenu} aria-label="Abrir navegación">
-        <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
-        <span><strong>EPISISMIC</strong><small>OBSERVATORIO MUNDIAL</small></span>
-      </button>
-      <label className="search-control">
-        <Search size={17} />
-        <input value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Buscar lugar, magnitud o estación" />
-        {query && <button onClick={() => onQuery('')} aria-label="Limpiar búsqueda"><X size={14} /></button>}
-      </label>
+    <header className="topbar" aria-label="Navegación principal">
+      <div className={`search-control ${searchOpen ? 'open' : ''}`}>
+        <button className="search-trigger" onClick={toggleSearch} title="Buscar" aria-label="Abrir búsqueda"><Search size={18} /></button>
+        <label><input ref={inputRef} value={query} onChange={(event) => onQuery(event.target.value)} placeholder="Lugar, magnitud, fuente o estación" aria-label="Buscar en Episismic" /></label>
+        {searchOpen && <button className="search-close" onClick={() => { onQuery(''); setSearchOpen(false); }} aria-label="Cerrar búsqueda"><X size={14} /></button>}
+      </div>
       <nav className="top-tools" aria-label="Herramientas">
         {tools.map(({ id, label, icon: Icon }) => (
           <button key={id} className={activePanel === id ? 'active' : ''} onClick={() => onPanel(activePanel === id ? null : id)} title={label}>
@@ -48,16 +53,14 @@ export function TopBar({ activePanel, query, status, alertCount, historyOpen, on
             {id === 'settings' && alertCount > 0 && <i>{alertCount}</i>}
           </button>
         ))}
-        <button onClick={() => onPanel(activePanel === 'settings' ? null : 'settings')} title="Tema y preferencias"><SunMoon size={18} /><span>Tema</span></button>
       </nav>
-      <div className="top-status">
+      <div className="top-status" title={status.sources?.join(' · ') || 'Estado de catálogos'}>
         <span className={`live-dot ${status.state}`} />
         <small>{status.state === 'live' ? `${status.sources?.length ?? 1}/3 FUENTES` : status.state === 'loading' ? 'SINCRONIZANDO' : 'LOCAL'}</small>
       </div>
       <button className={`history-toggle ${historyOpen ? 'active' : ''}`} onClick={onHistory} title="Historial sísmico">
         <History size={19} /><span>Historial</span>
       </button>
-      <button className="mobile-menu" onClick={onMenu} title="Menú"><Menu size={20} /></button>
     </header>
   );
 }

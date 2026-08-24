@@ -41,12 +41,14 @@ La web seguirá funcionando con USGS aunque ese servicio no esté disponible.
 ## Rendimiento
 
 - Cartografía por teselas y globo vectorial: no se amplía una textura global fija.
+- Natural Earth de países y ciudades se distribuye con la aplicación para que el modo político no dependa de un host externo.
 - GeoJSON procesado en los Web Workers de MapLibre.
 - Clustering separado para terremotos, estaciones y volcanes.
 - Actualización multifuente desacoplada a 30 segundos.
 - Persistencia SQLite diferida para agrupar escrituras.
 - Listado histórico limitado a los 900 registros más recientes; el mapa conserva el conjunto completo agrupado.
 - Rótulos y radios interpolados por nivel de zoom.
+- Símbolos WebGL y halos separados para conservar contraste sin extrusiones ni elementos DOM por estación.
 
 Próximos pasos técnicos: Web Worker dedicado para SQLite y servicio SeedLink/WebSocket para detecciones de forma de onda previas a los catálogos.
 

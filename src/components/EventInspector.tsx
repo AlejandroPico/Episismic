@@ -1,6 +1,6 @@
 import { AlertTriangle, ExternalLink, LocateFixed, RadioTower, X } from 'lucide-react';
 import type { Earthquake } from '../types';
-import { formatDateTime, formatMagnitude, intensityLabel, magnitudeColor } from '../utils/format';
+import { formatDateTime, formatMagnitude, intensityLabel, magnitudeColor, toRomanIntensity } from '../utils/format';
 
 export function EventInspector({ event, onClose, onFocus }: { event: Earthquake; onClose: () => void; onFocus: () => void }) {
   return (
@@ -24,11 +24,13 @@ export function EventInspector({ event, onClose, onFocus }: { event: Earthquake;
       <div className="metric-grid">
         <article><span>Profundidad</span><strong>{event.depthKm.toFixed(1)} km</strong></article>
         <article><span>Coordenadas</span><strong>{event.lat.toFixed(3)}°, {event.lng.toFixed(3)}°</strong></article>
-        <article><span>Significancia</span><strong>{event.significance}</strong></article>
-        <article><span>Sentido por</span><strong>{event.felt === null ? 'Sin datos' : `${event.felt.toLocaleString('es-ES')} personas`}</strong></article>
+        <article><span>Intensidad</span><strong>{toRomanIntensity(event.intensity)}</strong></article>
+        <article><span>Estado / sig.</span><strong>{event.reviewCode} · {event.significance}</strong></article>
       </div>
       <div className="inspector-flags">
         <span><RadioTower size={15} /> Fuente {event.source}</span>
+        <span>Magnitud {event.magnitudeType.toUpperCase()} · {event.status === 'reviewed' ? 'Revisada' : 'Automática'}</span>
+        {event.felt !== null && <span>Sentido por {event.felt.toLocaleString('es-ES')} personas</span>}
         {event.alert && <span className={`alert-${event.alert}`}><AlertTriangle size={15} /> Alerta {event.alert}</span>}
         {event.tsunami && <span className="alert-orange"><AlertTriangle size={15} /> Bandera de tsunami</span>}
       </div>

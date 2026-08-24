@@ -1,6 +1,6 @@
 import { AlertTriangle, ChevronRight, Radio, RefreshCw, X } from 'lucide-react';
 import type { DataStatus, Earthquake, TimeWindow } from '../types';
-import { formatRelativeTime, magnitudeColor } from '../utils/format';
+import { formatRelativeTime, magnitudeColor, toRomanIntensity } from '../utils/format';
 
 interface EventHistoryProps {
   events: Earthquake[];
@@ -49,8 +49,9 @@ export function EventHistory({ events, selected, status, timeWindow, onWindowCha
               {event.magnitude.toFixed(1)}
             </span>
             <span className="event-copy">
-              <strong>{event.place}</strong>
-              <small>{formatRelativeTime(event.time)} · {Math.round(event.depthKm)} km · {event.source}</small>
+              <span className="event-row-heading"><strong>{event.place}</strong><i className={`review-code ${event.reviewCode.toLowerCase()}`}>{event.reviewCode}</i></span>
+              <small>{formatRelativeTime(event.time)} · {event.depthKm.toFixed(1)} km · {event.magnitudeType.toUpperCase()} · INT {toRomanIntensity(event.intensity)}</small>
+              <em>{event.source}</em>
             </span>
             {event.tsunami ? <AlertTriangle size={15} className="tsunami-icon" aria-label="Aviso de tsunami" /> : event.magnitude >= 5 ? <Radio size={15} /> : <ChevronRight size={15} />}
           </button>

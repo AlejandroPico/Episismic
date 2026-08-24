@@ -57,6 +57,12 @@ export function intensityLabel(magnitude: number): string {
   return 'Microseísmo';
 }
 
+export function toRomanIntensity(value: number | null): string {
+  if (value === null || !Number.isFinite(value) || value < 1) return '—';
+  const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+  return numerals[Math.max(0, Math.min(11, Math.round(value) - 1))];
+}
+
 export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const toRadians = (value: number) => value * Math.PI / 180;
   const earthRadius = 6371;

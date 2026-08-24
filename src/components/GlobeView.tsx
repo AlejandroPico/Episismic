@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl, { type GeoJSONSource, type MapGeoJSONFeature, type MapLayerMouseEvent, type StyleSpecification } from 'maplibre-gl';
+import { Compass, Home, Minus, Plus } from 'lucide-react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Earthquake, MapLayerState, MapStyle, SeismicStation, Volcano } from '../types';
 
-const COUNTRIES_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_countries.geojson';
-const PLACES_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_populated_places_simple.geojson';
+const COUNTRIES_URL = `${import.meta.env.BASE_URL}data/countries.geojson`;
+const PLACES_URL = `${import.meta.env.BASE_URL}data/places.geojson`;
 const SATELLITE_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const RELIEF_TILES = 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png';
 const BATHYMETRY_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}';
@@ -101,7 +102,25 @@ function setVisibility(map: maplibregl.Map, ids: string[], visible: boolean) {
   for (const id of ids) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
 }
 
+function stationIcon() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 40; canvas.height = 40;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas 2D no disponible');
+  context.lineCap = 'square';
+  context.lineJoin = 'miter';
+  context.strokeStyle = '#d9fffa';
+  context.fillStyle = '#0b716d';
+  context.lineWidth = 3;
+  context.beginPath(); context.arc(20, 20, 7, 0, Math.PI * 2); context.fill(); context.stroke();
+  context.beginPath(); context.moveTo(20, 5); context.lineTo(20, 15); context.moveTo(20, 25); context.lineTo(20, 35); context.moveTo(5, 20); context.lineTo(15, 20); context.moveTo(25, 20); context.lineTo(35, 20); context.stroke();
+  context.strokeStyle = '#48e0d1'; context.lineWidth = 2;
+  context.beginPath(); context.arc(20, 20, 13, -.7, .7); context.moveTo(20, 7); context.arc(20, 20, 13, Math.PI - .7, Math.PI + .7); context.stroke();
+  return context.getImageData(0, 0, 40, 40);
+}
+
 function addSourceAndLayers(map: maplibregl.Map) {
+  map.addImage('station-node', stationIcon(), { pixelRatio: 2 });
   map.addSource('satellite', { type: 'raster', tiles: [SATELLITE_TILES], tileSize: 256, minzoom: 0, maxzoom: 19, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics' });
   map.addSource('relief', { type: 'raster', tiles: [RELIEF_TILES], tileSize: 256, minzoom: 0, maxzoom: 17, attribution: '© OpenTopoMap · © OpenStreetMap contributors · SRTM' });
   map.addSource('bathymetry', { type: 'raster', tiles: [BATHYMETRY_TILES], tileSize: 256, minzoom: 0, maxzoom: 16, attribution: 'Ocean Basemap © Esri, GEBCO, NOAA and contributors' });
@@ -127,7 +146,7 @@ function addSourceAndLayers(map: maplibregl.Map) {
   });
   map.addLayer({ id: 'political-border', type: 'line', source: 'countries', paint: { 'line-color': '#6b7775', 'line-opacity': 0.88, 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 0.45, 5, 0.9, 12, 1.5] } as never });
   map.addLayer({ id: 'graticule-lines', type: 'line', source: 'graticule', layout: { visibility: 'none' }, paint: { 'line-color': '#405a5f', 'line-opacity': 0.22, 'line-width': 0.55 } });
-  map.addLayer({ id: 'orogen-lines', type: 'line', source: 'plate-orogens', paint: { 'line-color': '#b93038', 'line-opacity': 0.58, 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 0.45, 5, 1.1, 11, 2] } as never });
+  map.addLayer({ id: 'orogen-lines', type: 'line', source: 'plate-orogens', paint: { 'line-color': '#a91428', 'line-opacity': 0.64, 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 0.45, 5, 1, 11, 1.75], 'line-dasharray': [2.4, 1.8] } as never });
   map.addLayer({ id: 'plate-lines', type: 'line', source: 'plate-boundaries', paint: { 'line-color': '#e12834', 'line-opacity': 0.9, 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 0.72, 5, 1.45, 11, 2.8] } as never });
 
   map.addLayer({ id: 'volcano-clusters', type: 'circle', source: 'volcanoes', filter: ['has', 'point_count'], paint: { 'circle-color': '#b84c35', 'circle-radius': ['step', ['get', 'point_count'], 7, 10, 10, 40, 14], 'circle-stroke-color': '#fff1df', 'circle-stroke-width': 1, 'circle-opacity': 0.86 } as never });
@@ -135,19 +154,26 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addLayer({ id: 'volcano-points', type: 'circle', source: 'volcanoes', filter: ['!', ['has', 'point_count']], paint: { 'circle-color': '#d55b37', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 1.8, 5, 3, 10, 4.8, 16, 6.2], 'circle-stroke-color': '#5d1716', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 0, 0.5, 10, 1.2] } as never });
   map.addLayer({ id: 'volcano-labels', type: 'symbol', source: 'volcanoes', minzoom: 4.2, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['get', 'name'], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 4, 9, 10, 12, 16, 14], 'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': '#f26a45', 'text-halo-color': 'rgba(8,15,18,.95)', 'text-halo-width': 1.5 } as never });
 
-  map.addLayer({ id: 'station-clusters', type: 'circle', source: 'stations', filter: ['has', 'point_count'], paint: { 'circle-color': '#197e7b', 'circle-radius': ['step', ['get', 'point_count'], 8, 10, 12, 50, 16, 250, 21], 'circle-stroke-color': '#b5f1e8', 'circle-stroke-width': 1, 'circle-opacity': 0.82 } as never });
+  map.addLayer({ id: 'station-cluster-halo', type: 'circle', source: 'stations', filter: ['has', 'point_count'], paint: { 'circle-color': '#2ee5d4', 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 18, 50, 23, 250, 29], 'circle-opacity': 0.16, 'circle-blur': 0.35 } as never });
+  map.addLayer({ id: 'station-clusters', type: 'circle', source: 'stations', filter: ['has', 'point_count'], paint: { 'circle-color': '#08736f', 'circle-radius': ['step', ['get', 'point_count'], 10, 10, 14, 50, 19, 250, 24], 'circle-stroke-color': '#c9fff8', 'circle-stroke-width': 1.4, 'circle-opacity': 0.94 } as never });
   map.addLayer({ id: 'station-cluster-count', type: 'symbol', source: 'stations', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Open Sans Regular'], 'text-size': 9 }, paint: { 'text-color': '#eafffb' } });
   map.addLayer({ id: 'station-selected', type: 'circle', source: 'stations', filter: ['==', ['get', 'stationId'], ''], paint: { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 5, 10, 10, 16, 14], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2, 'circle-opacity': 0 } as never });
-  map.addLayer({ id: 'station-points', type: 'circle', source: 'stations', filter: ['!', ['has', 'point_count']], paint: { 'circle-color': '#1db6aa', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 1.1, 4, 1.7, 8, 2.7, 12, 4.1, 18, 6], 'circle-stroke-color': '#062f32', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 0, 0.3, 10, 1] } as never });
+  map.addLayer({ id: 'station-points', type: 'circle', source: 'stations', filter: ['!', ['has', 'point_count']], paint: { 'circle-color': '#31e0d0', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 3, 4, 4.2, 8, 5.5, 12, 7.5, 18, 10], 'circle-opacity': 0.28, 'circle-blur': 0.3 } as never });
+  map.addLayer({ id: 'station-icons', type: 'symbol', source: 'stations', filter: ['!', ['has', 'point_count']], layout: { 'icon-image': 'station-node', 'icon-size': ['interpolate', ['linear'], ['zoom'], 0, .58, 5, .72, 10, .92, 16, 1.2], 'icon-allow-overlap': true, 'icon-ignore-placement': true } as never });
   map.addLayer({ id: 'station-labels', type: 'symbol', source: 'stations', minzoom: 7, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['concat', ['get', 'network'], '.', ['get', 'code']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 7, 8, 12, 10, 18, 13], 'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': '#59e2d4', 'text-halo-color': 'rgba(5,18,21,.96)', 'text-halo-width': 1.5 } as never });
 
   map.addLayer({ id: 'earthquake-clusters', type: 'circle', source: 'earthquakes', filter: ['has', 'point_count'], paint: { 'circle-color': ['step', ['get', 'point_count'], '#f5b347', 10, '#f17b45', 50, '#e7454f', 250, '#b92842'], 'circle-radius': ['step', ['get', 'point_count'], 10, 10, 14, 50, 19, 250, 25], 'circle-stroke-color': '#fff7ea', 'circle-stroke-width': 1.2, 'circle-opacity': 0.9 } as never });
   map.addLayer({ id: 'earthquake-cluster-count', type: 'symbol', source: 'earthquakes', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Open Sans Regular'], 'text-size': 10 }, paint: { 'text-color': '#fff' } });
+  map.addLayer({ id: 'earthquake-halos', type: 'circle', source: 'earthquakes', filter: ['!', ['has', 'point_count']], paint: {
+    'circle-color': ['step', ['get', 'depth'], '#ff5c52', 35, '#ffad39', 70, '#4fc8ff', 300, '#a88cff'],
+    'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 6, 2, 8, 4, 11, 6, 16, 8, 23], 8, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 8, 2, 11, 4, 15, 6, 22, 8, 32], 16, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 10, 2, 14, 4, 19, 6, 29, 8, 42]],
+    'circle-opacity': ['interpolate', ['linear'], ['get', 'magnitude'], -2, .13, 3, .2, 6, .3], 'circle-blur': .42,
+  } as never });
   map.addLayer({ id: 'earthquake-selected', type: 'circle', source: 'earthquakes', filter: ['==', ['get', 'eventId'], ''], paint: { 'circle-color': 'rgba(255,255,255,.08)', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 9, 8, 18, 15, 26], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.2 } as never });
   map.addLayer({ id: 'earthquake-points', type: 'circle', source: 'earthquakes', filter: ['!', ['has', 'point_count']], paint: {
     'circle-color': ['step', ['get', 'depth'], '#f06157', 35, '#f1a43c', 70, '#4caad6', 300, '#856bc6'],
-    'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, ['interpolate', ['linear'], ['get', 'magnitude'], 0, 1.4, 4, 2.6, 6, 5, 8, 8], 8, ['interpolate', ['linear'], ['get', 'magnitude'], 0, 3, 4, 6, 6, 11, 8, 17], 16, ['interpolate', ['linear'], ['get', 'magnitude'], 0, 5, 4, 9, 6, 16, 8, 24]],
-    'circle-stroke-color': '#fff8ec', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 0, 0.45, 10, 1.2], 'circle-opacity': 0.94,
+    'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 3.2, 1, 4.1, 4, 6.2, 6, 9.5, 8, 14], 8, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 4.2, 1, 5.5, 4, 8.5, 6, 13, 8, 20], 16, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 5.2, 1, 7, 4, 11, 6, 18, 8, 28]],
+    'circle-stroke-color': '#fff8ec', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 0, 0.75, 10, 1.5], 'circle-opacity': 0.98,
   } as never });
   map.addLayer({ id: 'earthquake-labels', type: 'symbol', source: 'earthquakes', minzoom: 4.2, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['concat', ['get', 'reviewCode'], ' ', ['get', 'magLabel'], ['case', ['!=', ['get', 'roman'], ''], ['concat', ' · ', ['get', 'roman']], '']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 4, 8, 10, 11, 16, 13], 'text-offset': [0, 1.2], 'text-anchor': 'top', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': '#fff8ec', 'text-halo-color': 'rgba(7,14,17,.96)', 'text-halo-width': 1.5 } as never });
 
@@ -179,6 +205,7 @@ export function GlobeView({
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(!hasWebGL());
   const [zoom, setZoom] = useState(1);
+  const [bearing, setBearing] = useState(0);
   eventsRef.current = events;
   stationsRef.current = stations;
   onSelectEventRef.current = onSelectEvent;
@@ -201,6 +228,7 @@ export function GlobeView({
         setReady(true);
         setZoom(map.getZoom());
         map.on('zoom', () => setZoom(map.getZoom()));
+        map.on('rotate', () => setBearing(map.getBearing()));
         map.on('click', 'earthquake-clusters', (event) => event.features?.[0] && clusterClick(map, 'earthquakes', event.features[0]));
         map.on('click', 'station-clusters', (event) => event.features?.[0] && clusterClick(map, 'stations', event.features[0]));
         map.on('click', 'volcano-clusters', (event) => event.features?.[0] && clusterClick(map, 'volcanoes', event.features[0]));
@@ -209,11 +237,13 @@ export function GlobeView({
           const item = eventsRef.current.find((candidate) => candidate.id === id);
           if (item) onSelectEventRef.current(item);
         });
-        map.on('click', 'station-points', (event: MapLayerMouseEvent) => {
+        const selectStationFeature = (event: MapLayerMouseEvent) => {
           const id = event.features?.[0]?.properties?.stationId;
           const item = stationsRef.current.find((candidate) => candidate.id === id);
           if (item) onSelectStationRef.current(item);
-        });
+        };
+        map.on('click', 'station-points', selectStationFeature);
+        map.on('click', 'station-icons', selectStationFeature);
         map.on('click', 'volcano-points', (event: MapLayerMouseEvent) => {
           const feature = event.features?.[0];
           if (!feature) return;
@@ -223,7 +253,7 @@ export function GlobeView({
             .setHTML(`<div class="map-popup"><b>${String(feature.properties?.name || 'Volcán')}</b><span>${String(feature.properties?.country || '')}</span><small>${String(feature.properties?.volcanoType || 'Catálogo Smithsonian GVP')}</small></div>`)
             .addTo(map);
         });
-        for (const layerId of ['earthquake-points', 'earthquake-clusters', 'station-points', 'station-clusters', 'volcano-points', 'volcano-clusters']) {
+        for (const layerId of ['earthquake-points', 'earthquake-clusters', 'station-points', 'station-icons', 'station-clusters', 'volcano-points', 'volcano-clusters']) {
           map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
           map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
         }
@@ -270,13 +300,13 @@ export function GlobeView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    setVisibility(map, ['earthquake-clusters', 'earthquake-cluster-count', 'earthquake-points', 'earthquake-labels', 'earthquake-selected'], layers.earthquakes);
-    setVisibility(map, ['station-clusters', 'station-cluster-count', 'station-points', 'station-labels', 'station-selected'], layers.stations);
+    setVisibility(map, ['earthquake-clusters', 'earthquake-cluster-count', 'earthquake-halos', 'earthquake-points', 'earthquake-labels', 'earthquake-selected'], layers.earthquakes);
+    setVisibility(map, ['station-cluster-halo', 'station-clusters', 'station-cluster-count', 'station-points', 'station-icons', 'station-labels', 'station-selected'], layers.stations);
     setVisibility(map, ['plate-lines', 'orogen-lines'], layers.plates);
     setVisibility(map, ['volcano-clusters', 'volcano-cluster-count', 'volcano-points', 'volcano-labels'], layers.volcanoes);
-    setVisibility(map, ['country-labels', 'place-labels'], layers.labels);
+    setVisibility(map, ['country-labels', 'place-labels'], layers.labels && mapStyle !== 'relief');
     setVisibility(map, ['graticule-lines'], layers.graticule);
-  }, [layers, ready]);
+  }, [layers, mapStyle, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -320,8 +350,15 @@ export function GlobeView({
   return <div className="globe-host" aria-label="Globo sísmico tridimensional">
     <div ref={hostRef} className="maplibre-host" />
     {layers.atmosphere && <div className="atmosphere-overlay" aria-hidden="true" />}
+    <div className="orientation-controls" aria-label="Orientación y zoom del globo">
+      <button onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 500 })} title="Norte arriba" aria-label="Poner el norte arriba"><Compass size={18} style={{ transform: `rotate(${-bearing}deg)` }} /><span>N</span></button>
+      <button onClick={() => mapRef.current?.zoomIn({ duration: 300 })} title="Acercar" aria-label="Acercar"><Plus size={18} /></button>
+      <button onClick={() => mapRef.current?.zoomOut({ duration: 300 })} title="Alejar" aria-label="Alejar"><Minus size={18} /></button>
+      <button onClick={() => mapRef.current?.easeTo({ center: [3, 27], zoom: 1.05, bearing: 0, pitch: 0, duration: 700 })} title="Restablecer vista mundial" aria-label="Restablecer vista mundial"><Home size={17} /></button>
+    </div>
     <div className="globe-corner-scale" aria-hidden="true">
       <span>PROFUNDIDAD</span><i style={{ background: '#f06157' }} />0–35<i style={{ background: '#f1a43c' }} />35–70<i style={{ background: '#4caad6' }} />70–300<i style={{ background: '#856bc6' }} />300+ km
+      <span className="tectonic-key"><i className="plate-solid" />LÍMITE<i className="plate-diffuse" />ZONA DIFUSA</span>
       <b>ZOOM {zoom.toFixed(1)}</b>
     </div>
   </div>;

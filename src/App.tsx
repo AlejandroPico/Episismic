@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, BellRing, Database, RadioTower, X } from 'lucide-react';
+import { BellRing, X } from 'lucide-react';
 import { ControlPanel } from './components/ControlPanel';
 import { EventHistory } from './components/EventHistory';
 import { EventInspector } from './components/EventInspector';
@@ -9,6 +9,7 @@ import { Timeline } from './components/Timeline';
 import { TopBar, type PanelId } from './components/TopBar';
 import { useEarthquakes } from './hooks/useEarthquakes';
 import { useGeodata } from './hooks/useGeodata';
+import { playSeismicAlert, unlockAudioAlerts } from './services/audioAlerts';
 import type {
   Earthquake, Filters, MapLayerState, MapStyle, SeismicStation, ThemeMode, TimeWindow,
 } from './types';
@@ -33,7 +34,7 @@ function loadPreference<T>(key: string, fallback: T): T {
 
 export default function App() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('day');
-  const { events: liveEvents, status, newEvent, refresh } = useEarthquakes(timeWindow);
+  const { events: liveEvents, status, newEvent, newEvents, refresh } = useEarthquakes(timeWindow);
   const { stations, volcanoes, ready: geodataReady } = useGeodata();
   const [historicalEvents, setHistoricalEvents] = useState<Earthquake[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Earthquake | null>(null);
@@ -48,7 +49,9 @@ export default function App() {
   const [theme, setTheme] = useState<ThemeMode>(() => loadPreference('theme', 'automatic'));
   const [autoFocus, setAutoFocus] = useState(() => loadPreference('auto-focus', true));
   const [autoFocusMagnitude, setAutoFocusMagnitude] = useState(() => loadPreference('auto-focus-magnitude', 5));
-  const [filters, setFilters] = useState<Filters>({ minMagnitude: 0, maxDepthKm: 700, query: '', significantOnly: false });
+  const [soundEnabled, setSoundEnabled] = useState(() => loadPreference('sound-enabled', true));
+  const [soundMinimumMagnitude, setSoundMinimumMagnitude] = useState(() => loadPreference('sound-minimum-magnitude', -1));
+  const [filters, setFilters] = useState<Filters>({ minMagnitude: -2, maxDepthKm: 700, query: '', significantOnly: false });
   const [notice, setNotice] = useState<Earthquake | null>(null);
 
   const sourceEvents = historicalEvents ?? liveEvents;
@@ -98,6 +101,19 @@ export default function App() {
   }, [autoFocus, autoFocusMagnitude, newEvent, selectEvent]);
 
   useEffect(() => {
+    if (!soundEnabled || !newEvents.length) return;
+    newEvents.filter((event) => event.magnitude >= soundMinimumMagnitude).slice(0, 6)
+      .forEach((event, index) => playSeismicAlert(event.magnitude, index * 240));
+  }, [newEvents, soundEnabled, soundMinimumMagnitude]);
+
+  useEffect(() => {
+    const unlock = () => void unlockAudioAlerts();
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
+    return () => { window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
+  }, []);
+
+  useEffect(() => {
     const applyTheme = () => {
       const hour = new Date().getHours();
       const resolved = theme === 'automatic' ? (hour >= 7 && hour < 17 ? 'morning' : hour < 21 ? 'afternoon' : 'night') : theme;
@@ -113,6 +129,8 @@ export default function App() {
   useEffect(() => { localStorage.setItem('episismic:map-style-v2', JSON.stringify(mapStyle)); }, [mapStyle]);
   useEffect(() => { localStorage.setItem('episismic:auto-focus', JSON.stringify(autoFocus)); }, [autoFocus]);
   useEffect(() => { localStorage.setItem('episismic:auto-focus-magnitude', JSON.stringify(autoFocusMagnitude)); }, [autoFocusMagnitude]);
+  useEffect(() => { localStorage.setItem('episismic:sound-enabled', JSON.stringify(soundEnabled)); }, [soundEnabled]);
+  useEffect(() => { localStorage.setItem('episismic:sound-minimum-magnitude', JSON.stringify(soundMinimumMagnitude)); }, [soundMinimumMagnitude]);
 
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
@@ -146,7 +164,6 @@ export default function App() {
         onPanel={setActivePanel}
         onQuery={setQuery}
         onHistory={() => setHistoryOpen((open) => !open)}
-        onMenu={() => setActivePanel((panel) => panel ? null : 'layers')}
       />
 
       <main className="map-stage">
@@ -179,6 +196,8 @@ export default function App() {
           theme={theme}
           autoFocus={autoFocus}
           autoFocusMagnitude={autoFocusMagnitude}
+          soundEnabled={soundEnabled}
+          soundMinimumMagnitude={soundMinimumMagnitude}
           stations={stations}
           onClose={() => setActivePanel(null)}
           onLayers={setLayers}
@@ -187,6 +206,8 @@ export default function App() {
           onTheme={setTheme}
           onAutoFocus={setAutoFocus}
           onAutoFocusMagnitude={setAutoFocusMagnitude}
+          onSoundEnabled={setSoundEnabled}
+          onSoundMinimumMagnitude={setSoundMinimumMagnitude}
           onSelectStation={selectStation}
           onHistoricalResults={loadHistorical}
         />}
@@ -219,12 +240,6 @@ export default function App() {
         onClose={() => setHistoryOpen(false)}
       />}
 
-      <div className="mobile-quickbar">
-        <button onClick={() => setActivePanel('layers')}><span><Database size={18} /></span>Capas</button>
-        <button onClick={() => setHistoryOpen(true)}><span><RadioTower size={18} /></span>Eventos</button>
-        <button onClick={() => setActivePanel('settings')}><span><BellRing size={18} /></span>Alertas</button>
-        <button onClick={() => setActivePanel('about')}><span><AlertTriangle size={18} /></span>Info</button>
-      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  BellRing, BookOpen, Database, ExternalLink, Info, Layers3, LoaderCircle,
-  Map, RadioTower, Search, SlidersHorizontal, X,
+  BellRing, Database, ExternalLink, Layers3, LoaderCircle, LockKeyhole,
+  Map, RadioTower, Search, SlidersHorizontal, Volume2, X,
 } from 'lucide-react';
 import { getDatabaseStats, upsertEarthquakes } from '../services/database';
 import { searchHistoricalEarthquakes } from '../services/usgs';
@@ -9,6 +9,7 @@ import type {
   Earthquake, Filters, MapLayerState, MapStyle, SeismicStation, ThemeMode,
 } from '../types';
 import type { PanelId } from './TopBar';
+import { Encyclopedia } from './Encyclopedia';
 
 interface ControlPanelProps {
   panel: Exclude<PanelId, null>;
@@ -18,6 +19,8 @@ interface ControlPanelProps {
   theme: ThemeMode;
   autoFocus: boolean;
   autoFocusMagnitude: number;
+  soundEnabled: boolean;
+  soundMinimumMagnitude: number;
   stations: SeismicStation[];
   onClose: () => void;
   onLayers: (layers: MapLayerState) => void;
@@ -26,6 +29,8 @@ interface ControlPanelProps {
   onTheme: (theme: ThemeMode) => void;
   onAutoFocus: (active: boolean) => void;
   onAutoFocusMagnitude: (magnitude: number) => void;
+  onSoundEnabled: (active: boolean) => void;
+  onSoundMinimumMagnitude: (magnitude: number) => void;
   onSelectStation: (station: SeismicStation) => void;
   onHistoricalResults: (events: Earthquake[]) => void;
 }
@@ -63,13 +68,14 @@ function LayersPanel({ layers, mapStyle, onLayers, onMapStyle }: Pick<ControlPan
     <section className="control-section">
       <h3><Layers3 size={16} /> Capas superpuestas</h3>
       <div className="switch-list">
-        {layerDefinitions.map((layer) => (
-          <label key={layer.id}>
-            <span><strong>{layer.label}</strong><small>{layer.detail}</small></span>
-            <input type="checkbox" checked={layers[layer.id]} onChange={() => onLayers({ ...layers, [layer.id]: !layers[layer.id] })} />
+        {layerDefinitions.map((layer) => {
+          const labelsLocked = layer.id === 'labels' && mapStyle === 'relief';
+          return <label key={layer.id} className={labelsLocked ? 'disabled' : ''}>
+            <span><strong>{layer.label}{labelsLocked && <LockKeyhole size={12} />}</strong><small>{labelsLocked ? 'Incluidos en las teselas de relieve' : layer.detail}</small></span>
+            <input type="checkbox" checked={labelsLocked || layers[layer.id]} disabled={labelsLocked} onChange={() => onLayers({ ...layers, [layer.id]: !layers[layer.id] })} />
             <i />
-          </label>
-        ))}
+          </label>;
+        })}
       </div>
     </section>
   </>;
@@ -80,7 +86,7 @@ function FiltersPanel({ filters, onFilters }: Pick<ControlPanelProps, 'filters' 
     <h3><SlidersHorizontal size={16} /> Umbrales visibles</h3>
     <label className="range-field">
       <span>Magnitud mínima <strong>M{filters.minMagnitude.toFixed(1)}</strong></span>
-      <input type="range" min="0" max="8" step="0.1" value={filters.minMagnitude} onChange={(event) => onFilters({ ...filters, minMagnitude: Number(event.target.value) })} />
+      <input type="range" min="-2" max="8" step="0.1" value={filters.minMagnitude} onChange={(event) => onFilters({ ...filters, minMagnitude: Number(event.target.value) })} />
     </label>
     <label className="range-field">
       <span>Profundidad máxima <strong>{filters.maxDepthKm} km</strong></span>
@@ -90,7 +96,7 @@ function FiltersPanel({ filters, onFilters }: Pick<ControlPanelProps, 'filters' 
       <input type="checkbox" checked={filters.significantOnly} onChange={(event) => onFilters({ ...filters, significantOnly: event.target.checked })} />
       <span><strong>Solo eventos significativos</strong><small>USGS significance ≥ 600 o magnitud ≥ 6</small></span>
     </label>
-    <button className="secondary-button" onClick={() => onFilters({ minMagnitude: 0, maxDepthKm: 700, query: '', significantOnly: false })}>Restablecer filtros</button>
+    <button className="secondary-button" onClick={() => onFilters({ minMagnitude: -2, maxDepthKm: 700, query: '', significantOnly: false })}>Restablecer filtros</button>
   </section>;
 }
 
@@ -146,7 +152,7 @@ function StationsPanel({ stations, onSelectStation }: Pick<ControlPanelProps, 's
   </section>;
 }
 
-function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'autoFocusMagnitude' | 'onTheme' | 'onAutoFocus' | 'onAutoFocusMagnitude'>) {
+function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'autoFocusMagnitude' | 'soundEnabled' | 'soundMinimumMagnitude' | 'onTheme' | 'onAutoFocus' | 'onAutoFocusMagnitude' | 'onSoundEnabled' | 'onSoundMinimumMagnitude'>) {
   const [stats, setStats] = useState<{ events: number; updates: number; sizeBytes: number } | null>(null);
   useEffect(() => { void getDatabaseStats().then(setStats); }, []);
   return <>
@@ -154,8 +160,10 @@ function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'a
       <h3><BellRing size={16} /> Detección y enfoque</h3>
       <div className="switch-list">
         <label><span><strong>Enfoque automático</strong><small>Desplaza la cámara al detectar un evento nuevo</small></span><input type="checkbox" checked={props.autoFocus} onChange={(event) => props.onAutoFocus(event.target.checked)} /><i /></label>
+        <label><span><strong>Alertas sonoras</strong><small>Avisan también de microseísmos publicados</small></span><input type="checkbox" checked={props.soundEnabled} onChange={(event) => props.onSoundEnabled(event.target.checked)} /><i /></label>
       </div>
       <label className="range-field"><span>Magnitud para enfocar <strong>M{props.autoFocusMagnitude.toFixed(1)}</strong></span><input type="range" min="3" max="8" step="0.1" value={props.autoFocusMagnitude} onChange={(event) => props.onAutoFocusMagnitude(Number(event.target.value))} /></label>
+      <label className={`range-field ${props.soundEnabled ? '' : 'disabled-control'}`}><span><Volume2 size={14} /> Sonar desde <strong>M{props.soundMinimumMagnitude.toFixed(1)}</strong></span><input type="range" min="-2" max="6" step="0.1" disabled={!props.soundEnabled} value={props.soundMinimumMagnitude} onChange={(event) => props.onSoundMinimumMagnitude(Number(event.target.value))} /></label>
       <p className="safety-note">Episismic es un observatorio informativo. Las animaciones y estimaciones no sustituyen los sistemas oficiales de alerta temprana.</p>
     </section>
     <section className="control-section">
@@ -173,36 +181,27 @@ function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'a
   </>;
 }
 
-function GuidePanel() {
-  return <section className="control-section prose-panel">
-    <h3><BookOpen size={16} /> Enciclopedia sísmica</h3>
-    <p>Episismic representa el hipocentro bajo la superficie y el epicentro sobre el globo. El color del marcador indica profundidad; su tamaño responde a la magnitud.</p>
-    <h4>Frentes de onda</h4><p>La onda P aparece en azul y se propaga más deprisa. La onda S aparece con el color de severidad del evento y avanza más lentamente.</p>
-    <h4>Estado del dato</h4><p><strong>Automático</strong> indica una solución rápida susceptible de revisión. <strong>Revisado</strong> indica intervención o validación posterior de la red de origen.</p>
-    <h4>Evento frente a detección</h4><p>El mapa fusiona terremotos publicados por USGS, EMSC y GEOFON. GlobalQuake también muestra disparos internos calculados directamente sobre formas de onda SeedLink; esos disparos no equivalen necesariamente a terremotos catalogados. Episismic no los fabrica: requerirán el servicio de ingesta SeedLink/WebSocket previsto.</p>
-    <h4>Capas</h4><p>Combina estaciones, límites tectónicos, volcanes, retícula y nombres geográficos. Acerca el globo para separar estaciones cercanas.</p>
-  </section>;
-}
-
 function AboutPanel() {
-  return <section className="control-section prose-panel">
-    <h3><Info size={16} /> Acerca de Episismic</h3>
-    <p>Observatorio geofísico mundial creado por Alejandro Pico. El núcleo inicial está dedicado a terremotos y se ha diseñado para incorporar volcanes, huracanes, grandes tormentas e incendios.</p>
-    <p>Los eventos se unifican desde USGS/ComCat, EMSC y GEOFON; las estaciones proceden de catálogos FDSN y los volcanes del Smithsonian GVP. La atribución concreta se conserva junto a cada registro.</p>
+  return <section className="control-section prose-panel about-panel-content">
+    <div className="about-identity"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><div><p className="eyebrow">OBSERVATORIO GEOFÍSICO MUNDIAL</p><h3>EPISISMIC</h3><span>Desarrollado por Alejandro Pico</span></div></div>
+    <p>Episismic convierte catálogos sísmicos públicos y cartografía científica en un observatorio tridimensional abierto: epicentros, estaciones FDSN, volcanes, límites tectónicos, archivo histórico y material educativo en una sola interfaz.</p>
+    <p>El proyecto nace centrado en terremotos y está estructurado para incorporar posteriormente volcanismo operativo, huracanes, grandes tormentas, incendios y otros riesgos naturales sin mezclar sus modelos de datos.</p>
+    <div className="about-principles"><span><strong>3</strong>catálogos sísmicos</span><span><strong>6.500+</strong>estaciones públicas</span><span><strong>SQLite</strong>archivo local</span></div>
+    <p className="safety-note">Aplicación informativa y educativa. Para emergencias y decisiones de protección civil deben seguirse siempre los avisos de los organismos oficiales.</p>
     <div className="about-links">
-      <a href="https://alejandropico.github.io/" target="_blank" rel="noreferrer">Portfolio <ExternalLink size={14} /></a>
-      <a href="https://github.com/AlejandroPico/Episismic" target="_blank" rel="noreferrer">Código y documentación <ExternalLink size={14} /></a>
+      <a href="https://alejandropico.github.io/" target="_blank" rel="noreferrer"><span><small>AUTOR</small>Portfolio de Alejandro Pico</span><ExternalLink size={14} /></a>
+      <a href="https://github.com/AlejandroPico/Episismic" target="_blank" rel="noreferrer"><span><small>PROYECTO ABIERTO</small>Código, fuentes y documentación</span><ExternalLink size={14} /></a>
     </div>
   </section>;
 }
 
 const titles: Record<Exclude<PanelId, null>, string> = {
   layers: 'Capas y cartografía', filters: 'Filtros del catálogo', archive: 'Consulta histórica',
-  stations: 'Red sísmica mundial', settings: 'Preferencias y alertas', guide: 'Guía científica', about: 'Acerca del proyecto',
+  stations: 'Red sísmica mundial', settings: 'Preferencias y alertas', guide: 'Enciclopedia sísmica', about: 'Acerca del proyecto',
 };
 
 export function ControlPanel(props: ControlPanelProps) {
-  return <aside className="control-panel">
+  return <aside className={`control-panel ${props.panel === 'guide' ? 'encyclopedia-panel' : ''} ${props.panel === 'about' ? 'about-control-panel' : ''}`}>
     <header className="panel-header"><div><p className="eyebrow">EPISISMIC / CONTROL</p><h2>{titles[props.panel]}</h2></div><button className="icon-button" onClick={props.onClose} title="Cerrar"><X size={18} /></button></header>
     <div className="control-scroll">
       {props.panel === 'layers' && <LayersPanel {...props} />}
@@ -210,7 +209,7 @@ export function ControlPanel(props: ControlPanelProps) {
       {props.panel === 'archive' && <ArchivePanel {...props} />}
       {props.panel === 'stations' && <StationsPanel {...props} />}
       {props.panel === 'settings' && <SettingsPanel {...props} />}
-      {props.panel === 'guide' && <GuidePanel />}
+      {props.panel === 'guide' && <Encyclopedia />}
       {props.panel === 'about' && <AboutPanel />}
     </div>
   </aside>;

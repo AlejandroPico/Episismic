@@ -20,8 +20,13 @@ Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sí
 - Catálogo generado de estaciones EarthScope/GEOFON con agrupación espacial e inspector.
 - Catálogo Smithsonian GVP de volcanes holocenos con nombre y metadatos.
 - Símbolos, rótulos y grosores adaptados al zoom; clustering para ventanas de 7 y 30 días.
+- Epicentros con halo de alto contraste y estaciones con iconografía WebGL visible en cualquier cartografía.
+- Alertas sonoras configurables, también para microseísmos de magnitud negativa publicados por las fuentes.
+- Controles directos de norte, zoom y restablecimiento de la vista mundial.
+- Enciclopedia sísmica de 71 capítulos con buscador, categorías, esquemas vectoriales y referencias oficiales.
 - Temas Mañana, Tarde, Noche y Automático; preferencias persistentes.
 - Diseño responsive para escritorio, 1080p, 4K, móvil vertical y móvil horizontal.
+- Navegación flotante compacta en la esquina superior derecha; buscador desplegable y paneles sin ocupar una barra completa.
 
 ## Arquitectura
 
