@@ -6,7 +6,7 @@ Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sí
 
 **Aplicación:** <https://alejandropico.github.io/Episismic/>
 
-**Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases/latest>
+**Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
 
 ## Funcionalidades disponibles
 

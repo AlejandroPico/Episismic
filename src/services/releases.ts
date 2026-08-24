@@ -1,5 +1,5 @@
 export const APP_VERSION = '0.9.0';
-export const RELEASES_URL = 'https://github.com/AlejandroPico/Episismic/releases/latest';
+export const RELEASES_URL = 'https://github.com/AlejandroPico/Episismic/releases';
 
 export type DesktopPlatform = 'windows' | 'macos' | 'linux' | 'unknown';
 
@@ -66,14 +66,16 @@ export async function fetchLatestRelease(force = false): Promise<LatestRelease |
     } catch { /* La consulta directa sigue disponible. */ }
   }
   try {
-    const response = await fetch('https://api.github.com/repos/AlejandroPico/Episismic/releases/latest', {
+    const response = await fetch('https://api.github.com/repos/AlejandroPico/Episismic/releases?per_page=1', {
       headers: { Accept: 'application/vnd.github+json' },
     });
     if (response.status === 404) return null;
     if (!response.ok) throw new Error(`GitHub Releases respondió ${response.status}`);
-    const data = await response.json() as {
+    const releases = await response.json() as Array<{
       tag_name: string; name: string; html_url: string; published_at: string; body: string; assets: ReleaseAsset[];
-    };
+    }>;
+    const data = releases[0];
+    if (!data) return null;
     const release: LatestRelease = {
       version: data.tag_name.replace(/^v/, ''),
       name: data.name || data.tag_name,
