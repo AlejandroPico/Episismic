@@ -14,7 +14,8 @@ Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sí
 - Frentes P y S diferenciados para eventos seleccionados o recién detectados.
 - Enfoque automático configurable por umbral de magnitud.
 - Político plano vectorial por defecto y modos Satélite, Relieve y Batimetría por teselas con detalle progresivo.
-- Capas de estaciones sísmicas, límites de placas, volcanes, etiquetas, atmósfera y retícula.
+- Etiquetas geográficas conmutables mediante capas de referencia para Político, Satélite y Batimetría; Relieve conserva sus nombres integrados.
+- Capas de estaciones sísmicas, límites de placas, volcanes, atmósfera y retícula.
 - Filtros por magnitud, profundidad, significancia y texto.
 - Fichas de evento con revisión, profundidad, significancia, reportes sentidos, tsunami, alerta y enlace al registro original.
 - Catálogo generado de estaciones EarthScope/GEOFON con agrupación espacial e inspector.
@@ -22,11 +23,12 @@ Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sí
 - Símbolos, rótulos y grosores adaptados al zoom; clustering para ventanas de 7 y 30 días.
 - Epicentros con halo de alto contraste y estaciones con iconografía WebGL visible en cualquier cartografía.
 - Alertas sonoras configurables, también para microseísmos de magnitud negativa publicados por las fuentes.
-- Controles directos de norte, zoom y restablecimiento de la vista mundial.
+- Control directo de norte en escritorio; la interfaz móvil prescinde de controles cartográficos superfluos.
 - Enciclopedia sísmica de 71 capítulos con buscador, categorías, esquemas vectoriales y referencias oficiales.
 - Temas Mañana, Tarde, Noche y Automático; preferencias persistentes.
 - Diseño responsive para escritorio, 1080p, 4K, móvil vertical y móvil horizontal.
-- Navegación flotante compacta en la esquina superior derecha; buscador desplegable y paneles sin ocupar una barra completa.
+- Navegación flotante continua en la esquina superior derecha, con Historial integrado y paneles mutuamente excluyentes alineados a la derecha.
+- Estado de las tres fuentes integrado en Estaciones e índice enciclopédico móvil como desplegable superpuesto.
 
 ## Arquitectura
 
