@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  BellRing, Database, ExternalLink, Layers3, LoaderCircle, LockKeyhole,
-  Map, RadioTower, Search, SlidersHorizontal, Volume2, X,
+  BellRing, Database, Download, ExternalLink, Layers3, LoaderCircle, LockKeyhole,
+  Map, MonitorDown, RadioTower, Search, SlidersHorizontal, Volume2, X,
 } from 'lucide-react';
 import { getDatabaseStats, upsertEarthquakes } from '../services/database';
+import {
+  APP_VERSION, RELEASES_URL, assetForPlatform, detectDesktopPlatform, isNewerVersion, platformLabel,
+  type LatestRelease,
+} from '../services/releases';
 import { searchHistoricalEarthquakes } from '../services/usgs';
 import type {
   DataStatus, Earthquake, Filters, MapLayerState, MapStyle, SeismicStation, ThemeMode,
@@ -23,6 +27,7 @@ interface ControlPanelProps {
   soundMinimumMagnitude: number;
   stations: SeismicStation[];
   status: DataStatus;
+  latestRelease: LatestRelease | null;
   onClose: () => void;
   onLayers: (layers: MapLayerState) => void;
   onFilters: (filters: Filters) => void;
@@ -51,6 +56,7 @@ const layerDefinitions: { id: keyof MapLayerState; label: string; detail: string
   { id: 'labels', label: 'Nombres geográficos', detail: 'Ciudades de referencia' },
   { id: 'atmosphere', label: 'Atmósfera', detail: 'Halo de lectura del globo' },
   { id: 'graticule', label: 'Retícula geográfica', detail: 'Latitud y longitud' },
+  { id: 'legend', label: 'Leyenda sísmica', detail: 'Magnitud, profundidad y tectónica' },
 ];
 
 function LayersPanel({ layers, mapStyle, onLayers, onMapStyle }: Pick<ControlPanelProps, 'layers' | 'mapStyle' | 'onLayers' | 'onMapStyle'>) {
@@ -137,7 +143,7 @@ function ArchivePanel({ onHistoricalResults }: Pick<ControlPanelProps, 'onHistor
   </section>;
 }
 
-function StationsPanel({ stations, status, onSelectStation }: Pick<ControlPanelProps, 'stations' | 'status' | 'onSelectStation'>) {
+function StationsPanel({ stations, status, layers, onLayers, onSelectStation }: Pick<ControlPanelProps, 'stations' | 'status' | 'layers' | 'onLayers' | 'onSelectStation'>) {
   const [query, setQuery] = useState('');
   const results = useMemo(() => stations.filter((station) => `${station.id} ${station.name} ${station.country}`.toLowerCase().includes(query.toLowerCase())), [query, stations]);
   return <section className="control-section station-catalogue">
@@ -145,6 +151,13 @@ function StationsPanel({ stations, status, onSelectStation }: Pick<ControlPanelP
     <div className="source-health-card" title={status.message}>
       <span className={`live-dot ${status.state}`} />
       <div><strong>{status.sources?.length ?? 0}/3 fuentes sísmicas</strong><small>{status.sources?.join(' · ') || 'Catálogos en sincronización'}{status.lastUpdated ? ` · ${new Date(status.lastUpdated).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}</small></div>
+    </div>
+    <div className="switch-list station-layer-switch">
+      <label>
+        <span><strong>Mostrar estaciones en el globo</strong><small>{stations.length.toLocaleString('es-ES')} estaciones públicas disponibles</small></span>
+        <input type="checkbox" checked={layers.stations} onChange={() => onLayers({ ...layers, stations: !layers.stations })} />
+        <i />
+      </label>
     </div>
     <label className="inline-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Código, país o estación" /></label>
     <p className="catalog-count">{results.length.toLocaleString('es-ES')} estaciones · se muestran las primeras {Math.min(results.length, 400).toLocaleString('es-ES')}</p>
@@ -186,12 +199,26 @@ function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'a
   </>;
 }
 
-function AboutPanel() {
+function AboutPanel({ latestRelease }: Pick<ControlPanelProps, 'latestRelease'>) {
+  const platform = detectDesktopPlatform();
+  const asset = latestRelease ? assetForPlatform(latestRelease, platform) : null;
+  const updateAvailable = Boolean(latestRelease && isNewerVersion(latestRelease.version));
   return <section className="control-section prose-panel about-panel-content">
-    <div className="about-identity"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><div><p className="eyebrow">OBSERVATORIO GEOFÍSICO MUNDIAL</p><h3>EPISISMIC</h3><span>Desarrollado por Alejandro Pico</span></div></div>
+    <div className="about-identity"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><div><p className="eyebrow">OBSERVATORIO GEOFÍSICO MUNDIAL</p><h3>EPISISMIC</h3><span>Versión {APP_VERSION} · Desarrollado por Alejandro Pico</span></div></div>
     <p>Episismic convierte catálogos sísmicos públicos y cartografía científica en un observatorio tridimensional abierto: epicentros, estaciones FDSN, volcanes, límites tectónicos, archivo histórico y material educativo en una sola interfaz.</p>
     <p>El proyecto nace centrado en terremotos y está estructurado para incorporar posteriormente volcanismo operativo, huracanes, grandes tormentas, incendios y otros riesgos naturales sin mezclar sus modelos de datos.</p>
-    <div className="about-principles"><span><strong>3</strong>catálogos sísmicos</span><span><strong>6.500+</strong>estaciones públicas</span><span><strong>SQLite</strong>archivo local</span></div>
+    <div className="about-principles"><span><strong>3</strong>catálogos sísmicos</span><span><strong>80.000+</strong>estaciones públicas</span><span><strong>SQLite</strong>archivo local</span></div>
+    <div className="desktop-download-card">
+      <MonitorDown size={28} />
+      <div>
+        <small>APLICACIÓN NATIVA · {platformLabel(platform).toUpperCase()}</small>
+        <strong>{updateAvailable ? `Actualización ${latestRelease?.version} disponible` : `Episismic ${APP_VERSION} para ${platformLabel(platform)}`}</strong>
+        <span>Ventana propia del sistema. La aplicación comprueba GitHub Releases al iniciarse y avisa cuando hay una versión superior.</span>
+      </div>
+      <a className="primary-button" href={asset?.browser_download_url || latestRelease?.url || RELEASES_URL} target="_blank" rel="noreferrer">
+        <Download size={15} /> {asset ? `Descargar ${(asset.size / 1024 / 1024).toFixed(0)} MB` : 'Ver descargas'}
+      </a>
+    </div>
     <p className="safety-note">Aplicación informativa y educativa. Para emergencias y decisiones de protección civil deben seguirse siempre los avisos de los organismos oficiales.</p>
     <div className="about-links">
       <a href="https://alejandropico.github.io/Portfolio/" target="_blank" rel="noreferrer"><span><small>AUTOR</small>Portfolio de Alejandro Pico</span><ExternalLink size={14} /></a>
@@ -215,7 +242,7 @@ export function ControlPanel(props: ControlPanelProps) {
       {props.panel === 'stations' && <StationsPanel {...props} />}
       {props.panel === 'settings' && <SettingsPanel {...props} />}
       {props.panel === 'guide' && <Encyclopedia />}
-      {props.panel === 'about' && <AboutPanel />}
+      {props.panel === 'about' && <AboutPanel {...props} />}
     </div>
   </aside>;
 }

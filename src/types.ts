@@ -64,6 +64,15 @@ export interface MapLayerState {
   labels: boolean;
   atmosphere: boolean;
   graticule: boolean;
+  legend: boolean;
+}
+
+export type SeismicActivityKind = 'new' | 'magnitude' | 'corroborated' | 'revision';
+
+export interface SeismicActivity {
+  event: Earthquake;
+  previous: Earthquake | null;
+  kind: SeismicActivityKind;
 }
 
 export interface Filters {

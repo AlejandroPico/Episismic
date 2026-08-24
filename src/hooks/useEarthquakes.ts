@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { fallbackEarthquakes } from '../data/fallbackEarthquakes';
 import { getStoredEarthquakes, upsertEarthquakes } from '../services/database';
 import { fetchCombinedEarthquakes } from '../services/catalog';
-import type { DataStatus, Earthquake, TimeWindow } from '../types';
+import type { DataStatus, Earthquake, SeismicActivity, TimeWindow } from '../types';
 import { windowStart } from '../utils/format';
 
 export function useEarthquakes(timeWindow: TimeWindow) {
@@ -10,8 +10,9 @@ export function useEarthquakes(timeWindow: TimeWindow) {
   const [status, setStatus] = useState<DataStatus>({ state: 'loading', lastUpdated: null });
   const [newEvent, setNewEvent] = useState<Earthquake | null>(null);
   const [newEvents, setNewEvents] = useState<Earthquake[]>([]);
+  const [activities, setActivities] = useState<SeismicActivity[]>([]);
   const initialized = useRef(false);
-  const knownUpdates = useRef(new Map<string, number>());
+  const knownEvents = useRef(new Map<string, Earthquake>());
 
   const refresh = useCallback(async (background = false) => {
     const controller = new AbortController();
@@ -19,17 +20,34 @@ export function useEarthquakes(timeWindow: TimeWindow) {
     if (!background) setStatus((current) => ({ ...current, state: 'loading' }));
     try {
       const { events: live, sources } = await fetchCombinedEarthquakes(timeWindow, controller.signal);
-      const unseen = initialized.current
-        ? live.filter((event) => !knownUpdates.current.has(event.id) && Date.now() - event.time < 12 * 60_000).slice(0, 12)
-        : [];
-      const revised = initialized.current
-        ? live.find((event) => (knownUpdates.current.get(event.id) ?? event.updated) < event.updated && event.magnitude >= 5)
-        : null;
-      knownUpdates.current = new Map(live.map((event) => [event.id, event.updated]));
+      const changes: SeismicActivity[] = [];
+      if (initialized.current) {
+        for (const event of live) {
+          const previous = knownEvents.current.get(event.id);
+          if (!previous) {
+            if (Date.now() - event.time < 12 * 60_000) changes.push({ event, previous: null, kind: 'new' });
+            continue;
+          }
+          if (event.updated <= previous.updated) continue;
+          if (event.magnitude > previous.magnitude + .049) {
+            changes.push({ event, previous, kind: 'magnitude' });
+          } else if (event.catalogs.length > previous.catalogs.length) {
+            changes.push({ event, previous, kind: 'corroborated' });
+          } else {
+            changes.push({ event, previous, kind: 'revision' });
+          }
+        }
+      }
+      changes.sort((a, b) => {
+        const priority = { magnitude: 4, new: 3, corroborated: 2, revision: 1 };
+        return priority[b.kind] - priority[a.kind] || b.event.magnitude - a.event.magnitude || b.event.updated - a.event.updated;
+      });
+      knownEvents.current = new Map(live.map((event) => [event.id, event]));
       initialized.current = true;
       setEvents(live);
-      setNewEvents(unseen.length ? unseen : revised ? [revised] : []);
-      setNewEvent(unseen[0] ?? revised ?? null);
+      setActivities(changes.slice(0, 16));
+      setNewEvents(changes.slice(0, 16).map((change) => change.event));
+      setNewEvent(changes[0]?.event ?? null);
       setStatus({ state: 'live', lastUpdated: Date.now(), sources });
       void upsertEarthquakes(live);
     } catch (error) {
@@ -47,10 +65,20 @@ export function useEarthquakes(timeWindow: TimeWindow) {
 
   useEffect(() => {
     initialized.current = false;
+    knownEvents.current.clear();
     void refresh();
     const interval = window.setInterval(() => void refresh(true), 30_000);
-    return () => window.clearInterval(interval);
+    const catchUp = () => {
+      if (!document.hidden) void refresh(true);
+    };
+    document.addEventListener('visibilitychange', catchUp);
+    window.addEventListener('online', catchUp);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', catchUp);
+      window.removeEventListener('online', catchUp);
+    };
   }, [refresh]);
 
-  return { events, status, newEvent, newEvents, refresh };
+  return { events, status, newEvent, newEvents, activities, refresh };
 }

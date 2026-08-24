@@ -45,14 +45,12 @@ function asCollection(features: FeatureCollection['features']): FeatureCollectio
 }
 
 function earthquakeGeoJson(events: Earthquake[]): FeatureCollection {
-  const now = Date.now();
   return asCollection(events.map((event) => ({
     type: 'Feature', geometry: { type: 'Point', coordinates: [event.lng, event.lat] },
     properties: {
-      eventId: event.id, magnitude: event.magnitude, magLabel: `M${event.magnitude.toFixed(1)}`,
+      eventId: event.id, magnitude: event.magnitude, magnitudeText: event.magnitude.toFixed(1), magLabel: `M${event.magnitude.toFixed(1)}`,
       depth: event.depthKm, place: event.place, reviewCode: event.reviewCode,
       roman: event.intensity ? toRomanIntensity(event.intensity) : '', source: event.source,
-      ageMinutes: Math.max(0, (now - event.time) / 60_000),
     },
   })));
 }
@@ -70,7 +68,11 @@ function stationGeoJson(stations: SeismicStation[]): FeatureCollection {
 function volcanoGeoJson(volcanoes: Volcano[]): FeatureCollection {
   return asCollection(volcanoes.map((volcano) => ({
     type: 'Feature', geometry: { type: 'Point', coordinates: [volcano.lng, volcano.lat] },
-    properties: { volcanoId: volcano.id, name: volcano.name, country: volcano.country, volcanoType: volcano.volcanoType || '' },
+    properties: {
+      volcanoId: volcano.id, name: volcano.name, country: volcano.country,
+      volcanoType: volcano.volcanoType || '', elevationM: volcano.elevationM,
+      status: volcano.status, region: volcano.region || '', lastEruptionYear: volcano.lastEruptionYear || '',
+    },
   })));
 }
 
@@ -185,24 +187,24 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addLayer({ id: 'earthquake-clusters', type: 'circle', source: 'earthquakes', filter: ['has', 'point_count'], paint: { 'circle-color': ['step', ['get', 'point_count'], '#f5b347', 10, '#f17b45', 50, '#e7454f', 250, '#b92842'], 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 19, 50, 25, 250, 32], 'circle-stroke-color': '#fff7ea', 'circle-stroke-width': 1.8, 'circle-opacity': 0.96 } as never });
   map.addLayer({ id: 'earthquake-cluster-count', type: 'symbol', source: 'earthquakes', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Open Sans Regular'], 'text-size': 10 }, paint: { 'text-color': '#fff' } });
   map.addLayer({ id: 'earthquake-halos', type: 'circle', source: 'earthquakes', filter: ['!', ['has', 'point_count']], paint: {
-    'circle-color': ['step', ['get', 'depth'], '#ff5c52', 35, '#ffad39', 70, '#4fc8ff', 300, '#a88cff'],
+    'circle-color': ['step', ['get', 'magnitude'], '#4aa9cf', 1, '#60bf81', 3, '#e7c449', 5, '#f08a3f', 6, '#e65348', 7, '#aa2c50'],
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 10, 2, 13, 4, 17, 6, 25, 8, 34], 8, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 13, 2, 17, 4, 23, 6, 33, 8, 47], 16, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 16, 2, 21, 4, 29, 6, 42, 8, 60]],
     'circle-opacity': ['interpolate', ['linear'], ['get', 'magnitude'], -2, .22, 3, .3, 6, .42], 'circle-blur': .34,
   } as never });
   map.addLayer({ id: 'earthquake-rings', type: 'circle', source: 'earthquakes', filter: ['!', ['has', 'point_count']], paint: {
     'circle-color': 'rgba(0,0,0,0)',
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 8, 2, 11, 4, 15, 6, 21, 8, 29], 10, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 10, 2, 14, 4, 20, 6, 29, 8, 40], 20, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 12, 2, 17, 4, 24, 6, 36, 8, 50]],
-    'circle-stroke-color': ['step', ['get', 'ageMinutes'], '#ff4f58', 60, '#ff9f3f', 1440, '#e0c74f', 10080, '#70bf8f'],
-    'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 0, 1.6, 10, 2.2, 20, 2.8],
+    'circle-stroke-color': ['step', ['get', 'depth'], '#f06157', 35, '#f1a43c', 70, '#4caad6', 300, '#856bc6'],
+    'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 0, 2, 10, 2.8, 20, 3.6],
     'circle-stroke-opacity': .96,
   } as never });
   map.addLayer({ id: 'earthquake-selected', type: 'circle', source: 'earthquakes', filter: ['==', ['get', 'eventId'], ''], paint: { 'circle-color': 'rgba(255,255,255,.08)', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 9, 8, 18, 15, 26], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.2 } as never });
   map.addLayer({ id: 'earthquake-points', type: 'circle', source: 'earthquakes', filter: ['!', ['has', 'point_count']], paint: {
-    'circle-color': ['step', ['get', 'depth'], '#f06157', 35, '#f1a43c', 70, '#4caad6', 300, '#856bc6'],
+    'circle-color': ['step', ['get', 'magnitude'], '#4aa9cf', 1, '#60bf81', 3, '#e7c449', 5, '#f08a3f', 6, '#e65348', 7, '#aa2c50'],
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 5.5, 1, 7, 4, 10, 6, 15, 8, 22], 8, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 7.5, 1, 10, 4, 15, 6, 22, 8, 32], 16, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 9, 1, 13, 4, 19, 6, 29, 8, 42]],
-    'circle-stroke-color': '#fff8ec', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 0, 1.25, 10, 2], 'circle-opacity': 1,
+    'circle-stroke-width': 0, 'circle-opacity': 1,
   } as never });
-  map.addLayer({ id: 'earthquake-labels', type: 'symbol', source: 'earthquakes', minzoom: 4.2, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['concat', ['get', 'reviewCode'], ' ', ['get', 'magLabel'], ['case', ['!=', ['get', 'roman'], ''], ['concat', ' · ', ['get', 'roman']], '']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 4, 8, 10, 11, 16, 13], 'text-offset': [0, 1.2], 'text-anchor': 'top', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': '#fff8ec', 'text-halo-color': 'rgba(7,14,17,.96)', 'text-halo-width': 1.5 } as never });
+  map.addLayer({ id: 'earthquake-labels', type: 'symbol', source: 'earthquakes', minzoom: 3.6, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['get', 'magnitudeText'], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3.6, 7.5, 9, 9.5, 16, 12], 'text-anchor': 'center', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': ['case', ['<', ['get', 'magnitude'], 5], '#132326', '#ffffff'], 'text-halo-color': 'rgba(255,255,255,.16)', 'text-halo-width': .5 } as never });
 
   map.addLayer({ id: 'p-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 'p'], paint: { 'line-color': '#4db9ff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1.4, 8, 2.1, 16, 2.8], 'line-opacity': 0 } as never });
   map.addLayer({ id: 's-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 's'], paint: { 'line-color': '#ff6659', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1.6, 8, 2.4, 16, 3.1], 'line-opacity': 0 } as never });
@@ -267,9 +269,37 @@ export function GlobeView({
           const feature = event.features?.[0];
           if (!feature) return;
           const coordinates = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+          const content = document.createElement('div');
+          content.className = 'map-popup volcano-popup';
+          const heading = document.createElement('div');
+          heading.className = 'volcano-popup-heading';
+          const symbol = document.createElement('i');
+          symbol.textContent = '▲';
+          const identity = document.createElement('div');
+          const title = document.createElement('b');
+          title.textContent = String(feature.properties?.name || 'Volcán catalogado');
+          const location = document.createElement('span');
+          location.textContent = [feature.properties?.region, feature.properties?.country].filter(Boolean).map(String).join(' · ');
+          identity.append(title, location);
+          heading.append(symbol, identity);
+          const facts = document.createElement('div');
+          facts.className = 'volcano-popup-facts';
+          const addFact = (label: string, value: string) => {
+            const row = document.createElement('span');
+            const key = document.createElement('small'); key.textContent = label;
+            const fact = document.createElement('strong'); fact.textContent = value;
+            row.append(key, fact); facts.append(row);
+          };
+          addFact('TIPO', String(feature.properties?.volcanoType || 'Sin clasificar'));
+          addFact('ELEVACIÓN', `${Number(feature.properties?.elevationM || 0).toLocaleString('es-ES')} m`);
+          addFact('ÚLTIMA ERUPCIÓN', feature.properties?.lastEruptionYear ? String(feature.properties.lastEruptionYear) : 'Sin fecha catalogada');
+          const source = document.createElement('small');
+          source.className = 'volcano-popup-source';
+          source.textContent = 'Smithsonian Global Volcanism Program · volcán holoceno catalogado';
+          content.append(heading, facts, source);
           new maplibregl.Popup({ closeButton: true, offset: 8 })
             .setLngLat(coordinates)
-            .setHTML(`<div class="map-popup"><b>${String(feature.properties?.name || 'Volcán')}</b><span>${String(feature.properties?.country || '')}</span><small>${String(feature.properties?.volcanoType || 'Catálogo Smithsonian GVP')}</small></div>`)
+            .setDOMContent(content)
             .addTo(map);
         });
         const stationHover = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10 });
@@ -402,10 +432,30 @@ export function GlobeView({
     <div className="orientation-controls" aria-label="Orientación del globo">
       <button onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 500 })} title="Norte arriba" aria-label="Poner el norte arriba"><Compass size={18} style={{ transform: `rotate(${-bearing}deg)` }} /><span>N</span></button>
     </div>
-    <div className="globe-corner-scale" aria-hidden="true">
-      <span>PROFUNDIDAD</span><i style={{ background: '#f06157' }} />0–35<i style={{ background: '#f1a43c' }} />35–70<i style={{ background: '#4caad6' }} />70–300<i style={{ background: '#856bc6' }} />300+ km
-      <span className="tectonic-key"><i className="plate-solid" />LÍMITE<i className="plate-diffuse" />ZONA DIFUSA</span>
-      <b>ZOOM {zoom.toFixed(1)}</b>
-    </div>
+    {layers.legend && <aside className="globe-legend" aria-label="Leyenda de la cartografía sísmica">
+      <header><strong>LEYENDA SÍSMICA</strong><span>ZOOM {zoom.toFixed(1)}</span></header>
+      <section>
+        <span>INTERIOR · MAGNITUD</span>
+        <div className="magnitude-legend">
+          <i style={{ background: '#4aa9cf' }} />&lt;1
+          <i style={{ background: '#60bf81' }} />1–3
+          <i style={{ background: '#e7c449' }} />3–5
+          <i style={{ background: '#f08a3f' }} />5–6
+          <i style={{ background: '#e65348' }} />6–7
+          <i style={{ background: '#aa2c50' }} />7+
+        </div>
+        <small>El diámetro también aumenta con la magnitud. El valor aparece dentro al acercarse.</small>
+      </section>
+      <section>
+        <span>BORDE · PROFUNDIDAD</span>
+        <div className="depth-legend">
+          <i style={{ borderColor: '#f06157' }} />0–35 km
+          <i style={{ borderColor: '#f1a43c' }} />35–70
+          <i style={{ borderColor: '#4caad6' }} />70–300
+          <i style={{ borderColor: '#856bc6' }} />300+
+        </div>
+      </section>
+      <section className="tectonic-legend"><i className="plate-solid" />Límite de placa<i className="plate-diffuse" />Zona tectónica difusa</section>
+    </aside>}
   </div>;
 }
