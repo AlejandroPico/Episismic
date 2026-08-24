@@ -2,7 +2,7 @@
 
 Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sísmicos multifuente, más de 80.000 estaciones FDSN catalogadas, 1.214 volcanes holocenos, límites tectónicos PB2002, archivo histórico y una base SQLite local.
 
-**Versión actual:** `0.9.0` (previa a 1.0)
+**Versión actual:** `0.9.1` (previa a 1.0)
 
 **Aplicación:** <https://alejandropico.github.io/Episismic/>
 
@@ -25,13 +25,16 @@ Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sí
 - Fichas de evento con revisión, profundidad, significancia, reportes sentidos, tsunami, alerta y enlace al registro original.
 - Catálogo deduplicado de 80.524 estaciones procedentes de EarthScope, GEOFON, NCEDC y BMKG, con buscador e inspector.
 - Catálogo Smithsonian GVP de volcanes holocenos con nombre y metadatos.
+- Nombres volcánicos contextualizados cuando el catálogo identifica una isla completa, incluidos Teide–Pico Viejo y los centros recientes de Gran Canaria.
 - Símbolos WebGL persistentes a cualquier zoom; estaciones, volcanes y epicentros no se sustituyen por clústeres.
 - Epicentros con núcleo por profundidad, halo y anillo por antigüedad; estaciones triangulares con identificación al pasar el puntero.
 - Monitor de estación con sismograma sintético, ejes de tiempo y amplitud, ventana temporal, ganancia y filtro de frecuencia regulable.
 - Alertas sonoras diferenciadas para eventos nuevos, revisiones al alza, corroboraciones multifuente y actualizaciones de solución; también incluyen microseísmos de magnitud negativa publicados.
 - Avisos visuales ampliados con profundidad, catálogos participantes, evolución de magnitud y acceso directo a la ficha.
 - Reproducción real de los 24 eventos recientes desde la cronología: enfoque de cámara, selección y ondas P/S en secuencia.
+- Recorrido cinematográfico de la cronología con salida de zoom, desplazamiento global y aproximación suave al epicentro.
 - Recuperación inmediata del catálogo al volver a una pestaña o reconectar la red, y notificación del sistema cuando el navegador ya tiene permiso.
+- Renderizador móvil adaptativo, recuperación automática ante pérdida de contexto WebGL y animaciones sísmicas de duración limitada.
 - Control directo de norte en escritorio; la interfaz móvil prescinde de controles cartográficos superfluos.
 - Enciclopedia sísmica de 71 capítulos con buscador, categorías, esquemas vectoriales y referencias oficiales.
 - Temas Mañana, Tarde, Noche y Automático; preferencias persistentes.

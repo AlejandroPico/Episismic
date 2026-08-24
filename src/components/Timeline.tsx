@@ -24,15 +24,19 @@ export function Timeline({ events, timeWindow, onReset, onPlayback }: { events: 
   useEffect(() => {
     if (!playing || !playbackEvents.length) return;
     let current = Math.min(playbackIndex, playbackEvents.length - 1);
+    let timer = 0;
     const step = () => {
       onPlayback(playbackEvents[current]);
       current += 1;
       setPlaybackIndex(current);
-      if (current >= playbackEvents.length) setPlaying(false);
+      if (current >= playbackEvents.length) {
+        setPlaying(false);
+        return;
+      }
+      timer = window.setTimeout(step, 4_300);
     };
     step();
-    const interval = window.setInterval(step, 1_800);
-    return () => window.clearInterval(interval);
+    return () => window.clearTimeout(timer);
   // El índice inicial solo se toma al pulsar Play; durante la sesión avanza en el cierre.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, playbackEvents, onPlayback]);

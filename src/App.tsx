@@ -48,7 +48,7 @@ export default function App() {
   const [historicalEvents, setHistoricalEvents] = useState<Earthquake[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Earthquake | null>(null);
   const [selectedStation, setSelectedStation] = useState<SeismicStation | null>(null);
-  const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number; altitude?: number; token: number } | null>(null);
+  const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number; altitude?: number; cinematic?: boolean; token: number } | null>(null);
   const [pulseEvent, setPulseEvent] = useState<Earthquake | null>(null);
   const [activePanel, setActivePanel] = useState<PanelId>(null);
   const [historyOpen, setHistoryOpen] = useState(() => window.innerWidth > 820);
@@ -73,8 +73,8 @@ export default function App() {
 
   const strongest = useMemo(() => visibleEvents.reduce<Earthquake | null>((max, event) => !max || event.magnitude > max.magnitude ? event : max, null), [visibleEvents]);
 
-  const focus = useCallback((target: { lat: number; lng: number }, altitude = 1.35) => {
-    setFocusTarget({ ...target, altitude, token: Date.now() });
+  const focus = useCallback((target: { lat: number; lng: number }, altitude = 1.35, cinematic = false) => {
+    setFocusTarget({ ...target, altitude, cinematic, token: Date.now() });
   }, []);
 
   const selectEvent = useCallback((event: Earthquake, animate = true) => {
@@ -92,6 +92,14 @@ export default function App() {
     setSelectedEvent(null);
     focus(station, 0.92);
     if (window.innerWidth < 820) setActivePanel(null);
+  }, [focus]);
+
+  const playEvent = useCallback((event: Earthquake) => {
+    setSelectedEvent(event);
+    setSelectedStation(null);
+    setPulseEvent(event);
+    focus(event, event.magnitude >= 6 ? 1.05 : 1.28, true);
+    window.setTimeout(() => setPulseEvent((current) => current?.id === event.id ? null : current), 12_000);
   }, [focus]);
 
   useEffect(() => {
@@ -202,13 +210,6 @@ export default function App() {
           onSelectStation={selectStation}
         />
 
-        <div className="summary-hud">
-          <article><span>VENTANA</span><strong>{historicalEvents ? 'ARCHIVO' : ({ hour: '1 HORA', day: '24 HORAS', week: '7 DÍAS', month: '30 DÍAS' })[timeWindow]}</strong></article>
-          <article><span>EVENTOS</span><strong>{visibleEvents.length.toLocaleString('es-ES')}</strong></article>
-          <article><span>MÁXIMO</span><strong style={{ color: strongest ? magnitudeColor(strongest.magnitude) : undefined }}>{strongest ? formatMagnitude(strongest.magnitude) : '—'}</strong></article>
-          <article><span>ESTACIONES</span><strong>{stations.length.toLocaleString('es-ES')}<small> / {geodataReady ? 'FDSN ACTIVO' : 'CARGANDO'}</small></strong></article>
-        </div>
-
         {activePanel && <ControlPanel
           panel={activePanel}
           layers={layers}
@@ -221,6 +222,11 @@ export default function App() {
           soundMinimumMagnitude={soundMinimumMagnitude}
           stations={stations}
           status={status}
+          timeWindow={timeWindow}
+          isHistorical={historicalEvents !== null}
+          visibleEventCount={visibleEvents.length}
+          strongestEvent={strongest}
+          geodataReady={geodataReady}
           latestRelease={latestRelease}
           onClose={() => setActivePanel(null)}
           onLayers={setLayers}
@@ -265,7 +271,7 @@ export default function App() {
           <span>CATÁLOGOS <a href="https://earthquake.usgs.gov/" target="_blank" rel="noreferrer">USGS</a> / <a href="https://www.seismicportal.eu/" target="_blank" rel="noreferrer">EMSC</a> / <a href="https://geofon.gfz-potsdam.de/" target="_blank" rel="noreferrer">GEOFON</a></span>
           <span>MAPLIBRE / PB2002 / FDSN</span>
         </div>
-        <Timeline events={visibleEvents} timeWindow={timeWindow} onPlayback={selectEvent} onReset={() => focus({ lat: 22, lng: 5 }, 2.25)} />
+        <Timeline events={visibleEvents} timeWindow={timeWindow} onPlayback={playEvent} onReset={() => focus({ lat: 22, lng: 5 }, 2.25)} />
       </main>
 
       {historyOpen && <EventHistory

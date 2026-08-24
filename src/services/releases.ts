@@ -1,4 +1,4 @@
-export const APP_VERSION = '0.9.0';
+export const APP_VERSION = '0.9.1';
 export const RELEASES_URL = 'https://github.com/AlejandroPico/Episismic/releases';
 
 export type DesktopPlatform = 'windows' | 'macos' | 'linux' | 'unknown';

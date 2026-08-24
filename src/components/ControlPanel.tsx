@@ -10,8 +10,9 @@ import {
 } from '../services/releases';
 import { searchHistoricalEarthquakes } from '../services/usgs';
 import type {
-  DataStatus, Earthquake, Filters, MapLayerState, MapStyle, SeismicStation, ThemeMode,
+  DataStatus, Earthquake, Filters, MapLayerState, MapStyle, SeismicStation, ThemeMode, TimeWindow,
 } from '../types';
+import { formatMagnitude, magnitudeColor } from '../utils/format';
 import type { PanelId } from './TopBar';
 import { Encyclopedia } from './Encyclopedia';
 
@@ -27,6 +28,11 @@ interface ControlPanelProps {
   soundMinimumMagnitude: number;
   stations: SeismicStation[];
   status: DataStatus;
+  timeWindow: TimeWindow;
+  isHistorical: boolean;
+  visibleEventCount: number;
+  strongestEvent: Earthquake | null;
+  geodataReady: boolean;
   latestRelease: LatestRelease | null;
   onClose: () => void;
   onLayers: (layers: MapLayerState) => void;
@@ -107,7 +113,9 @@ function FiltersPanel({ filters, onFilters }: Pick<ControlPanelProps, 'filters' 
   </section>;
 }
 
-function ArchivePanel({ onHistoricalResults }: Pick<ControlPanelProps, 'onHistoricalResults'>) {
+function ArchivePanel({
+  onHistoricalResults, timeWindow, isHistorical, visibleEventCount, strongestEvent, stations, geodataReady,
+}: Pick<ControlPanelProps, 'onHistoricalResults' | 'timeWindow' | 'isHistorical' | 'visibleEventCount' | 'strongestEvent' | 'stations' | 'geodataReady'>) {
   const today = new Date();
   const lastYear = new Date(today); lastYear.setFullYear(today.getFullYear() - 1);
   const [start, setStart] = useState(lastYear.toISOString().slice(0, 10));
@@ -132,6 +140,12 @@ function ArchivePanel({ onHistoricalResults }: Pick<ControlPanelProps, 'onHistor
 
   return <section className="control-section">
     <h3><Database size={16} /> Archivo sísmico</h3>
+    <div className="archive-summary" aria-label="Resumen del catálogo visible">
+      <article><span>VENTANA</span><strong>{isHistorical ? 'ARCHIVO' : ({ hour: '1 HORA', day: '24 HORAS', week: '7 DÍAS', month: '30 DÍAS' })[timeWindow]}</strong></article>
+      <article><span>EVENTOS</span><strong>{visibleEventCount.toLocaleString('es-ES')}</strong></article>
+      <article><span>MÁXIMO</span><strong style={{ color: strongestEvent ? magnitudeColor(strongestEvent.magnitude) : undefined }}>{strongestEvent ? formatMagnitude(strongestEvent.magnitude) : '—'}</strong></article>
+      <article><span>ESTACIONES</span><strong>{stations.length.toLocaleString('es-ES')}</strong><small>{geodataReady ? 'FDSN DISPONIBLE' : 'CARGANDO RED'}</small></article>
+    </div>
     <p className="section-intro">Las consultas se incorporan a la base SQLite local y conservan las revisiones posteriores.</p>
     <form className="archive-form" onSubmit={submit}>
       <label>Desde<input type="date" value={start} max={end} onChange={(event) => setStart(event.target.value)} /></label>

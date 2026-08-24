@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl, { type GeoJSONSource, type MapLayerMouseEvent, type StyleSpecification } from 'maplibre-gl';
-import { Compass } from 'lucide-react';
+import { Compass, LoaderCircle, RefreshCw } from 'lucide-react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Earthquake, MapLayerState, MapStyle, SeismicStation, Volcano } from '../types';
 
@@ -20,7 +20,7 @@ interface GlobeViewProps {
   mapStyle: MapStyle;
   selectedEvent: Earthquake | null;
   selectedStation: SeismicStation | null;
-  focusTarget: { lat: number; lng: number; altitude?: number; token: number } | null;
+  focusTarget: { lat: number; lng: number; altitude?: number; cinematic?: boolean; token: number } | null;
   pulseEvent: Earthquake | null;
   onSelectEvent: (event: Earthquake) => void;
   onSelectStation: (station: SeismicStation) => void;
@@ -69,11 +69,24 @@ function volcanoGeoJson(volcanoes: Volcano[]): FeatureCollection {
   return asCollection(volcanoes.map((volcano) => ({
     type: 'Feature', geometry: { type: 'Point', coordinates: [volcano.lng, volcano.lat] },
     properties: {
-      volcanoId: volcano.id, name: volcano.name, country: volcano.country,
+      volcanoId: volcano.id, name: volcanoDisplayName(volcano), catalogueName: volcano.name, country: volcano.country,
       volcanoType: volcano.volcanoType || '', elevationM: volcano.elevationM,
       status: volcano.status, region: volcano.region || '', lastEruptionYear: volcano.lastEruptionYear || '',
     },
   })));
+}
+
+const volcanoDisplayNames: Record<string, string> = {
+  '383010': 'La Palma — Cumbre Vieja',
+  '383020': 'El Hierro — sistema volcánico insular',
+  '383030': 'Tenerife — Teide–Pico Viejo',
+  '383040': 'Gran Canaria — Bandama / El Garañón',
+  '383050': 'Fuerteventura — campo volcánico insular',
+  '383060': 'Lanzarote — Timanfaya / Tao–Nuevo del Fuego',
+};
+
+function volcanoDisplayName(volcano: Volcano) {
+  return volcanoDisplayNames[volcano.id] ?? volcano.name;
 }
 
 function destinationPoint(origin: { lat: number; lng: number }, bearingDegrees: number, distanceKm: number): [number, number] {
@@ -223,8 +236,14 @@ export function GlobeView({
   const stationsByIdRef = useRef(new Map(stations.map((station) => [station.id, station])));
   const onSelectEventRef = useRef(onSelectEvent);
   const onSelectStationRef = useRef(onSelectStation);
+  const cameraTimersRef = useRef<number[]>([]);
+  const contextLostRef = useRef(false);
+  const recoveryTimerRef = useRef(0);
+  const compactRendererRef = useRef(window.matchMedia('(max-width: 900px), (pointer: coarse)').matches);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(!hasWebGL());
+  const [contextLost, setContextLost] = useState(false);
+  const [rendererRevision, setRendererRevision] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [bearing, setBearing] = useState(0);
   eventsRef.current = events;
@@ -238,17 +257,40 @@ export function GlobeView({
   useEffect(() => {
     if (!hostRef.current || failed || mapRef.current) return;
     try {
+      const compactRenderer = compactRendererRef.current;
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, compactRenderer ? 1.35 : 2);
       const map = new maplibregl.Map({
         container: hostRef.current, style: createStyle(), center: [3, 27], zoom: 1.05,
         minZoom: 0.15, maxZoom: 20, maxPitch: 76, pitch: 0, bearing: 0,
         renderWorldCopies: false, attributionControl: false, cooperativeGestures: false, fadeDuration: 100,
+        pixelRatio,
+        maxCanvasSize: compactRenderer ? [2048, 2048] : [4096, 4096],
+        maxTileCacheSize: compactRenderer ? 120 : 320,
+        cancelPendingTileRequestsWhileZooming: true,
+        trackResize: false,
+        canvasContextAttributes: {
+          antialias: false,
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: false,
+          failIfMajorPerformanceCaveat: false,
+          desynchronized: true,
+          contextType: 'webgl2',
+        },
       });
       mapRef.current = map;
       map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+      const collapseAttribution = () => {
+        const attribution = hostRef.current?.querySelector('.maplibregl-ctrl-attrib');
+        if (attribution instanceof HTMLDetailsElement) attribution.open = false;
+        attribution?.classList.remove('maplibregl-compact-show');
+        attribution?.querySelector('button, summary')?.setAttribute('aria-expanded', 'false');
+      };
+      window.requestAnimationFrame(collapseAttribution);
       map.scrollZoom.setWheelZoomRate(1 / 290);
       map.on('load', () => {
         map.setProjection({ type: 'globe' });
         addSourceAndLayers(map);
+        collapseAttribution();
         setReady(true);
         setZoom(map.getZoom());
         map.on('zoom', () => setZoom(map.getZoom()));
@@ -324,11 +366,60 @@ export function GlobeView({
           map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
         }
       });
-      const observer = new ResizeObserver(() => map.resize());
+      const handleContextLost = (event: Event) => {
+        event.preventDefault();
+        contextLostRef.current = true;
+        setReady(false);
+        setContextLost(true);
+        window.clearTimeout(recoveryTimerRef.current);
+        recoveryTimerRef.current = window.setTimeout(() => {
+          if (!contextLostRef.current) return;
+          setContextLost(false);
+          setRendererRevision((revision) => revision + 1);
+        }, 4_500);
+      };
+      const handleContextRestored = () => {
+        contextLostRef.current = false;
+        window.clearTimeout(recoveryTimerRef.current);
+        setContextLost(false);
+        setReady(true);
+        window.requestAnimationFrame(() => { map.resize(); map.triggerRepaint(); });
+      };
+      const canvas = map.getCanvas();
+      canvas.addEventListener('webglcontextlost', handleContextLost, false);
+      canvas.addEventListener('webglcontextrestored', handleContextRestored, false);
+      let resizeFrame = 0;
+      const observer = new ResizeObserver(() => {
+        window.cancelAnimationFrame(resizeFrame);
+        resizeFrame = window.requestAnimationFrame(() => {
+          if (!contextLostRef.current) map.resize();
+        });
+      });
       observer.observe(hostRef.current);
-      return () => { observer.disconnect(); map.remove(); mapRef.current = null; };
+      const resumeRenderer = () => {
+        if (document.hidden || contextLostRef.current) return;
+        window.requestAnimationFrame(() => { map.resize(); map.triggerRepaint(); collapseAttribution(); });
+      };
+      document.addEventListener('visibilitychange', resumeRenderer);
+      window.addEventListener('pageshow', resumeRenderer);
+      window.addEventListener('orientationchange', resumeRenderer);
+      return () => {
+        observer.disconnect();
+        window.cancelAnimationFrame(resizeFrame);
+        window.clearTimeout(recoveryTimerRef.current);
+        cameraTimersRef.current.forEach(window.clearTimeout);
+        cameraTimersRef.current = [];
+        contextLostRef.current = false;
+        document.removeEventListener('visibilitychange', resumeRenderer);
+        window.removeEventListener('pageshow', resumeRenderer);
+        window.removeEventListener('orientationchange', resumeRenderer);
+        canvas.removeEventListener('webglcontextlost', handleContextLost);
+        canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+        try { map.remove(); } catch { /* El navegador puede haber invalidado ya el contexto. */ }
+        mapRef.current = null;
+      };
     } catch { setFailed(true); }
-  }, [failed]);
+  }, [failed, rendererRevision]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -380,7 +471,30 @@ export function GlobeView({
     const map = mapRef.current;
     if (!map || !ready || !focusTarget) return;
     const targetZoom = focusTarget.altitude !== undefined && focusTarget.altitude <= 1 ? 10 : focusTarget.altitude !== undefined && focusTarget.altitude <= 1.4 ? 7.8 : 1.05;
-    map.easeTo({ center: [focusTarget.lng, focusTarget.lat], zoom: targetZoom, pitch: targetZoom > 5 ? 28 : 0, duration: 1200, essential: true });
+    cameraTimersRef.current.forEach(window.clearTimeout);
+    cameraTimersRef.current = [];
+    map.stop();
+    if (focusTarget.cinematic) {
+      const cruiseZoom = Math.min(map.getZoom(), compactRendererRef.current ? 1.75 : 2.1);
+      map.easeTo({ zoom: cruiseZoom, pitch: 0, duration: 720, essential: true });
+      cameraTimersRef.current.push(window.setTimeout(() => {
+        map.flyTo({
+          center: [focusTarget.lng, focusTarget.lat],
+          zoom: Math.min(targetZoom, compactRendererRef.current ? 5.8 : 6.5),
+          pitch: 24,
+          bearing: 0,
+          curve: 1.45,
+          speed: .72,
+          duration: 2_850,
+          essential: true,
+        });
+      }, 680));
+      return () => {
+        cameraTimersRef.current.forEach(window.clearTimeout);
+        cameraTimersRef.current = [];
+      };
+    }
+    map.easeTo({ center: [focusTarget.lng, focusTarget.lat], zoom: targetZoom, pitch: targetZoom > 5 ? 28 : 0, duration: 1350, essential: true });
   }, [focusTarget, ready]);
 
   useEffect(() => {
@@ -404,16 +518,25 @@ export function GlobeView({
     let frame = 0;
     let lastUpdate = 0;
     const started = performance.now();
+    const duration = 10_000;
+    const updateInterval = compactRendererRef.current ? 85 : 45;
     const maxRadiusKm = Math.max(120, Math.min(1350, 160 + Math.max(0, wave.magnitude) * 140));
     const animate = (time: number) => {
-      if (time - lastUpdate >= 40) {
-        const cycle = ((time - started) % 10_000) / 10_000;
+      const elapsed = time - started;
+      if (time - lastUpdate >= updateInterval) {
+        const cycle = Math.min(1, elapsed / duration);
         const p = Math.min(1, cycle * 1.35);
         const s = Math.min(1, cycle * .9);
         source.setData(waveCollection(wave, p * maxRadiusKm, s * maxRadiusKm) as never);
         map.setPaintProperty('p-wave', 'line-opacity', Math.max(0, .78 * (1 - p)));
         map.setPaintProperty('s-wave', 'line-opacity', Math.max(0, .9 * (1 - s)));
         lastUpdate = time;
+      }
+      if (elapsed >= duration || contextLostRef.current) {
+        source.setData(asCollection([]) as never);
+        map.setPaintProperty('p-wave', 'line-opacity', 0);
+        map.setPaintProperty('s-wave', 'line-opacity', 0);
+        return;
       }
       frame = requestAnimationFrame(animate);
     };
@@ -428,6 +551,11 @@ export function GlobeView({
 
   return <div className="globe-host" aria-label="Globo sísmico tridimensional">
     <div ref={hostRef} className="maplibre-host" />
+    {contextLost && <div className="renderer-recovery" role="status">
+      <LoaderCircle size={17} className="spin" />
+      <span>RECUPERANDO CARTOGRAFÍA</span>
+      <button onClick={() => { setContextLost(false); setRendererRevision((revision) => revision + 1); }}><RefreshCw size={14} /> Reiniciar</button>
+    </div>}
     {layers.atmosphere && <div className="atmosphere-overlay" aria-hidden="true" />}
     <div className="orientation-controls" aria-label="Orientación del globo">
       <button onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 500 })} title="Norte arriba" aria-label="Poner el norte arriba"><Compass size={18} style={{ transform: `rotate(${-bearing}deg)` }} /><span>N</span></button>
