@@ -1,6 +1,6 @@
 # Episismic
 
-Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sísmicos multifuente, más de 6.500 estaciones activas, 1.214 volcanes holocenos, límites tectónicos PB2002, archivo histórico y una base SQLite local.
+Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sísmicos multifuente, más de 80.000 estaciones FDSN catalogadas, 1.214 volcanes holocenos, límites tectónicos PB2002, archivo histórico y una base SQLite local.
 
 **Aplicación:** <https://alejandropico.github.io/Episismic/>
 
@@ -11,17 +11,18 @@ Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sí
 - Historial lateral de 1 hora, 24 horas, 7 días y 30 días.
 - Consulta histórica parametrizada y persistencia en SQLite dentro del navegador.
 - Marcadores dimensionados por magnitud y coloreados por profundidad.
-- Frentes P y S diferenciados para eventos seleccionados o recién detectados.
+- Frentes P y S geográficos para eventos seleccionados o recién detectados; su extensión se mide sobre la superficie y respeta el zoom.
 - Enfoque automático configurable por umbral de magnitud.
 - Político plano vectorial por defecto y modos Satélite, Relieve y Batimetría por teselas con detalle progresivo.
 - Etiquetas geográficas conmutables mediante capas de referencia para Político, Satélite y Batimetría; Relieve conserva sus nombres integrados.
 - Capas de estaciones sísmicas, límites de placas, volcanes, atmósfera y retícula.
-- Filtros por magnitud, profundidad, significancia y texto.
+- Filtros por magnitud, profundidad y significancia.
 - Fichas de evento con revisión, profundidad, significancia, reportes sentidos, tsunami, alerta y enlace al registro original.
-- Catálogo generado de estaciones EarthScope/GEOFON con agrupación espacial e inspector.
+- Catálogo deduplicado de 80.524 estaciones procedentes de EarthScope, GEOFON, NCEDC y BMKG, con buscador e inspector.
 - Catálogo Smithsonian GVP de volcanes holocenos con nombre y metadatos.
-- Símbolos, rótulos y grosores adaptados al zoom; clustering para ventanas de 7 y 30 días.
-- Epicentros con halo de alto contraste y estaciones con iconografía WebGL visible en cualquier cartografía.
+- Símbolos WebGL persistentes a cualquier zoom; estaciones, volcanes y epicentros no se sustituyen por clústeres.
+- Epicentros con núcleo por profundidad, halo y anillo por antigüedad; estaciones triangulares con identificación al pasar el puntero.
+- Monitor de estación con sismograma sintético, ejes de tiempo y amplitud, ventana temporal, ganancia y filtro de frecuencia regulable.
 - Alertas sonoras configurables, también para microseísmos de magnitud negativa publicados por las fuentes.
 - Control directo de norte en escritorio; la interfaz móvil prescinde de controles cartográficos superfluos.
 - Enciclopedia sísmica de 71 capítulos con buscador, categorías, esquemas vectoriales y referencias oficiales.
@@ -82,7 +83,7 @@ El despliegue de `main` se realiza con GitHub Actions. Vite utiliza `/Episismic/
 ## Fuentes y atribución
 
 - Terremotos: [USGS](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php), [EMSC SeismicPortal](https://www.seismicportal.eu/fdsn-wsevent.html) y [GEOFON](https://geofon.gfz-potsdam.de/fdsnws/event/1/).
-- Estaciones: [EarthScope](https://service.earthscope.org/fdsnws/station/1/) y [GEOFON FDSN Station](https://geofon.gfz-potsdam.de/fdsnws/station/1/).
+- Estaciones: [EarthScope](https://service.earthscope.org/fdsnws/station/1/), [GEOFON FDSN Station](https://geofon.gfz-potsdam.de/fdsnws/station/1/), [NCEDC](https://service.ncedc.org/fdsnws/station/1/) y [BMKG](https://geof.bmkg.go.id/fdsnws/station/1/).
 - Volcanes: [Smithsonian Global Volcanism Program](https://volcano.si.edu/database/webservices.cfm).
 - Tectónica: [PB2002](https://github.com/fraxen/tectonicplates), basado en el modelo de Peter Bird.
 - Cartografía: MapLibre GL JS, Natural Earth, Esri, OpenTopoMap, GEBCO/NOAA y OpenStreetMap según la capa activa.

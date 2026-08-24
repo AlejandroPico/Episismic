@@ -688,3 +688,46 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   .top-tools button, .top-tools .history-toggle { flex-basis: 12.5%; }
   .top-tools svg { width: 16px; height: 16px; }
 }
+
+/* Monitor sísmico y simbología persistente. */
+.station-inspector { width: min(840px, calc(100% - 28px)); }
+.waveform-wrap { padding: 10px 13px 11px; }
+.waveform-title { min-height: 18px; align-items: center; gap: 12px; letter-spacing: .04em; }
+.waveform { height: 172px; margin-top: 3px; }
+.waveform-controls {
+  display: grid;
+  grid-template-columns: 166px repeat(3,minmax(0,1fr)) 34px;
+  align-items: end;
+  gap: 8px;
+  padding: 9px 0 0;
+  border-top: 1px solid var(--line);
+}
+.waveform-controls > label { min-width: 0; display: grid; gap: 7px; color: var(--text-soft); font-size: 7px; }
+.waveform-controls > label span { display: flex; justify-content: space-between; gap: 6px; }
+.waveform-controls > label strong { color: var(--text); font: 600 7px/1 IBM Plex Mono, monospace; }
+.waveform-controls input[type="range"] { margin: 0; }
+.waveform-zoom-control { height: 35px; display: grid; grid-template: 11px 24px / 28px minmax(48px,1fr) 28px; align-items: center; border: 1px solid var(--line); }
+.waveform-zoom-control > span { grid-column: 1 / -1; padding: 4px 6px 0; color: var(--text-soft); font: 500 6px/1 IBM Plex Mono, monospace; letter-spacing: .06em; }
+.waveform-zoom-control button, .waveform-reset { height: 23px; display: grid; place-items: center; padding: 0; border: 0; color: var(--text-soft); background: transparent; cursor: pointer; }
+.waveform-zoom-control button:hover, .waveform-reset:hover { color: var(--accent); background: var(--accent-soft); }
+.waveform-zoom-control strong { color: var(--text); font: 600 8px/1 IBM Plex Mono, monospace; text-align: center; }
+.waveform-reset { width: 34px; height: 35px; border: 1px solid var(--line); }
+.station-inspector .metric-grid.compact { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.station-hover-popup { min-width: 230px; }
+
+@media (max-width: 900px) {
+  .station-inspector { width: auto; }
+  .waveform { height: 150px; }
+  .waveform-controls { grid-template-columns: repeat(2,minmax(0,1fr)) 34px; }
+  .waveform-zoom-control { grid-column: 1; }
+  .waveform-controls > label:last-of-type { grid-column: 2; }
+  .station-inspector .metric-grid.compact { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+@media (max-width: 560px) {
+  .waveform-title { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .waveform { height: 138px; }
+  .waveform-controls { grid-template-columns: minmax(0,1fr) 34px; }
+  .waveform-zoom-control, .waveform-controls > label, .waveform-controls > label:last-of-type { grid-column: 1; }
+  .waveform-reset { grid-column: 2; grid-row: 1; }
+}

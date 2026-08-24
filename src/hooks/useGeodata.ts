@@ -13,6 +13,23 @@ async function loadCompressedJson<T>(filename: string, signal: AbortSignal): Pro
   return new Response(stream).json() as Promise<T>;
 }
 
+function waitForIdle() {
+  return new Promise<void>((resolve) => {
+    const requestIdle = (window as unknown as { requestIdleCallback?: (callback: () => void, options: { timeout: number }) => number }).requestIdleCallback;
+    if (requestIdle) requestIdle(resolve, { timeout: 1200 });
+    else window.setTimeout(resolve, 20);
+  });
+}
+
+async function persistStationsInBatches(stations: SeismicStation[], version: string) {
+  const batchSize = 2000;
+  for (let index = 0; index < stations.length; index += batchSize) {
+    await waitForIdle();
+    await upsertStations(stations.slice(index, index + batchSize));
+  }
+  localStorage.setItem('episismic:station-catalog-version', version);
+}
+
 export function useGeodata() {
   const [stations, setStations] = useState<SeismicStation[]>(fallbackStations);
   const [volcanoes, setVolcanoes] = useState<Volcano[]>(fallbackVolcanoes);
@@ -27,9 +44,9 @@ export function useGeodata() {
       setStations(stationCatalog);
       setVolcanoes(volcanoCatalog);
       setReady(true);
-      const version = `2026-08-24:${stationCatalog.length}`;
+      const version = `fdsn-full-v1:${stationCatalog.length}`;
       if (localStorage.getItem('episismic:station-catalog-version') !== version) {
-        const persist = () => void upsertStations(stationCatalog).then(() => localStorage.setItem('episismic:station-catalog-version', version));
+        const persist = () => void persistStationsInBatches(stationCatalog, version);
         const requestIdle = (window as unknown as { requestIdleCallback?: (callback: () => void, options: { timeout: number }) => number }).requestIdleCallback;
         if (requestIdle) requestIdle(persist, { timeout: 5000 });
         else window.setTimeout(persist, 1200);

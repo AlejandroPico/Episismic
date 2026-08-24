@@ -39,7 +39,7 @@ export interface SeismicStation extends Coordinates {
   elevationM: number;
   status: 'online' | 'delayed' | 'unknown';
   dataUrl: string;
-  source: 'EarthScope' | 'GEOFON' | 'IGN' | 'USGS';
+  source: string;
   startTime?: string | null;
   endTime?: string | null;
 }

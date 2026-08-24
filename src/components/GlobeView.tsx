@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import maplibregl, { type GeoJSONSource, type MapGeoJSONFeature, type MapLayerMouseEvent, type StyleSpecification } from 'maplibre-gl';
+import maplibregl, { type GeoJSONSource, type MapLayerMouseEvent, type StyleSpecification } from 'maplibre-gl';
 import { Compass } from 'lucide-react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Earthquake, MapLayerState, MapStyle, SeismicStation, Volcano } from '../types';
@@ -45,12 +45,14 @@ function asCollection(features: FeatureCollection['features']): FeatureCollectio
 }
 
 function earthquakeGeoJson(events: Earthquake[]): FeatureCollection {
+  const now = Date.now();
   return asCollection(events.map((event) => ({
     type: 'Feature', geometry: { type: 'Point', coordinates: [event.lng, event.lat] },
     properties: {
       eventId: event.id, magnitude: event.magnitude, magLabel: `M${event.magnitude.toFixed(1)}`,
       depth: event.depthKm, place: event.place, reviewCode: event.reviewCode,
       roman: event.intensity ? toRomanIntensity(event.intensity) : '', source: event.source,
+      ageMinutes: Math.max(0, (now - event.time) / 60_000),
     },
   })));
 }
@@ -58,7 +60,10 @@ function earthquakeGeoJson(events: Earthquake[]): FeatureCollection {
 function stationGeoJson(stations: SeismicStation[]): FeatureCollection {
   return asCollection(stations.map((station) => ({
     type: 'Feature', geometry: { type: 'Point', coordinates: [station.lng, station.lat] },
-    properties: { stationId: station.id, code: station.code, network: station.network, name: station.name },
+    properties: {
+      stationId: station.id, code: station.code, network: station.network, name: station.name,
+      country: station.country, source: station.source, status: station.status,
+    },
   })));
 }
 
@@ -69,8 +74,22 @@ function volcanoGeoJson(volcanoes: Volcano[]): FeatureCollection {
   })));
 }
 
-function pointCollection(point: { lat: number; lng: number } | null): FeatureCollection {
-  return asCollection(point ? [{ type: 'Feature', geometry: { type: 'Point', coordinates: [point.lng, point.lat] }, properties: {} }] : []);
+function destinationPoint(origin: { lat: number; lng: number }, bearingDegrees: number, distanceKm: number): [number, number] {
+  const angularDistance = distanceKm / 6371.0088;
+  const bearing = bearingDegrees * Math.PI / 180;
+  const lat1 = origin.lat * Math.PI / 180;
+  const lng1 = origin.lng * Math.PI / 180;
+  const lat2 = Math.asin(Math.sin(lat1) * Math.cos(angularDistance) + Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearing));
+  const lng2 = lng1 + Math.atan2(Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat1), Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2));
+  return [((lng2 * 180 / Math.PI + 540) % 360) - 180, lat2 * 180 / Math.PI];
+}
+
+function waveCollection(origin: { lat: number; lng: number }, pRadiusKm: number, sRadiusKm: number): FeatureCollection {
+  const ring = (radiusKm: number) => Array.from({ length: 121 }, (_, index) => destinationPoint(origin, index * 3, radiusKm));
+  const features: FeatureCollection['features'] = [];
+  if (pRadiusKm > 0) features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: ring(pRadiusKm) }, properties: { waveType: 'p' } });
+  if (sRadiusKm > 0) features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: ring(sRadiusKm) }, properties: { waveType: 's' } });
+  return asCollection(features);
 }
 
 function graticuleGeoJson(): FeatureCollection {
@@ -106,19 +125,17 @@ function setVisibility(map: maplibregl.Map, ids: string[], visible: boolean) {
 
 function stationIcon() {
   const canvas = document.createElement('canvas');
-  canvas.width = 40; canvas.height = 40;
+  canvas.width = 32; canvas.height = 32;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Canvas 2D no disponible');
-  context.lineCap = 'square';
-  context.lineJoin = 'miter';
-  context.strokeStyle = '#d9fffa';
-  context.fillStyle = '#0b716d';
-  context.lineWidth = 3;
-  context.beginPath(); context.arc(20, 20, 7, 0, Math.PI * 2); context.fill(); context.stroke();
-  context.beginPath(); context.moveTo(20, 5); context.lineTo(20, 15); context.moveTo(20, 25); context.lineTo(20, 35); context.moveTo(5, 20); context.lineTo(15, 20); context.moveTo(25, 20); context.lineTo(35, 20); context.stroke();
-  context.strokeStyle = '#48e0d1'; context.lineWidth = 2;
-  context.beginPath(); context.arc(20, 20, 13, -.7, .7); context.moveTo(20, 7); context.arc(20, 20, 13, Math.PI - .7, Math.PI + .7); context.stroke();
-  return context.getImageData(0, 0, 40, 40);
+  context.lineJoin = 'round';
+  context.beginPath();
+  context.moveTo(16, 3); context.lineTo(29, 27); context.lineTo(3, 27); context.closePath();
+  context.fillStyle = '#08736f'; context.fill();
+  context.strokeStyle = '#d9fffa'; context.lineWidth = 2.4; context.stroke();
+  context.beginPath(); context.arc(16, 18, 3.5, 0, Math.PI * 2);
+  context.fillStyle = '#53e1d3'; context.fill();
+  return context.getImageData(0, 0, 32, 32);
 }
 
 function addSourceAndLayers(map: maplibregl.Map) {
@@ -133,9 +150,9 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addSource('plate-boundaries', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/plate-boundaries.json`, attribution: 'PB2002 · Peter Bird / Nordpil' });
   map.addSource('plate-orogens', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/plate-orogens.json`, attribution: 'PB2002 · Peter Bird / Nordpil' });
   map.addSource('graticule', { type: 'geojson', data: graticuleGeoJson() as never });
-  map.addSource('earthquakes', { type: 'geojson', data: asCollection([]) as never, cluster: true, clusterRadius: 34, clusterMaxZoom: 7 });
-  map.addSource('stations', { type: 'geojson', data: asCollection([]) as never, cluster: true, clusterRadius: 32, clusterMaxZoom: 8 });
-  map.addSource('volcanoes', { type: 'geojson', data: asCollection([]) as never, cluster: true, clusterRadius: 28, clusterMaxZoom: 6 });
+  map.addSource('earthquakes', { type: 'geojson', data: asCollection([]) as never });
+  map.addSource('stations', { type: 'geojson', data: asCollection([]) as never });
+  map.addSource('volcanoes', { type: 'geojson', data: asCollection([]) as never });
   map.addSource('wave', { type: 'geojson', data: asCollection([]) as never });
 
   map.addLayer({ id: 'satellite-base', type: 'raster', source: 'satellite', layout: { visibility: 'none' }, paint: { 'raster-resampling': 'linear', 'raster-fade-duration': 100 } });
@@ -162,7 +179,7 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addLayer({ id: 'station-cluster-count', type: 'symbol', source: 'stations', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Open Sans Regular'], 'text-size': 9 }, paint: { 'text-color': '#eafffb' } });
   map.addLayer({ id: 'station-selected', type: 'circle', source: 'stations', filter: ['==', ['get', 'stationId'], ''], paint: { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 5, 10, 10, 16, 14], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2, 'circle-opacity': 0 } as never });
   map.addLayer({ id: 'station-points', type: 'circle', source: 'stations', filter: ['!', ['has', 'point_count']], paint: { 'circle-color': '#31e0d0', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 3, 4, 4.2, 8, 5.5, 12, 7.5, 18, 10], 'circle-opacity': 0.28, 'circle-blur': 0.3 } as never });
-  map.addLayer({ id: 'station-icons', type: 'symbol', source: 'stations', filter: ['!', ['has', 'point_count']], layout: { 'icon-image': 'station-node', 'icon-size': ['interpolate', ['linear'], ['zoom'], 0, .58, 5, .72, 10, .92, 16, 1.2], 'icon-allow-overlap': true, 'icon-ignore-placement': true } as never });
+  map.addLayer({ id: 'station-icons', type: 'symbol', source: 'stations', filter: ['!', ['has', 'point_count']], layout: { 'icon-image': 'station-node', 'icon-size': ['interpolate', ['linear'], ['zoom'], 0, .72, 6, .78, 12, .9, 20, 1.05], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-optional': false } as never });
   map.addLayer({ id: 'station-labels', type: 'symbol', source: 'stations', minzoom: 7, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['concat', ['get', 'network'], '.', ['get', 'code']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 7, 8, 12, 10, 18, 13], 'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': '#59e2d4', 'text-halo-color': 'rgba(5,18,21,.96)', 'text-halo-width': 1.5 } as never });
 
   map.addLayer({ id: 'earthquake-clusters', type: 'circle', source: 'earthquakes', filter: ['has', 'point_count'], paint: { 'circle-color': ['step', ['get', 'point_count'], '#f5b347', 10, '#f17b45', 50, '#e7454f', 250, '#b92842'], 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 19, 50, 25, 250, 32], 'circle-stroke-color': '#fff7ea', 'circle-stroke-width': 1.8, 'circle-opacity': 0.96 } as never });
@@ -172,6 +189,13 @@ function addSourceAndLayers(map: maplibregl.Map) {
     'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 10, 2, 13, 4, 17, 6, 25, 8, 34], 8, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 13, 2, 17, 4, 23, 6, 33, 8, 47], 16, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 16, 2, 21, 4, 29, 6, 42, 8, 60]],
     'circle-opacity': ['interpolate', ['linear'], ['get', 'magnitude'], -2, .22, 3, .3, 6, .42], 'circle-blur': .34,
   } as never });
+  map.addLayer({ id: 'earthquake-rings', type: 'circle', source: 'earthquakes', filter: ['!', ['has', 'point_count']], paint: {
+    'circle-color': 'rgba(0,0,0,0)',
+    'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 8, 2, 11, 4, 15, 6, 21, 8, 29], 10, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 10, 2, 14, 4, 20, 6, 29, 8, 40], 20, ['interpolate', ['linear'], ['get', 'magnitude'], -2, 12, 2, 17, 4, 24, 6, 36, 8, 50]],
+    'circle-stroke-color': ['step', ['get', 'ageMinutes'], '#ff4f58', 60, '#ff9f3f', 1440, '#e0c74f', 10080, '#70bf8f'],
+    'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 0, 1.6, 10, 2.2, 20, 2.8],
+    'circle-stroke-opacity': .96,
+  } as never });
   map.addLayer({ id: 'earthquake-selected', type: 'circle', source: 'earthquakes', filter: ['==', ['get', 'eventId'], ''], paint: { 'circle-color': 'rgba(255,255,255,.08)', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 9, 8, 18, 15, 26], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.2 } as never });
   map.addLayer({ id: 'earthquake-points', type: 'circle', source: 'earthquakes', filter: ['!', ['has', 'point_count']], paint: {
     'circle-color': ['step', ['get', 'depth'], '#f06157', 35, '#f1a43c', 70, '#4caad6', 300, '#856bc6'],
@@ -180,19 +204,11 @@ function addSourceAndLayers(map: maplibregl.Map) {
   } as never });
   map.addLayer({ id: 'earthquake-labels', type: 'symbol', source: 'earthquakes', minzoom: 4.2, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['concat', ['get', 'reviewCode'], ' ', ['get', 'magLabel'], ['case', ['!=', ['get', 'roman'], ''], ['concat', ' · ', ['get', 'roman']], '']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 4, 8, 10, 11, 16, 13], 'text-offset': [0, 1.2], 'text-anchor': 'top', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': '#fff8ec', 'text-halo-color': 'rgba(7,14,17,.96)', 'text-halo-width': 1.5 } as never });
 
-  for (const [id, color] of [['p-wave', '#4db9ff'], ['s-wave', '#ff6659']] as const) map.addLayer({ id, type: 'circle', source: 'wave', paint: { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': 0, 'circle-stroke-color': color, 'circle-stroke-width': 2, 'circle-stroke-opacity': 0 } });
+  map.addLayer({ id: 'p-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 'p'], paint: { 'line-color': '#4db9ff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1.4, 8, 2.1, 16, 2.8], 'line-opacity': 0 } as never });
+  map.addLayer({ id: 's-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 's'], paint: { 'line-color': '#ff6659', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1.6, 8, 2.4, 16, 3.1], 'line-opacity': 0 } as never });
 
   map.addLayer({ id: 'country-labels', type: 'symbol', source: 'countries', minzoom: 0, maxzoom: 9, layout: { 'text-field': ['coalesce', ['get', 'NAME_ES'], ['get', 'ADMIN'], ['get', 'NAME']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 0, 8, 5, 12, 8, 15], 'text-transform': 'uppercase', 'text-letter-spacing': 0.08, 'text-allow-overlap': false }, paint: { 'text-color': '#253534', 'text-halo-color': 'rgba(244,244,226,.88)', 'text-halo-width': 1.4 } as never });
   map.addLayer({ id: 'place-labels', type: 'symbol', source: 'places', minzoom: 3, filter: ['<=', ['to-number', ['get', 'scalerank']], 7], layout: { 'text-field': ['coalesce', ['get', 'name'], ['get', 'nameascii']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 9, 8, 12, 14, 15], 'text-allow-overlap': false }, paint: { 'text-color': '#eaf6f5', 'text-halo-color': 'rgba(2,9,12,.95)', 'text-halo-width': 1.6 } as never });
-}
-
-function clusterClick(map: maplibregl.Map, sourceId: string, feature: MapGeoJSONFeature) {
-  const clusterId = Number(feature.properties?.cluster_id);
-  const source = map.getSource(sourceId) as GeoJSONSource;
-  void source.getClusterExpansionZoom(clusterId).then((zoom) => {
-    const coordinates = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
-    map.easeTo({ center: coordinates, zoom, duration: 650 });
-  });
 }
 
 export function GlobeView({
@@ -202,7 +218,7 @@ export function GlobeView({
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const eventsRef = useRef(events);
-  const stationsRef = useRef(stations);
+  const stationsByIdRef = useRef(new Map(stations.map((station) => [station.id, station])));
   const onSelectEventRef = useRef(onSelectEvent);
   const onSelectStationRef = useRef(onSelectStation);
   const [ready, setReady] = useState(false);
@@ -210,9 +226,12 @@ export function GlobeView({
   const [zoom, setZoom] = useState(1);
   const [bearing, setBearing] = useState(0);
   eventsRef.current = events;
-  stationsRef.current = stations;
   onSelectEventRef.current = onSelectEvent;
   onSelectStationRef.current = onSelectStation;
+
+  useEffect(() => {
+    stationsByIdRef.current = new Map(stations.map((station) => [station.id, station]));
+  }, [stations]);
 
   useEffect(() => {
     if (!hostRef.current || failed || mapRef.current) return;
@@ -232,9 +251,6 @@ export function GlobeView({
         setZoom(map.getZoom());
         map.on('zoom', () => setZoom(map.getZoom()));
         map.on('rotate', () => setBearing(map.getBearing()));
-        map.on('click', 'earthquake-clusters', (event) => event.features?.[0] && clusterClick(map, 'earthquakes', event.features[0]));
-        map.on('click', 'station-clusters', (event) => event.features?.[0] && clusterClick(map, 'stations', event.features[0]));
-        map.on('click', 'volcano-clusters', (event) => event.features?.[0] && clusterClick(map, 'volcanoes', event.features[0]));
         map.on('click', 'earthquake-points', (event: MapLayerMouseEvent) => {
           const id = event.features?.[0]?.properties?.eventId;
           const item = eventsRef.current.find((candidate) => candidate.id === id);
@@ -242,7 +258,7 @@ export function GlobeView({
         });
         const selectStationFeature = (event: MapLayerMouseEvent) => {
           const id = event.features?.[0]?.properties?.stationId;
-          const item = stationsRef.current.find((candidate) => candidate.id === id);
+          const item = stationsByIdRef.current.get(id);
           if (item) onSelectStationRef.current(item);
         };
         map.on('click', 'station-points', selectStationFeature);
@@ -256,7 +272,24 @@ export function GlobeView({
             .setHTML(`<div class="map-popup"><b>${String(feature.properties?.name || 'Volcán')}</b><span>${String(feature.properties?.country || '')}</span><small>${String(feature.properties?.volcanoType || 'Catálogo Smithsonian GVP')}</small></div>`)
             .addTo(map);
         });
-        for (const layerId of ['earthquake-points', 'earthquake-clusters', 'station-points', 'station-icons', 'station-clusters', 'volcano-points', 'volcano-clusters']) {
+        const stationHover = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 10 });
+        map.on('mousemove', 'station-icons', (event: MapLayerMouseEvent) => {
+          const feature = event.features?.[0];
+          if (!feature) return;
+          const coordinates = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+          const content = document.createElement('div');
+          content.className = 'map-popup station-hover-popup';
+          const title = document.createElement('b');
+          title.textContent = `${String(feature.properties?.network || '')}.${String(feature.properties?.code || '')}`;
+          const name = document.createElement('span');
+          name.textContent = String(feature.properties?.name || 'Estación sísmica');
+          const source = document.createElement('small');
+          source.textContent = `${String(feature.properties?.country || '—')} · ${String(feature.properties?.source || 'FDSN')}`;
+          content.append(title, name, source);
+          stationHover.setLngLat(coordinates).setDOMContent(content).addTo(map);
+        });
+        map.on('mouseleave', 'station-icons', () => stationHover.remove());
+        for (const layerId of ['earthquake-points', 'station-points', 'station-icons', 'volcano-points']) {
           map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
           map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
         }
@@ -303,7 +336,7 @@ export function GlobeView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    setVisibility(map, ['earthquake-clusters', 'earthquake-cluster-count', 'earthquake-halos', 'earthquake-points', 'earthquake-labels', 'earthquake-selected'], layers.earthquakes);
+    setVisibility(map, ['earthquake-clusters', 'earthquake-cluster-count', 'earthquake-halos', 'earthquake-rings', 'earthquake-points', 'earthquake-labels', 'earthquake-selected', 'p-wave', 's-wave'], layers.earthquakes);
     setVisibility(map, ['station-cluster-halo', 'station-clusters', 'station-cluster-count', 'station-points', 'station-icons', 'station-labels', 'station-selected'], layers.stations);
     setVisibility(map, ['plate-lines', 'orogen-lines'], layers.plates);
     setVisibility(map, ['volcano-clusters', 'volcano-cluster-count', 'volcano-points', 'volcano-labels'], layers.volcanoes);
@@ -331,23 +364,34 @@ export function GlobeView({
     const map = mapRef.current;
     if (!map || !ready) return;
     const wave = pulseEvent ?? selectedEvent;
-    (map.getSource('wave') as GeoJSONSource).setData(pointCollection(wave) as never);
-    if (!wave) return;
+    const source = map.getSource('wave') as GeoJSONSource;
+    if (!wave) {
+      source.setData(asCollection([]) as never);
+      map.setPaintProperty('p-wave', 'line-opacity', 0);
+      map.setPaintProperty('s-wave', 'line-opacity', 0);
+      return;
+    }
     let frame = 0;
+    let lastUpdate = 0;
     const started = performance.now();
-    const maxRadius = Math.min(230, 70 + wave.magnitude * 24);
+    const maxRadiusKm = Math.max(120, Math.min(1350, 160 + Math.max(0, wave.magnitude) * 140));
     const animate = (time: number) => {
-      const cycle = ((time - started) % 8000) / 8000;
-      const p = Math.min(1, cycle * 1.42);
-      const s = Math.min(1, cycle * 0.92);
-      map.setPaintProperty('p-wave', 'circle-radius', p * maxRadius);
-      map.setPaintProperty('p-wave', 'circle-stroke-opacity', Math.max(0, 0.72 * (1 - p)));
-      map.setPaintProperty('s-wave', 'circle-radius', s * maxRadius);
-      map.setPaintProperty('s-wave', 'circle-stroke-opacity', Math.max(0, 0.84 * (1 - s)));
+      if (time - lastUpdate >= 40) {
+        const cycle = ((time - started) % 10_000) / 10_000;
+        const p = Math.min(1, cycle * 1.35);
+        const s = Math.min(1, cycle * .9);
+        source.setData(waveCollection(wave, p * maxRadiusKm, s * maxRadiusKm) as never);
+        map.setPaintProperty('p-wave', 'line-opacity', Math.max(0, .78 * (1 - p)));
+        map.setPaintProperty('s-wave', 'line-opacity', Math.max(0, .9 * (1 - s)));
+        lastUpdate = time;
+      }
       frame = requestAnimationFrame(animate);
     };
     frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      source.setData(asCollection([]) as never);
+    };
   }, [pulseEvent, selectedEvent, ready]);
 
   if (failed) return <div className="webgl-fallback" role="status"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><p className="eyebrow">MODO DE COMPATIBILIDAD</p><h2>El globo 3D necesita WebGL</h2><p>Los datos y el historial siguen disponibles. Activa la aceleración gráfica para abrir la cartografía científica.</p></div>;

@@ -3,20 +3,27 @@ import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 const outputDir = path.resolve('public/data');
-const now = new Date();
-const start = new Date(now.getTime() - 60 * 60_000).toISOString();
-const end = now.toISOString();
 
 const stationProviders = [
   {
     source: 'EarthScope',
     baseUrl: 'https://service.earthscope.org/fdsnws/station/1/',
-    url: `https://service.earthscope.org/fdsnws/station/1/query?format=text&level=station&includerestricted=false&channel=BH%3F%2CHH%3F%2CEH%3F%2CSH%3F&starttime=${encodeURIComponent(start)}&endtime=${encodeURIComponent(end)}`,
+    url: 'https://service.earthscope.org/fdsnws/station/1/query?format=text&level=station&includerestricted=false',
   },
   {
     source: 'GEOFON',
     baseUrl: 'https://geofon.gfz-potsdam.de/fdsnws/station/1/',
-    url: `https://geofon.gfz-potsdam.de/fdsnws/station/1/query?format=text&level=station&includerestricted=false&channel=BH%3F%2CHH%3F%2CEH%3F%2CSH%3F&starttime=${encodeURIComponent(start)}&endtime=${encodeURIComponent(end)}`,
+    url: 'https://geofon.gfz-potsdam.de/fdsnws/station/1/query?format=text&level=station&includerestricted=false',
+  },
+  {
+    source: 'NCEDC',
+    baseUrl: 'https://service.ncedc.org/fdsnws/station/1/',
+    url: 'https://service.ncedc.org/fdsnws/station/1/query?format=text&level=station&includerestricted=false',
+  },
+  {
+    source: 'BMKG',
+    baseUrl: 'https://geof.bmkg.go.id/fdsnws/station/1/',
+    url: 'https://geof.bmkg.go.id/fdsnws/station/1/query?format=text&level=station&includerestricted=false',
   },
 ];
 
@@ -50,7 +57,7 @@ function parseStations(text, provider) {
       lat: Number(latitude),
       lng: Number(longitude),
       elevationM: Number(elevation) || 0,
-      status: 'online',
+      status: 'unknown',
       dataUrl: `${provider.baseUrl}query?network=${encodeURIComponent(network)}&station=${encodeURIComponent(code)}&level=station&format=text`,
       source: provider.source,
       startTime: startTime || null,
@@ -60,11 +67,21 @@ function parseStations(text, provider) {
 }
 
 async function syncStations() {
-  const batches = await Promise.all(stationProviders.map(async (provider) => parseStations(await fetchText(provider.url), provider)));
+  const batches = await Promise.allSettled(stationProviders.map(async (provider) => ({
+    provider,
+    stations: parseStations(await fetchText(provider.url), provider),
+  })));
   const deduplicated = new Map();
-  for (const station of batches.flat()) {
+  for (const batch of batches) {
+    if (batch.status === 'rejected') {
+      console.warn(`Proveedor FDSN omitido: ${batch.reason instanceof Error ? batch.reason.message : batch.reason}`);
+      continue;
+    }
+    console.log(`${batch.value.provider.source}: ${batch.value.stations.length} estaciones catalogadas.`);
+    for (const station of batch.value.stations) {
     const current = deduplicated.get(station.id);
     if (!current || current.source !== 'EarthScope') deduplicated.set(station.id, station);
+    }
   }
   const stations = [...deduplicated.values()].sort((a, b) => a.id.localeCompare(b.id));
   await writeFile(path.join(outputDir, 'stations.json.gz'), gzipSync(`${JSON.stringify(stations)}\n`, { level: 9 }));
