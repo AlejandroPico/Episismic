@@ -194,7 +194,7 @@ function AboutPanel() {
     <div className="about-principles"><span><strong>3</strong>catálogos sísmicos</span><span><strong>6.500+</strong>estaciones públicas</span><span><strong>SQLite</strong>archivo local</span></div>
     <p className="safety-note">Aplicación informativa y educativa. Para emergencias y decisiones de protección civil deben seguirse siempre los avisos de los organismos oficiales.</p>
     <div className="about-links">
-      <a href="https://alejandropico.github.io/" target="_blank" rel="noreferrer"><span><small>AUTOR</small>Portfolio de Alejandro Pico</span><ExternalLink size={14} /></a>
+      <a href="https://alejandropico.github.io/Portfolio/" target="_blank" rel="noreferrer"><span><small>AUTOR</small>Portfolio de Alejandro Pico</span><ExternalLink size={14} /></a>
       <a href="https://github.com/AlejandroPico/Episismic" target="_blank" rel="noreferrer"><span><small>PROYECTO ABIERTO</small>Código, fuentes y documentación</span><ExternalLink size={14} /></a>
     </div>
   </section>;
