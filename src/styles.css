@@ -112,6 +112,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .globe-host { position: absolute; inset: 0; }
 .globe-host canvas { display: block; }
 .webgl-fallback { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 10px; padding: 28px; text-align: center; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 9%, transparent), transparent 46%); }
+.webgl-fallback > img { width: 64px; height: 64px; margin-bottom: 8px; }
 .webgl-fallback h2 { margin: 0; font-size: clamp(18px, 2vw, 26px); }
 .webgl-fallback > p:last-child { max-width: 520px; margin: 0; color: var(--text-soft); font-size: 11px; line-height: 1.6; }
 .fallback-orbit { width: 120px; height: 120px; display: grid; place-items: center; margin-bottom: 10px; border: 1px solid var(--line-strong); border-radius: 50%; box-shadow: 0 0 0 18px var(--accent-soft), 0 0 0 19px var(--line); }

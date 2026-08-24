@@ -42,7 +42,7 @@ export function normalizeUsgsFeature(feature: UsgsFeature): Earthquake {
     lng,
     time: properties.time,
     updated: properties.updated,
-    source: properties.net?.toUpperCase() || 'USGS',
+    source: properties.net ? `${properties.net.toUpperCase()} · USGS` : 'USGS',
     sourceUrl: properties.url,
     detailUrl: properties.detail,
     felt: properties.felt,

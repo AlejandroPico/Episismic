@@ -56,7 +56,7 @@ async function fetchEmsc(window: TimeWindow, signal?: AbortSignal): Promise<Eart
     return {
       id: `emsc:${feature.id}`, magnitude: Number(properties.mag) || 0,
       depthKm: Math.max(0, Number(properties.depth) || 0), place: properties.flynn_region || 'Localización por revisar',
-      lat, lng, time, updated, source: `EMSC · ${authority}`,
+      lat, lng, time, updated, source: authority === 'EMSC' ? 'EMSC' : `EMSC · ${authority}`,
       sourceUrl: `https://www.seismicportal.eu/eventdetails.html?unid=${encodeURIComponent(feature.id)}`,
       felt: null, tsunami: false, alert: null, status: 'automatic', significance: Math.round((Number(properties.mag) || 0) * 70),
       magnitudeType: properties.magtype || '—', catalogs: ['EMSC'], intensity: null, reviewCode: 'A', kind: 'earthquake',
