@@ -2,6 +2,7 @@ export const APP_VERSION = '0.9.0';
 export const RELEASES_URL = 'https://github.com/AlejandroPico/Episismic/releases';
 
 export type DesktopPlatform = 'windows' | 'macos' | 'linux' | 'unknown';
+export type DesktopArchitecture = 'x64' | 'arm64' | 'unknown';
 
 export interface ReleaseAsset {
   name: string;
@@ -37,6 +38,13 @@ export function platformLabel(platform = detectDesktopPlatform()) {
   return ({ windows: 'Windows', macos: 'macOS', linux: 'Linux', unknown: 'escritorio' })[platform];
 }
 
+export function detectDesktopArchitecture(): DesktopArchitecture {
+  const description = `${navigator.userAgent} ${navigator.platform}`.toLowerCase();
+  if (/arm64|aarch64/.test(description)) return 'arm64';
+  if (/x86_64|x64|amd64|win64/.test(description) && !description.includes('macintel')) return 'x64';
+  return 'unknown';
+}
+
 export function isNewerVersion(candidate: string, current = APP_VERSION) {
   const parts = (version: string) => version.replace(/^v/, '').split(/[.-]/).slice(0, 3).map((value) => Number.parseInt(value, 10) || 0);
   const next = parts(candidate);
@@ -44,10 +52,16 @@ export function isNewerVersion(candidate: string, current = APP_VERSION) {
   return next.some((value, index) => value > installed[index] && next.slice(0, index).every((part, partIndex) => part === installed[partIndex]));
 }
 
-export function assetForPlatform(release: LatestRelease, platform = detectDesktopPlatform()) {
+export function assetForPlatform(release: LatestRelease, platform = detectDesktopPlatform(), architecture?: DesktopArchitecture) {
+  if (platform === 'macos') {
+    const resolvedArchitecture = architecture ?? detectDesktopArchitecture();
+    if (resolvedArchitecture === 'arm64') return release.assets.find((asset) => /_aarch64\.dmg$/i.test(asset.name)) || null;
+    if (resolvedArchitecture === 'x64') return release.assets.find((asset) => /_x64\.dmg$/i.test(asset.name)) || null;
+    return null;
+  }
   const extensions: Record<DesktopPlatform, RegExp[]> = {
     windows: [/setup\.exe$/i, /\.msi$/i],
-    macos: [/\.dmg$/i, /\.app\.tar\.gz$/i],
+    macos: [],
     linux: [/\.AppImage$/i, /\.deb$/i],
     unknown: [],
   };

@@ -20,7 +20,8 @@ describe('versionado de escritorio', () => {
 
   it('elige el instalador correspondiente al sistema', () => {
     expect(assetForPlatform(release, 'windows')?.browser_download_url).toContain('windows');
-    expect(assetForPlatform(release, 'macos')?.browser_download_url).toContain('macos');
+    expect(assetForPlatform(release, 'macos', 'x64')?.browser_download_url).toContain('macos');
+    expect(assetForPlatform(release, 'macos', 'unknown')).toBeNull();
     expect(assetForPlatform(release, 'linux')?.browser_download_url).toContain('linux');
   });
 });

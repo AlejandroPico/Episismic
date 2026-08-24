@@ -213,7 +213,7 @@ function AboutPanel({ latestRelease }: Pick<ControlPanelProps, 'latestRelease'>)
       <div>
         <small>APLICACIÓN NATIVA · {platformLabel(platform).toUpperCase()}</small>
         <strong>{updateAvailable ? `Actualización ${latestRelease?.version} disponible` : `Episismic ${APP_VERSION} para ${platformLabel(platform)}`}</strong>
-        <span>Ventana propia del sistema. La aplicación comprueba GitHub Releases al iniciarse y avisa cuando hay una versión superior.</span>
+        <span>Ventana propia del sistema. La aplicación comprueba GitHub Releases al iniciarse y avisa cuando hay una versión superior.{platform === 'macos' && !asset ? ' Elige Intel o Apple Silicon en la página de descargas.' : ''}</span>
       </div>
       <a className="primary-button" href={asset?.browser_download_url || latestRelease?.url || RELEASES_URL} target="_blank" rel="noreferrer">
         <Download size={15} /> {asset ? `Descargar ${(asset.size / 1024 / 1024).toFixed(0)} MB` : 'Ver descargas'}
