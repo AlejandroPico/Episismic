@@ -570,3 +570,121 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   .encyclopedia-chapters { display: block; overflow-y: auto; }
   .encyclopedia-chapters > button { width: 100%; min-width: 0; height: 46px; border-right: 0; border-bottom: 1px solid var(--line); }
 }
+
+/* Revisión 2.1: una sola barra, paneles a la derecha y lectura móvil prioritaria. */
+.topbar {
+  gap: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--panel);
+  box-shadow: 0 5px 20px rgba(0,0,0,.2);
+  backdrop-filter: blur(14px);
+}
+.top-tools { width: auto; border: 0; background: transparent; box-shadow: none; backdrop-filter: none; }
+.top-tools button, .top-tools .history-toggle {
+  width: 42px;
+  min-width: 42px;
+  height: 40px;
+  flex: 0 0 42px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  box-shadow: none;
+  background: transparent;
+}
+.top-tools button:last-child { border-right: 0; }
+.control-panel { z-index: 40; right: 10px; left: auto; }
+.source-health-card {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 12px minmax(0,1fr);
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+}
+.source-health-card > div { min-width: 0; display: grid; gap: 5px; }
+.source-health-card strong { color: var(--text); font: 600 9px/1 IBM Plex Mono, monospace; text-transform: uppercase; letter-spacing: .05em; }
+.source-health-card small { overflow: hidden; color: var(--text-soft); font-size: 8px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.orientation-controls { right: 10px; bottom: 88px; left: auto; }
+.orientation-controls button { border-right: 0; }
+.encyclopedia-mobile-index-toggle { display: none; }
+
+@media (max-width: 900px) {
+  .topbar {
+    top: 8px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    height: 40px;
+    min-height: 40px;
+    display: flex;
+  }
+  .top-tools { width: 100%; min-width: 0; height: 38px; overflow: hidden; }
+  .top-tools button, .top-tools .history-toggle {
+    width: auto;
+    min-width: 0;
+    height: 38px;
+    flex: 1 1 12.5%;
+  }
+  .top-tools button i { top: 2px; right: 2px; }
+  .orientation-controls { display: none !important; }
+  .control-panel, .about-control-panel { right: 8px; left: 8px; }
+  .encyclopedia-workspace {
+    position: relative;
+    display: grid;
+    grid-template: 42px minmax(0,1fr) / minmax(0,1fr);
+  }
+  .encyclopedia-mobile-index-toggle {
+    z-index: 5;
+    grid-area: 1 / 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 20px minmax(0,1fr) 20px;
+    align-items: center;
+    gap: 8px;
+    padding: 0 11px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--text-soft);
+    background: var(--panel-solid);
+    text-align: left;
+    cursor: pointer;
+  }
+  .encyclopedia-mobile-index-toggle > span { min-width: 0; display: grid; gap: 3px; }
+  .encyclopedia-mobile-index-toggle small { color: var(--accent); font: 600 7px/1 IBM Plex Mono, monospace; letter-spacing: .08em; }
+  .encyclopedia-mobile-index-toggle strong { overflow: hidden; color: var(--text); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+  .encyclopedia-mobile-index-toggle[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
+  .encyclopedia-index {
+    position: absolute;
+    z-index: 6;
+    top: 42px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: none;
+    border: 0;
+    background: var(--panel-solid);
+    box-shadow: 0 18px 35px rgba(0,0,0,.38);
+  }
+  .encyclopedia-index.mobile-open { display: flex; }
+  .encyclopedia-article { grid-area: 2 / 1; }
+  .encyclopedia-stats { min-height: 48px; }
+  .encyclopedia-search { position: static; width: auto; margin: 9px; }
+  .encyclopedia-categories { flex-wrap: nowrap; overflow-x: auto; padding: 0 9px 9px; }
+  .encyclopedia-chapters { display: block; overflow-x: hidden; overflow-y: auto; }
+  .encyclopedia-chapters > button {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: 49px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .encyclopedia-chapters > button.active { box-shadow: inset 2px 0 var(--accent); }
+}
+
+@media (max-width: 360px) {
+  .top-tools button, .top-tools .history-toggle { flex-basis: 12.5%; }
+  .top-tools svg { width: 16px; height: 16px; }
+}

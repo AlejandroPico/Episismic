@@ -6,7 +6,7 @@ import {
 import { getDatabaseStats, upsertEarthquakes } from '../services/database';
 import { searchHistoricalEarthquakes } from '../services/usgs';
 import type {
-  Earthquake, Filters, MapLayerState, MapStyle, SeismicStation, ThemeMode,
+  DataStatus, Earthquake, Filters, MapLayerState, MapStyle, SeismicStation, ThemeMode,
 } from '../types';
 import type { PanelId } from './TopBar';
 import { Encyclopedia } from './Encyclopedia';
@@ -22,6 +22,7 @@ interface ControlPanelProps {
   soundEnabled: boolean;
   soundMinimumMagnitude: number;
   stations: SeismicStation[];
+  status: DataStatus;
   onClose: () => void;
   onLayers: (layers: MapLayerState) => void;
   onFilters: (filters: Filters) => void;
@@ -136,11 +137,15 @@ function ArchivePanel({ onHistoricalResults }: Pick<ControlPanelProps, 'onHistor
   </section>;
 }
 
-function StationsPanel({ stations, onSelectStation }: Pick<ControlPanelProps, 'stations' | 'onSelectStation'>) {
+function StationsPanel({ stations, status, onSelectStation }: Pick<ControlPanelProps, 'stations' | 'status' | 'onSelectStation'>) {
   const [query, setQuery] = useState('');
   const results = useMemo(() => stations.filter((station) => `${station.id} ${station.name} ${station.country}`.toLowerCase().includes(query.toLowerCase())), [query, stations]);
   return <section className="control-section station-catalogue">
     <h3><RadioTower size={16} /> Catálogo de estaciones</h3>
+    <div className="source-health-card" title={status.message}>
+      <span className={`live-dot ${status.state}`} />
+      <div><strong>{status.sources?.length ?? 0}/3 fuentes sísmicas</strong><small>{status.sources?.join(' · ') || 'Catálogos en sincronización'}{status.lastUpdated ? ` · ${new Date(status.lastUpdated).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : ''}</small></div>
+    </div>
     <label className="inline-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Código, país o estación" /></label>
     <p className="catalog-count">{results.length.toLocaleString('es-ES')} estaciones · se muestran las primeras {Math.min(results.length, 400).toLocaleString('es-ES')}</p>
     <div className="station-list">

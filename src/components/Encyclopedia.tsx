@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { BookOpen, ChevronRight, ExternalLink, LibraryBig, Search } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, ExternalLink, LibraryBig, ListTree, Search } from 'lucide-react';
 import { encyclopediaCategories, encyclopediaChapters } from '../data/encyclopedia';
 import { ScientificDiagram } from './ScientificDiagram';
 
@@ -11,6 +11,7 @@ export function Encyclopedia() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Todos');
   const [selectedId, setSelectedId] = useState(encyclopediaChapters[0].id);
+  const [mobileIndexOpen, setMobileIndexOpen] = useState(false);
   const filtered = useMemo(() => {
     const term = normalize(query.trim());
     return encyclopediaChapters.filter((item) => (category === 'Todos' || item.category === category)
@@ -19,7 +20,10 @@ export function Encyclopedia() {
   const selected = encyclopediaChapters.find((item) => item.id === selectedId) ?? filtered[0] ?? encyclopediaChapters[0];
 
   return <div className="encyclopedia-workspace">
-    <aside className="encyclopedia-index">
+    <button className="encyclopedia-mobile-index-toggle" onClick={() => setMobileIndexOpen((open) => !open)} aria-expanded={mobileIndexOpen}>
+      <ListTree size={16} /><span><small>ÍNDICE</small><strong>{selected.title}</strong></span><ChevronDown size={16} />
+    </button>
+    <aside className={`encyclopedia-index ${mobileIndexOpen ? 'mobile-open' : ''}`}>
       <div className="encyclopedia-stats">
         <LibraryBig size={20} />
         <div><strong>{encyclopediaChapters.length} capítulos</strong><small>{encyclopediaCategories.length} áreas · esquemas y fuentes</small></div>
@@ -29,7 +33,7 @@ export function Encyclopedia() {
         {['Todos', ...encyclopediaCategories].map((item) => <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{item}</button>)}
       </div>
       <div className="encyclopedia-chapters">
-        {filtered.map((item, index) => <button key={item.id} className={selected.id === item.id ? 'active' : ''} onClick={() => setSelectedId(item.id)}>
+        {filtered.map((item, index) => <button key={item.id} className={selected.id === item.id ? 'active' : ''} onClick={() => { setSelectedId(item.id); setMobileIndexOpen(false); }}>
           <span>{String(index + 1).padStart(2, '0')}</span><div><strong>{item.title}</strong><small>{item.category}</small></div><ChevronRight size={14} />
         </button>)}
         {!filtered.length && <p className="encyclopedia-empty">No hay capítulos para esta búsqueda.</p>}

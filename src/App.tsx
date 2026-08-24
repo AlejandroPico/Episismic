@@ -43,7 +43,6 @@ export default function App() {
   const [pulseEvent, setPulseEvent] = useState<Earthquake | null>(null);
   const [activePanel, setActivePanel] = useState<PanelId>(null);
   const [historyOpen, setHistoryOpen] = useState(() => window.innerWidth > 820);
-  const [query, setQuery] = useState('');
   const [layers, setLayers] = useState<MapLayerState>(() => loadPreference('layers-v2', DEFAULT_LAYERS));
   const [mapStyle, setMapStyle] = useState<MapStyle>(() => loadPreference('map-style-v2', 'political'));
   const [theme, setTheme] = useState<ThemeMode>(() => loadPreference('theme', 'automatic'));
@@ -56,19 +55,10 @@ export default function App() {
 
   const sourceEvents = historicalEvents ?? liveEvents;
   const visibleEvents = useMemo(() => sourceEvents.filter((event) => {
-    const search = query.trim().toLowerCase();
     return event.magnitude >= filters.minMagnitude
       && event.depthKm <= filters.maxDepthKm
-      && (!filters.significantOnly || event.significance >= 600 || event.magnitude >= 6)
-      && (!search || `${event.place} ${event.source} ${event.magnitude.toFixed(1)}`.toLowerCase().includes(search));
-  }), [filters, query, sourceEvents]);
-
-  const visibleStations = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    if (!search) return stations;
-    const matches = stations.filter((station) => `${station.id} ${station.name} ${station.country}`.toLowerCase().includes(search));
-    return matches.length ? matches : stations;
-  }, [query, stations]);
+      && (!filters.significantOnly || event.significance >= 600 || event.magnitude >= 6);
+  }), [filters, sourceEvents]);
 
   const strongest = useMemo(() => visibleEvents.reduce<Earthquake | null>((max, event) => !max || event.magnitude > max.magnitude ? event : max, null), [visibleEvents]);
 
@@ -134,9 +124,9 @@ export default function App() {
 
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { setActivePanel(null); setSelectedEvent(null); setSelectedStation(null); }
-      if (event.key.toLowerCase() === 'l' && !(event.target instanceof HTMLInputElement)) setActivePanel((panel) => panel === 'layers' ? null : 'layers');
-      if (event.key.toLowerCase() === 'h' && !(event.target instanceof HTMLInputElement)) setHistoryOpen((open) => !open);
+      if (event.key === 'Escape') { setActivePanel(null); setHistoryOpen(false); setSelectedEvent(null); setSelectedStation(null); }
+      if (event.key.toLowerCase() === 'l' && !(event.target instanceof HTMLInputElement)) { setHistoryOpen(false); setActivePanel((panel) => panel === 'layers' ? null : 'layers'); }
+      if (event.key.toLowerCase() === 'h' && !(event.target instanceof HTMLInputElement)) { setActivePanel(null); setHistoryOpen((open) => !open); }
     };
     window.addEventListener('keydown', keyboard);
     return () => window.removeEventListener('keydown', keyboard);
@@ -147,8 +137,19 @@ export default function App() {
     setTimeWindow(window);
   };
 
+  const togglePanel = (panel: PanelId) => {
+    setActivePanel((current) => current === panel ? null : panel);
+    setHistoryOpen(false);
+  };
+
+  const toggleHistory = () => {
+    setActivePanel(null);
+    setHistoryOpen((open) => !open);
+  };
+
   const loadHistorical = (events: Earthquake[]) => {
     setHistoricalEvents(events);
+    setActivePanel(null);
     setHistoryOpen(true);
     if (events[0]) selectEvent(events[0], false);
   };
@@ -157,19 +158,16 @@ export default function App() {
     <div className={`app-shell ${historyOpen ? 'with-history' : ''}`}>
       <TopBar
         activePanel={activePanel}
-        query={query}
-        status={status}
         alertCount={visibleEvents.filter((event) => event.alert || event.magnitude >= 6).length}
         historyOpen={historyOpen}
-        onPanel={setActivePanel}
-        onQuery={setQuery}
-        onHistory={() => setHistoryOpen((open) => !open)}
+        onPanel={togglePanel}
+        onHistory={toggleHistory}
       />
 
       <main className="map-stage">
         <GlobeView
           events={visibleEvents}
-          stations={visibleStations}
+          stations={stations}
           volcanoes={volcanoes}
           layers={layers}
           mapStyle={mapStyle}
@@ -199,6 +197,7 @@ export default function App() {
           soundEnabled={soundEnabled}
           soundMinimumMagnitude={soundMinimumMagnitude}
           stations={stations}
+          status={status}
           onClose={() => setActivePanel(null)}
           onLayers={setLayers}
           onFilters={setFilters}
