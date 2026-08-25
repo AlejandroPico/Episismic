@@ -6,8 +6,9 @@ import { formatDateTime, formatMagnitude, haversineKm, intensityLabel, magnitude
 import { WaveSimulator } from './WaveSimulator';
 import { SeismicAnalysis } from './SeismicAnalysis';
 import { SequenceDiagnostics } from './SequenceDiagnostics';
+import { ImpactAssessment } from './ImpactAssessment';
 
-type InspectorTab = 'summary' | 'data' | 'focal' | 'sequence' | 'analysis' | 'diagnostics' | 'waves' | 'revisions' | 'compare';
+type InspectorTab = 'summary' | 'data' | 'focal' | 'sequence' | 'analysis' | 'diagnostics' | 'impact' | 'waves' | 'revisions' | 'compare';
 
 interface EventInspectorProps {
   event: Earthquake;
@@ -79,7 +80,7 @@ function FocalBall({ mechanism }: { mechanism: FocalMechanism }) {
 
 const tabs: Array<{ id: InspectorTab; label: string }> = [
   { id: 'summary', label: 'Resumen' }, { id: 'data', label: 'Datos' }, { id: 'focal', label: 'Focal' },
-  { id: 'sequence', label: 'Secuencia' }, { id: 'analysis', label: 'Análisis' }, { id: 'diagnostics', label: 'Diagnóstico' }, { id: 'waves', label: 'Ondas' }, { id: 'revisions', label: 'Revisiones' }, { id: 'compare', label: 'Comparar' },
+  { id: 'sequence', label: 'Secuencia' }, { id: 'analysis', label: 'Análisis' }, { id: 'diagnostics', label: 'Diagnóstico' }, { id: 'impact', label: 'Impacto' }, { id: 'waves', label: 'Ondas' }, { id: 'revisions', label: 'Revisiones' }, { id: 'compare', label: 'Comparar' },
 ];
 
 export function EventInspector({
@@ -132,6 +133,7 @@ export function EventInspector({
       {activeTab === 'sequence' && <section className="event-tab-panel scientific-section-body sequence-summary" role="tabpanel"><div className="section-lead"><div><strong>Secuencia local provisional</strong><p>Eventos dentro de {sequence.radiusKm.toFixed(0)} km y ±14 días, limitada al catálogo cargado.</p></div><button className="primary-button" onClick={() => onPlaySequence(event)} disabled={sequence.candidates.length === 0}><Play size={13} /> REPRODUCIR</button></div><div><span>Posibles precursores<strong>{sequence.precursors.length}</strong></span><span>Posibles réplicas<strong>{sequence.aftershocks.length}</strong></span><span>Patrón de enjambre<strong>{sequence.swarm ? 'Posible' : 'No detectado'}</strong></span></div><div className="sequence-event-list">{[...sequence.candidates].sort((a, b) => a.time - b.time).slice(0, 12).map((candidate) => <article key={candidate.id}><time>{formatDateTime(candidate.time)}</time><strong>M{candidate.magnitude.toFixed(1)}</strong><span>{candidate.place}</span></article>)}</div></section>}
       {activeTab === 'analysis' && <section className="event-tab-panel scientific-section-body analysis-tab" role="tabpanel"><SeismicAnalysis event={event} events={events} /></section>}
       {activeTab === 'diagnostics' && <section className="event-tab-panel scientific-section-body analysis-tab" role="tabpanel"><SequenceDiagnostics event={event} events={events} /></section>}
+      {activeTab === 'impact' && <section className="event-tab-panel scientific-section-body impact-tab" role="tabpanel"><ImpactAssessment event={event} /></section>}
       {activeTab === 'waves' && <section className="event-tab-panel wave-tab" role="tabpanel"><WaveSimulator embedded event={event} stations={stations} speed={waveSpeed} paused={wavePaused} showInterior={waveInterior} onSpeed={onWaveSpeed} onPaused={onWavePaused} onInterior={onWaveInterior} /></section>}
       {activeTab === 'revisions' && <section className="event-tab-panel scientific-section-body revision-timeline" role="tabpanel"><article><Clock size={14} /><div><span>ORIGEN DEL EVENTO</span><strong>{formatDateTime(event.time)}</strong></div></article>{(details?.revisions ?? []).slice(0, 12).map((revision) => <article key={revision.id}><Database size={14} /><div><span>{revision.kind.toUpperCase()} · {revision.agency}</span><strong>{formatDateTime(revision.updated)} · {revision.status}</strong></div></article>)}<article><Clock size={14} /><div><span>ÚLTIMA ACTUALIZACIÓN</span><strong>{formatDateTime(event.updated)}</strong></div></article></section>}
       {activeTab === 'compare' && <section className="event-tab-panel scientific-section-body compare-panel" role="tabpanel"><div className="section-lead"><div><strong>Comparación de terremotos</strong><p>Añade hasta cuatro eventos desde el botón ± de cada ficha.</p></div>{comparisonEvents.length > 0 && <button onClick={onClearComparison}>LIMPIAR</button>}</div>{comparisonEvents.length === 0 ? <p className="scientific-empty">Todavía no hay eventos en la comparación.</p> : <div className="comparison-table"><div className="comparison-row comparison-header"><span>Evento</span><span>M</span><span>Prof.</span><span>Int.</span><span>Energía</span><span /></div>{comparisonEvents.map((item) => <div className="comparison-row" key={item.id}><span>{item.place}</span><strong style={{ color: magnitudeColor(item.magnitude) }}>{item.magnitude.toFixed(1)}</strong><span>{item.depthKm.toFixed(1)} km</span><span>{toRomanIntensity(item.estimatedIntensity ?? item.intensity)}</span><span>{formatEnergy(energyJoules(item.magnitude))}</span><button onClick={() => onToggleComparison(item)} title="Quitar">×</button></div>)}</div>}</section>}

@@ -1246,6 +1246,70 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .classification-card > div > strong { color: var(--accent); font: 600 15px/1 IBM Plex Mono,monospace; }
 .classification-card p { grid-column: 1/-1; }
 
+/* Impacto 86–98, 115 y 121. */
+.impact-tab { padding: 8px; }
+.impact-assessment { display: grid; gap: 7px; }
+.impact-priority { min-height: 62px; display: grid; grid-template-columns: minmax(0,1fr) 78px; align-items: center; border: 1px solid var(--line-strong); border-left: 4px solid var(--accent); background: color-mix(in srgb,var(--accent) 5%,var(--panel-solid)); }
+.impact-priority[data-level="crítica"] { border-left-color: #ff4458; }
+.impact-priority[data-level="alta"] { border-left-color: #ff874f; }
+.impact-priority[data-level="media"] { border-left-color: #f1cf59; }
+.impact-priority > div { min-width: 0; display: grid; gap: 5px; padding: 8px 10px; }
+.impact-priority span, .impact-card > header span { color: var(--accent); font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .08em; }
+.impact-priority strong { font: 600 13px/1 IBM Plex Mono,monospace; }
+.impact-priority > div small { color: var(--text-soft); font-size: 7px; line-height: 1.35; }
+.impact-priority > b { height: 100%; display: grid; place-items: center; align-content: center; border-left: 1px solid var(--line); color: var(--text); font: 700 24px/1 IBM Plex Mono,monospace; }
+.impact-priority > b small { color: var(--text-soft); font-size: 7px; }
+.impact-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+.impact-card { min-width: 0; border: 1px solid var(--line-strong); background: color-mix(in srgb,var(--accent) 2%,var(--panel-solid)); }
+.impact-card > header { min-height: 40px; display: grid; align-content: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.impact-card > header strong { overflow: hidden; font: 600 9px/1 IBM Plex Mono,monospace; text-overflow: ellipsis; white-space: nowrap; }
+.impact-zones > div { min-height: 154px; display: grid; grid-template-columns: 180px minmax(0,1fr); align-items: center; }
+.impact-zones svg { width: 180px; height: 154px; display: block; }
+.impact-ring { fill: none; stroke-width: 4; opacity: .72; }
+.impact-ring.perceived { stroke: #65cde7; }
+.impact-ring.damage { stroke: #f1cd55; }
+.impact-ring.severe { stroke: #ff5966; }
+.impact-epicenter { fill: #fff; stroke: #ff5966; stroke-width: 2; }
+.impact-zones > div > div { display: grid; border-left: 1px solid var(--line); }
+.impact-zones > div span { min-height: 39px; display: grid; grid-template-columns: 9px minmax(0,1fr); align-items: center; gap: 6px; padding: 5px 8px; color: var(--text-soft); border-bottom: 1px solid var(--line); font-size: 7px; }
+.impact-zones > div span:last-child { border-bottom: 0; }
+.impact-zones > div span i { width: 8px; height: 8px; border: 2px solid; border-radius: 50%; }
+.impact-zones > div span i.perceived { border-color: #65cde7; }
+.impact-zones > div span i.damage { border-color: #f1cd55; }
+.impact-zones > div span i.severe { border-color: #ff5966; }
+.impact-zones > div span strong { grid-column: 2; color: var(--text); font: 600 8px/1 IBM Plex Mono,monospace; }
+.impact-metrics { min-height: 154px; display: grid; align-items: stretch; }
+.impact-metrics.three { grid-template-columns: repeat(3,1fr); }
+.impact-metrics.four { grid-template-columns: repeat(2,1fr); }
+.impact-metrics > span { min-width: 0; display: grid; align-content: center; gap: 7px; padding: 9px; color: var(--text-soft); border-right: 1px solid var(--line); font-size: 7px; text-align: center; }
+.impact-metrics > span:last-child { border-right: 0; }
+.impact-metrics.four > span { border-bottom: 1px solid var(--line); }
+.impact-metrics.four > span:nth-child(2n) { border-right: 0; }
+.impact-metrics.four > span:nth-last-child(-n+2) { border-bottom: 0; }
+.impact-metrics strong { overflow: hidden; color: var(--text); font: 600 11px/1 IBM Plex Mono,monospace; text-overflow: ellipsis; white-space: nowrap; }
+.hazard-screening { min-height: 154px; display: grid; grid-template-columns: repeat(3,1fr); }
+.hazard-screening > span { display: grid; place-items: center; align-content: center; gap: 8px; padding: 8px; color: var(--text-soft); border-right: 1px solid var(--line); font-size: 7px; text-align: center; }
+.hazard-screening > span:last-child { border-right: 0; }
+.hazard-screening svg { color: var(--accent); }
+.hazard-screening strong { font: 600 9px/1 IBM Plex Mono,monospace; }
+.hazard-screening .low strong { color: #62d9a2; }
+.hazard-screening .watch strong { color: #f1cf59; }
+.hazard-screening .high strong { color: #ff5966; }
+.impact-report-actions { min-height: 54px; display: grid; grid-template-columns: minmax(0,1fr) repeat(3,auto); align-items: center; gap: 6px; padding: 7px 8px; border: 1px solid var(--line-strong); }
+.impact-report-actions > div { min-width: 0; display: grid; gap: 4px; }
+.impact-report-actions > div strong { font-size: 9px; }
+.impact-report-actions > div span { color: var(--text-soft); font-size: 7px; }
+.impact-report-actions button { min-height: 29px; display: inline-flex; align-items: center; gap: 5px; padding: 0 8px; border: 1px solid var(--line-strong); color: var(--accent); background: transparent; font: 600 7px/1 IBM Plex Mono,monospace; white-space: nowrap; cursor: pointer; }
+.impact-report-actions button:hover { color: var(--bg-deep); background: var(--accent); }
+.impact-disclaimer { margin: 0; padding: 7px 8px; color: var(--text-soft); border-left: 2px solid var(--warm); background: color-mix(in srgb,var(--warm) 5%,transparent); font-size: 7px; line-height: 1.45; }
+
+@media (max-width: 620px) {
+  .impact-grid { grid-template-columns: 1fr; }
+  .impact-report-actions { grid-template-columns: repeat(3,1fr); }
+  .impact-report-actions > div { grid-column: 1/-1; }
+  .impact-report-actions button { justify-content: center; padding: 0 4px; }
+}
+
 /* Estaciones 61–70: monitor multicomponente, red, metadatos y acceso FDSN. */
 .compact-station-inspector { width: min(800px,calc(100% - 28px)); max-height: min(560px,calc(100% - 78px)); }
 .compact-station-inspector > header { min-height: 66px; flex: 0 0 auto; padding: 8px 10px; }

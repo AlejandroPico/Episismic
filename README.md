@@ -1,85 +1,118 @@
 # Episismic
 
-Observatorio sísmico mundial en un globo 3D interactivo. Combina catálogos sísmicos multifuente, más de 80.000 estaciones FDSN catalogadas, 1.214 volcanes holocenos, límites tectónicos PB2002, archivo histórico y una base SQLite local.
+Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación experimental de impacto.
 
-**Versión actual:** `0.9.1` (previa a 1.0)
+**Versión actual:** `0.10.0` (previa a 1.0)
 
-**Aplicación:** <https://alejandropico.github.io/Episismic/>
+- **Aplicación web:** <https://alejandropico.github.io/Episismic/>
+- **Código:** <https://github.com/AlejandroPico/Episismic>
+- **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
 
-**Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+## Novedades de 0.10.0
 
-## Funcionalidades disponibles
+La versión 0.10.0 completa los objetivos funcionales 11–98, 115 y 121:
 
-- Globo WebGL con zoom, giro, enfoque de epicentros y detalle progresivo.
-- Terremotos recientes unificados desde USGS/ComCat, EMSC y GEOFON, consultados cada 30 segundos.
-- Historial lateral de 1 hora, 24 horas, 7 días y 30 días.
-- Consulta histórica parametrizada y persistencia en SQLite dentro del navegador.
-- Marcadores de doble escala: relleno y diámetro por magnitud, borde por profundidad y valor numérico al acercarse.
-- Leyenda científica conmutable desde Capas, apagada por defecto.
-- Frentes P y S geográficos para eventos seleccionados o recién detectados; su extensión se mide sobre la superficie y respeta el zoom.
-- Enfoque automático configurable por umbral de magnitud.
-- Político plano vectorial por defecto y modos Satélite, Relieve y Batimetría por teselas con detalle progresivo.
-- Etiquetas geográficas conmutables mediante capas de referencia para Político, Satélite y Batimetría; Relieve conserva sus nombres integrados.
-- Capas de estaciones sísmicas, límites de placas, volcanes, atmósfera y retícula.
-- Filtros por magnitud, profundidad y significancia.
-- Fichas de evento con revisión, profundidad, significancia, reportes sentidos, tsunami, alerta y enlace al registro original.
-- Catálogo deduplicado de 80.524 estaciones procedentes de EarthScope, GEOFON, NCEDC y BMKG, con buscador e inspector.
-- Catálogo Smithsonian GVP de volcanes holocenos con nombre y metadatos.
-- Nombres volcánicos contextualizados cuando el catálogo identifica una isla completa, incluidos Teide–Pico Viejo y los centros recientes de Gran Canaria.
-- Símbolos WebGL persistentes a cualquier zoom; estaciones, volcanes y epicentros no se sustituyen por clústeres.
-- Epicentros con núcleo por profundidad, halo y anillo por antigüedad; estaciones triangulares con identificación al pasar el puntero.
-- Monitor de estación con sismograma sintético, ejes de tiempo y amplitud, ventana temporal, ganancia y filtro de frecuencia regulable.
-- Alertas sonoras diferenciadas para eventos nuevos, revisiones al alza, corroboraciones multifuente y actualizaciones de solución; también incluyen microseísmos de magnitud negativa publicados.
-- Avisos visuales ampliados con profundidad, catálogos participantes, evolución de magnitud y acceso directo a la ficha.
-- Reproducción real de los 24 eventos recientes desde la cronología: enfoque de cámara, selección y ondas P/S en secuencia.
-- Recorrido cinematográfico de la cronología con salida de zoom, desplazamiento global y aproximación suave al epicentro.
-- Recuperación inmediata del catálogo al volver a una pestaña o reconectar la red, y notificación del sistema cuando el navegador ya tiene permiso.
-- Renderizador móvil adaptativo, recuperación automática ante pérdida de contexto WebGL y animaciones sísmicas de duración limitada.
-- Control directo de norte en escritorio; la interfaz móvil prescinde de controles cartográficos superfluos.
-- Enciclopedia sísmica de 71 capítulos con buscador, categorías, esquemas vectoriales y referencias oficiales.
-- Temas Mañana, Tarde, Noche y Automático; preferencias persistentes.
-- Diseño responsive para escritorio, 1080p, 4K, móvil vertical y móvil horizontal.
-- Navegación flotante continua en la esquina superior derecha, con Historial integrado y paneles mutuamente excluyentes alineados a la derecha.
-- Estado de las tres fuentes integrado en Estaciones e índice enciclopédico móvil como desplegable superpuesto.
-- Monitor de estación a pantalla completa en móvil, con el sismograma anclado durante el desplazamiento.
-- Aplicación nativa Tauri para Windows, macOS (Intel y Apple Silicon) y Linux, ejecutada en una ventana propia.
-- Detección de sistema operativo, descarga recomendada y comprobación interna de nuevas versiones mediante GitHub Releases.
+- ficha compacta del terremoto organizada por pestañas;
+- ondas P, S y superficiales reproducidas continuamente mientras el evento permanece seleccionado;
+- análisis de secuencias, Gutenberg–Richter, Omori, energía, momento, migración y profundidad;
+- diagnóstico avanzado de intervalos, correlaciones, difusión, anomalías y consenso de catálogos;
+- monitor de estación BHZ/BHN/BHE, contexto de red, cobertura azimutal y acceso FDSN;
+- asociación entre estaciones y terremotos con llegadas previstas, azimut, intensidad y detectabilidad;
+- evaluación experimental de impacto con PGA, PGV, radios MMI, ruptura y riesgos secundarios;
+- informes descargables CSV, JSON, GeoJSON y Markdown, además de impresión/PDF mediante el navegador.
+
+El antiguo objetivo 9 de niveles de detalle y agrupación se mantiene retirado. Los terremotos, estaciones y volcanes se representan mediante símbolos individuales a cualquier escala.
+
+## Cartografía y datos vivos
+
+- Globo WebGL con zoom, giro, enfoque de epicentros y navegación móvil/escritorio.
+- Cartografía Política, Satélite, Relieve y Batimetría.
+- Capas de terremotos, estaciones, placas tectónicas, volcanes, etiquetas, atmósfera, retícula, leyenda y ShakeMap estimado.
+- Catálogo deduplicado de USGS/ComCat, EMSC y GEOFON, actualizado cada 30 segundos.
+- Historial de una hora, 24 horas, siete días y 30 días.
+- Consulta histórica de hasta 5.000 eventos y persistencia SQLite en el navegador.
+- Más de 80.000 estaciones procedentes de EarthScope, GEOFON, NCEDC y BMKG.
+- Catálogo Smithsonian GVP de volcanes holocenos y límites tectónicos PB2002.
+- Símbolos individuales persistentes: no se sustituyen por clústeres al alejar o acercar la cámara.
+
+## Ficha científica del terremoto
+
+La ficha mantiene el mapa visible y distribuye la información en pestañas:
+
+- **Resumen:** origen, profundidad, intensidad, estado, energía, ruptura y duración.
+- **Datos:** soluciones por agencia, errores, fases, brecha azimutal y distancia mínima.
+- **Focal:** beachball, planos nodales y tensor de momento cuando la fuente los publica.
+- **Secuencia:** precursores, réplicas, enjambres y reproducción cinematográfica.
+- **Análisis:** magnitud/tiempo, valor b, Omori, profundidad, energía, migración, ritmo, momento, huella, calidad y exportación.
+- **Diagnóstico:** acumulación, intervalos, valor b móvil, correlaciones, difusión, anomalías, consenso y clasificación automática.
+- **Impacto:** intensidad, PGA, PGV, radios MMI, geometría de ruptura, riesgos secundarios y prioridad operativa experimental.
+- **Ondas:** simulador interior y llegadas P, S y superficiales.
+- **Revisiones y comparación:** evolución de soluciones y comparación de hasta cuatro terremotos.
+
+Cuando un terremoto queda seleccionado, los frentes de onda se reproducen, se difuminan y vuelven a comenzar automáticamente. La velocidad configurada —1×, 10×, 30×, 60× o 120×— se respeta en todo momento.
+
+## Estaciones sísmicas
+
+La ficha de estación incluye:
+
+- monitor sintético sincronizado de tres componentes BHZ, BHN y BHE;
+- filtros de frecuencia, ganancia y ventana temporal;
+- número de estaciones de la red, densidad local y estación más próxima;
+- cobertura azimutal en ocho sectores;
+- percentil de elevación, hemisferios, zona geográfica y periodo operativo;
+- enlaces StationXML y miniSEED preparados mediante servicios FDSN;
+- catálogo de terremotos potencialmente detectables;
+- distancia, azimut, back-azimut, llegadas P/S/superficiales y desfase P–S;
+- fase temporal de la propagación, intensidad estimada y puntuación experimental de detectabilidad;
+- exportaciones GeoJSON, JSON y CSV.
+
+Las formas de onda sintéticas se identifican expresamente como simulación. Nunca se presentan como telemetría SeedLink real.
+
+## Alertas y reproducción
+
+- Enfoque automático configurable por magnitud.
+- Alertas sonoras diferenciadas para eventos nuevos, revisiones al alza, corroboraciones y cambios de solución.
+- Notificaciones del sistema cuando el navegador dispone de permiso.
+- Avisos visuales con profundidad, fuentes participantes y evolución de magnitud.
+- Reproducción cronológica y recorrido cinematográfico por eventos históricos.
+- Recuperación del catálogo al volver a la pestaña o recuperar la conexión.
+- Recuperación automática ante pérdida del contexto WebGL.
+
+Episismic es informativo y experimental. No sustituye alertas tempranas, ShakeMap, PAGER, protección civil ni análisis de una agencia sismológica.
 
 ## Arquitectura
 
 ```text
 src/
-  components/       Interfaz, globo, paneles e inspectores
-  data/             Catálogos iniciales y capas de respaldo
-  hooks/            Sincronización de estado y datos vivos
-  services/         USGS, EMSC, GEOFON, FDSN y repositorio SQLite
-public/data/        Catálogos geográficos compactos generados
-scripts/            Sincronización reproducible de estaciones, volcanes y placas
-  utils/            Cálculos y formato científico
+  components/       Globo, paneles, inspectores y visualizaciones
+  data/             Datos iniciales y capas de respaldo
+  hooks/            Sincronización de catálogos y geodatos
+  services/         FDSN, catálogos, SQLite y modelos científicos
+  utils/            Geodesia, formato y cálculos comunes
+public/data/        Catálogos geográficos generados
+scripts/            Sincronización reproducible de geodatos
 database/
-  schema.sql        Modelo relacional completo y extensible
-src-tauri/          Ventana nativa, empaquetado e iconos de escritorio
-.github/workflows/  Pruebas, compilación y despliegue en Pages
+  schema.sql        Modelo SQLite extensible
+src-tauri/          Aplicación nativa y empaquetado
+.github/workflows/  Pruebas, compilación, Pages y escritorio
 ```
 
-El núcleo del dominio usa `phenomena` como entidad común. `earthquake_events` amplía esa entidad hoy; volcanes, tormentas e incendios pueden incorporarse sin acoplar el renderizador a un único tipo de riesgo. Consulta [Arquitectura](docs/ARCHITECTURE.md) y [Modelo de datos](docs/DATABASE.md).
+El dominio utiliza `phenomena` como entidad común. `earthquake_events` especializa el terremoto actual; volcanes, tormentas, huracanes e incendios pueden incorporarse posteriormente sin acoplar el renderizador a un único riesgo.
+
+Consulta [Arquitectura](docs/ARCHITECTURE.md) y [Modelo de datos](docs/DATABASE.md).
 
 ## Base de datos
 
-La web crea una base SQLite real mediante WebAssembly y la persiste en IndexedDB. El esquema conserva:
+SQLite se ejecuta mediante WebAssembly y se conserva en IndexedDB. El esquema contempla:
 
-- fuentes e ingestas;
-- fenómeno y resumen del terremoto;
-- orígenes e hipocentros alternativos;
-- soluciones de magnitud;
-- revisiones de cada registro;
-- productos ShakeMap, PAGER, mecanismos focales y otros;
-- estimaciones de impacto;
-- redes, estaciones y canales;
-- segmentos de forma de onda y detecciones;
-- alertas, volcanes y límites tectónicos.
+- fuentes, ingestas y revisiones;
+- fenómenos, orígenes e hipocentros alternativos;
+- soluciones de magnitud y mecanismos focales;
+- productos ShakeMap, PAGER e impacto;
+- redes, estaciones, canales y segmentos de onda;
+- detecciones, alertas, volcanes y límites tectónicos.
 
-La futura versión descargable podrá abrir el mismo esquema con SQLite nativo. En GitHub Pages no existe un servidor escribible: cada navegador conserva su propio archivo local y consulta las fuentes públicas directamente.
+GitHub Pages no dispone de un servidor escribible: cada navegador conserva su archivo local y consulta las fuentes públicas directamente.
 
 ## Desarrollo
 
@@ -95,24 +128,29 @@ npm run desktop:dev
 npm run desktop:build
 ```
 
-El despliegue de `main` se realiza con GitHub Actions. Vite utiliza `/Episismic/` como ruta base.
-
-Los instaladores se compilan de forma reproducible en GitHub Actions y se publican como versión previa en GitHub Releases. La edición 0.9 avisa de una versión superior y dirige al instalador correcto; las actualizaciones automáticas silenciosas no se habilitan hasta disponer de una clave privada de firma custodiada fuera del repositorio. Los binarios actuales tampoco incluyen firma comercial de Windows/macOS.
+Cada actualización de `main` ejecuta pruebas, TypeScript, Vite y el despliegue de GitHub Pages mediante Actions.
 
 ## Versionado
 
-Episismic sigue [versionado semántico](https://semver.org/lang/es/). `0.9.x` representa la fase de estabilización previa a 1.0: se mantiene compatibilidad de datos, pero todavía pueden ajustarse contratos internos y el proceso de instalación. La versión se conserva sincronizada en `package.json`, `src/services/releases.ts`, `src-tauri/Cargo.toml` y `src-tauri/tauri.conf.json`.
+Episismic utiliza versionado semántico. La versión se mantiene sincronizada en:
 
-## Fuentes y atribución
+- `package.json` y `package-lock.json`;
+- `src/services/releases.ts`;
+- `src-tauri/Cargo.toml`;
+- `src-tauri/tauri.conf.json`.
 
-- Terremotos: [USGS](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php), [EMSC SeismicPortal](https://www.seismicportal.eu/fdsn-wsevent.html) y [GEOFON](https://geofon.gfz-potsdam.de/fdsnws/event/1/).
-- Estaciones: [EarthScope](https://service.earthscope.org/fdsnws/station/1/), [GEOFON FDSN Station](https://geofon.gfz-potsdam.de/fdsnws/station/1/), [NCEDC](https://service.ncedc.org/fdsnws/station/1/) y [BMKG](https://geof.bmkg.go.id/fdsnws/station/1/).
-- Volcanes: [Smithsonian Global Volcanism Program](https://volcano.si.edu/database/webservices.cfm).
-- Tectónica: [PB2002](https://github.com/fraxen/tectonicplates), basado en el modelo de Peter Bird.
+La serie `0.x` continúa siendo previa a 1.0. Los instaladores actuales no incluyen firma comercial de Windows/macOS y las actualizaciones silenciosas no se activarán sin una clave privada de firma custodiada fuera del repositorio.
+
+## Fuentes
+
+- Terremotos: [USGS](https://earthquake.usgs.gov/), [EMSC](https://www.seismicportal.eu/) y [GEOFON](https://geofon.gfz-potsdam.de/).
+- Estaciones: [EarthScope](https://service.earthscope.org/fdsnws/station/1/), GEOFON, NCEDC y BMKG.
+- Volcanes: [Smithsonian Global Volcanism Program](https://volcano.si.edu/).
+- Tectónica: [PB2002](https://github.com/fraxen/tectonicplates), basado en Peter Bird.
 - Cartografía: MapLibre GL JS, Natural Earth, Esri, OpenTopoMap, GEBCO/NOAA y OpenStreetMap según la capa activa.
 
-Cada red y producto puede imponer atribuciones adicionales. El modelo `data_sources` conserva licencia, prioridad y URL de atribución por fuente.
+Cada fuente conserva su atribución, prioridad, licencia y enlace original cuando están disponibles.
 
 ## Aviso
 
-Episismic es un proyecto informativo, científico y experimental. No constituye un sistema oficial de alerta temprana y no debe utilizarse para decisiones de seguridad. Las formas de onda que aparecen como “vista previa sintética” no son telemetría real. Las alertas operativas futuras se identificarán por fuente, certeza y estado de revisión.
+Episismic es un proyecto abierto, educativo y experimental desarrollado por Alejandro Pico. No debe utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
