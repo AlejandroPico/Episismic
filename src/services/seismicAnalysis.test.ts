@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Earthquake } from '../types';
-import { aftershockDecay, associatedSequence, depthDistribution, frequencyMagnitude } from './seismicAnalysis';
+import { aftershockDecay, associatedSequence, cumulativeEnergy, depthDistribution, frequencyMagnitude, hypocentralMigration, sequenceIndicators, temporalRate } from './seismicAnalysis';
 
 const event = (id: string, magnitude: number, depthKm: number, time: number, lat = 0, lng = 0) => ({ id, magnitude, depthKm, time, lat, lng } as Earthquake);
 
@@ -24,5 +24,20 @@ describe('análisis estadístico de secuencias', () => {
     const decay = aftershockDecay(main, nearby);
     expect(decay[0].count).toBe(1);
     expect(decay[0].expected).toBeGreaterThan(decay[3].expected);
+  });
+
+  it('acumula energía sin perder la fracción total', () => {
+    const result = cumulativeEnergy(nearby);
+    expect(result.points.at(-1)?.cumulativeFraction).toBeCloseTo(1);
+    expect(result.dominantFraction).toBeGreaterThan(.9);
+  });
+
+  it('calcula migración, cadencia e indicadores de secuencia', () => {
+    const migrating = [main, event('m1', 4, 14, main.time + 86_400_000, .1, 0), event('m2', 3.8, 16, main.time + 172_800_000, .3, 0)];
+    expect(hypocentralMigration(main, migrating).rateKmPerDay).toBeGreaterThan(0);
+    expect(temporalRate(migrating).medianIntervalHours).toBe(24);
+    const indicators = sequenceIndicators(main, migrating);
+    expect(indicators.strongestAftershock?.id).toBe('m1');
+    expect(indicators.bathGap).toBe(2);
   });
 });
