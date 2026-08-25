@@ -53,6 +53,17 @@ export function normalizeUsgsFeature(feature: UsgsFeature): Earthquake {
     magnitudeType: properties.magType || '—',
     catalogs: ['USGS'],
     intensity: properties.mmi ?? properties.cdi ?? null,
+    reportedIntensity: properties.cdi ?? null,
+    estimatedIntensity: properties.mmi ?? null,
+    eventType: properties.type || 'earthquake',
+    solutions: [{
+      agency: properties.net?.toUpperCase() || 'USGS',
+      magnitude: Number.isFinite(properties.mag) ? Number(properties.mag) : 0,
+      magnitudeType: properties.magType || '—',
+      depthKm: Number.isFinite(depth) ? Math.max(0, depth) : 0,
+      time: properties.time,
+      status: properties.status || 'automatic',
+    }],
     reviewCode: properties.status === 'reviewed' ? 'R' : 'A',
     kind: 'earthquake',
   };

@@ -241,7 +241,7 @@ export default function App() {
           onHistoricalResults={loadHistorical}
         />}
 
-        {selectedEvent && <EventInspector event={selectedEvent} onClose={() => setSelectedEvent(null)} onFocus={() => focus(selectedEvent, 1.05)} />}
+        {selectedEvent && <EventInspector event={selectedEvent} events={sourceEvents} onClose={() => setSelectedEvent(null)} onFocus={() => focus(selectedEvent, 1.05)} />}
         {selectedStation && <StationInspector station={selectedStation} onClose={() => setSelectedStation(null)} onFocus={() => focus(selectedStation, 0.9)} />}
 
         {notice && <div className="event-notice" style={{ '--notice-color': magnitudeColor(notice.event.magnitude) } as React.CSSProperties}>

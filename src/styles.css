@@ -922,3 +922,78 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .top-tools,
 .top-status,
 .history-toggle { background: var(--panel-solid); }
+
+/* Ficha sísmica científica ampliada. */
+.scientific-event-inspector { width: min(940px,calc(100% - 28px)); max-height: calc(100% - 82px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.scientific-summary-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-bottom: 1px solid var(--line); }
+.scientific-summary-grid article { position: relative; min-width: 0; display: grid; gap: 5px; padding: 11px 12px 11px 35px; border-right: 1px solid var(--line); }
+.scientific-summary-grid article:last-child { border-right: 0; }
+.scientific-summary-grid svg { position: absolute; top: 12px; left: 12px; color: var(--accent); }
+.scientific-summary-grid span { color: var(--text-soft); font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .08em; }
+.scientific-summary-grid strong { overflow: hidden; font: 600 10px/1.2 IBM Plex Mono,monospace; text-overflow: ellipsis; }
+.scientific-summary-grid small { color: var(--text-soft); font-size: 7px; line-height: 1.35; }
+.scientific-detail-state { padding: 7px 12px; color: var(--text-soft); border-bottom: 1px solid var(--line); background: color-mix(in srgb,var(--accent) 5%,var(--panel-solid)); font: 500 7px/1.3 IBM Plex Mono,monospace; }
+.scientific-detail-state[data-state="ready"] { color: var(--accent); }
+.scientific-detail-state[data-state="error"] { color: var(--warm); }
+.scientific-accordions details { border-bottom: 1px solid var(--line); }
+.scientific-accordions summary { min-height: 37px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 12px; color: var(--text); background: color-mix(in srgb,var(--panel-solid) 92%,var(--accent)); cursor: pointer; font: 600 9px/1 IBM Plex Mono,monospace; list-style-position: inside; }
+.scientific-accordions summary span { color: var(--accent); font-size: 7px; font-weight: 500; }
+.scientific-section-body { padding: 11px 12px; }
+.solution-table { border: 1px solid var(--line-strong); }
+.solution-row { min-height: 31px; display: grid; grid-template-columns: 1.15fr 1fr .8fr 1fr; align-items: center; }
+.solution-row + .solution-row { border-top: 1px solid var(--line); }
+.solution-row > * { min-width: 0; overflow: hidden; padding: 0 8px; color: var(--text-soft); border-right: 1px solid var(--line); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.solution-row > *:last-child { border-right: 0; }
+.solution-row strong { color: var(--text); }
+.solution-header { min-height: 25px; background: var(--panel-soft); }
+.solution-header span { color: var(--accent); font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .06em; }
+.uncertainty-grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); margin-top: 9px; border: 1px solid var(--line); }
+.uncertainty-grid > span { min-width: 0; display: grid; gap: 5px; padding: 8px; color: var(--text-soft); border-right: 1px solid var(--line); font-size: 7px; }
+.uncertainty-grid > span:last-child { border-right: 0; }
+.uncertainty-grid strong { color: var(--text); font: 600 8px/1 IBM Plex Mono,monospace; }
+.focal-layout { display: grid; grid-template-columns: 130px minmax(0,1fr); align-items: center; gap: 14px; }
+.focal-ball { width: 116px; height: 116px; display: block; object-fit: contain; background: #071318; }
+.focal-values { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); }
+.focal-values span { min-width: 0; display: grid; gap: 5px; padding: 9px; color: var(--text-soft); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 7px; }
+.focal-values span:nth-child(2n) { border-right: 0; }
+.focal-values span:nth-last-child(-n+2) { border-bottom: 0; }
+.focal-values strong { color: var(--text); font: 600 8px/1.25 IBM Plex Mono,monospace; }
+.focal-values small { color: var(--text-soft); font-size: 7px; }
+.tensor-grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); margin-top: 9px; border: 1px solid var(--line); }
+.tensor-grid span { min-width: 0; display: grid; gap: 4px; padding: 7px; color: var(--accent); border-right: 1px solid var(--line); font: 600 7px/1 IBM Plex Mono,monospace; }
+.tensor-grid span:last-child { border-right: 0; }
+.tensor-grid strong { overflow: hidden; color: var(--text); font-weight: 500; text-overflow: ellipsis; }
+.scientific-empty, .sequence-summary > p { margin: 0; color: var(--text-soft); font-size: 8px; line-height: 1.5; }
+.sequence-summary > div { display: grid; grid-template-columns: repeat(3,1fr); margin-top: 9px; border: 1px solid var(--line); }
+.sequence-summary span { display: grid; gap: 5px; padding: 9px; color: var(--text-soft); border-right: 1px solid var(--line); font-size: 8px; }
+.sequence-summary span:last-child { border-right: 0; }
+.sequence-summary strong { color: var(--text); font: 600 9px/1 IBM Plex Mono,monospace; }
+.revision-timeline { display: grid; gap: 0; }
+.revision-timeline article { position: relative; min-height: 37px; display: flex; align-items: center; gap: 10px; padding-left: 3px; border-left: 1px solid var(--accent); }
+.revision-timeline svg { margin-left: -8px; padding: 2px; color: var(--accent); background: var(--panel-solid); }
+.revision-timeline div { display: grid; gap: 4px; }
+.revision-timeline span { color: var(--accent); font: 600 7px/1 IBM Plex Mono,monospace; }
+.revision-timeline strong { font-size: 8px; font-weight: 500; }
+
+@media (max-width: 900px) {
+  .scientific-event-inspector { width: 100%; max-height: none; }
+  .scientific-summary-grid { grid-template-columns: 1fr 1fr; }
+  .scientific-summary-grid article:nth-child(2) { border-right: 0; }
+  .scientific-summary-grid article:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .uncertainty-grid, .tensor-grid { grid-template-columns: repeat(3,1fr); }
+  .uncertainty-grid > span:nth-child(3), .tensor-grid span:nth-child(3) { border-right: 0; }
+  .uncertainty-grid > span:nth-child(-n+3), .tensor-grid span:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
+}
+
+@media (max-width: 560px) {
+  .focal-layout { grid-template-columns: 92px minmax(0,1fr); align-items: start; }
+  .focal-ball { width: 82px; height: 82px; }
+  .focal-values { grid-template-columns: 1fr; }
+  .focal-values span { border-right: 0; border-bottom: 1px solid var(--line) !important; }
+  .focal-values span:last-child { border-bottom: 0 !important; }
+  .solution-row { grid-template-columns: 1fr .9fr .72fr; }
+  .solution-row > *:last-child { display: none; }
+  .sequence-summary > div { grid-template-columns: 1fr; }
+  .sequence-summary span { border-right: 0; border-bottom: 1px solid var(--line); }
+  .sequence-summary span:last-child { border-bottom: 0; }
+}

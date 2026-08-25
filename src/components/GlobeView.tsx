@@ -165,9 +165,12 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addSource('plate-boundaries', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/plate-boundaries.json`, attribution: 'PB2002 · Peter Bird / Nordpil' });
   map.addSource('plate-orogens', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/plate-orogens.json`, attribution: 'PB2002 · Peter Bird / Nordpil' });
   map.addSource('graticule', { type: 'geojson', data: graticuleGeoJson() as never });
-  map.addSource('earthquakes', { type: 'geojson', data: asCollection([]) as never });
-  map.addSource('stations', { type: 'geojson', data: asCollection([]) as never });
-  map.addSource('volcanoes', { type: 'geojson', data: asCollection([]) as never });
+  map.addSource('earthquakes', {
+    type: 'geojson', data: asCollection([]) as never, cluster: true, clusterRadius: 46, clusterMaxZoom: 5,
+    clusterProperties: { maxMagnitude: ['max', ['get', 'magnitude']] as never },
+  });
+  map.addSource('stations', { type: 'geojson', data: asCollection([]) as never, cluster: true, clusterRadius: 42, clusterMaxZoom: 8 });
+  map.addSource('volcanoes', { type: 'geojson', data: asCollection([]) as never, cluster: true, clusterRadius: 38, clusterMaxZoom: 6 });
   map.addSource('wave', { type: 'geojson', data: asCollection([]) as never });
 
   map.addLayer({ id: 'satellite-base', type: 'raster', source: 'satellite', layout: { visibility: 'none' }, paint: { 'raster-resampling': 'linear', 'raster-fade-duration': 0 } });
@@ -197,7 +200,7 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addLayer({ id: 'station-icons', type: 'symbol', source: 'stations', filter: ['!', ['has', 'point_count']], layout: { 'icon-image': 'station-node', 'icon-size': ['interpolate', ['linear'], ['zoom'], 0, .72, 6, .78, 12, .9, 20, 1.05], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-optional': false } as never });
   map.addLayer({ id: 'station-labels', type: 'symbol', source: 'stations', minzoom: 7, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['concat', ['get', 'network'], '.', ['get', 'code']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 7, 8, 12, 10, 18, 13], 'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': '#59e2d4', 'text-halo-color': 'rgba(5,18,21,.96)', 'text-halo-width': 1.5 } as never });
 
-  map.addLayer({ id: 'earthquake-clusters', type: 'circle', source: 'earthquakes', filter: ['has', 'point_count'], paint: { 'circle-color': ['step', ['get', 'point_count'], '#f5b347', 10, '#f17b45', 50, '#e7454f', 250, '#b92842'], 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 19, 50, 25, 250, 32], 'circle-stroke-color': '#fff7ea', 'circle-stroke-width': 1.8, 'circle-opacity': 0.96 } as never });
+  map.addLayer({ id: 'earthquake-clusters', type: 'circle', source: 'earthquakes', filter: ['has', 'point_count'], paint: { 'circle-color': ['step', ['get', 'maxMagnitude'], '#4aa9cf', 3, '#e7c449', 5, '#f08a3f', 6, '#e65348', 7, '#aa2c50'], 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 19, 50, 25, 250, 32], 'circle-stroke-color': '#fff7ea', 'circle-stroke-width': 1.8, 'circle-opacity': 0.96 } as never });
   map.addLayer({ id: 'earthquake-cluster-count', type: 'symbol', source: 'earthquakes', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Open Sans Regular'], 'text-size': 10 }, paint: { 'text-color': '#fff' } });
   map.addLayer({ id: 'earthquake-halos', type: 'circle', source: 'earthquakes', filter: ['!', ['has', 'point_count']], paint: {
     'circle-color': ['step', ['get', 'magnitude'], '#4aa9cf', 1, '#60bf81', 3, '#e7c449', 5, '#f08a3f', 6, '#e65348', 7, '#aa2c50'],
@@ -306,6 +309,16 @@ export function GlobeView({
         };
         map.on('click', 'station-points', selectStationFeature);
         map.on('click', 'station-icons', selectStationFeature);
+        const expandCluster = (sourceId: 'earthquakes' | 'stations' | 'volcanoes') => async (event: MapLayerMouseEvent) => {
+          const feature = event.features?.[0];
+          const clusterId = Number(feature?.properties?.cluster_id);
+          if (!feature || !Number.isFinite(clusterId) || feature.geometry.type !== 'Point') return;
+          const zoom = await (map.getSource(sourceId) as GeoJSONSource).getClusterExpansionZoom(clusterId);
+          map.easeTo({ center: feature.geometry.coordinates as [number, number], zoom, duration: 520, essential: true });
+        };
+        map.on('click', 'earthquake-clusters', expandCluster('earthquakes'));
+        map.on('click', 'station-clusters', expandCluster('stations'));
+        map.on('click', 'volcano-clusters', expandCluster('volcanoes'));
         map.on('click', 'volcano-points', (event: MapLayerMouseEvent) => {
           const feature = event.features?.[0];
           if (!feature) return;
@@ -360,7 +373,7 @@ export function GlobeView({
           stationHover.setLngLat(coordinates).setDOMContent(content).addTo(map);
         });
         map.on('mouseleave', 'station-icons', () => stationHover.remove());
-        for (const layerId of ['earthquake-points', 'station-points', 'station-icons', 'volcano-points']) {
+        for (const layerId of ['earthquake-points', 'station-points', 'station-icons', 'volcano-points', 'earthquake-clusters', 'station-clusters', 'volcano-clusters']) {
           map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
           map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
         }

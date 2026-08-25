@@ -8,6 +8,15 @@ export interface Coordinates {
   lng: number;
 }
 
+export interface EarthquakeSolution {
+  agency: string;
+  magnitude: number;
+  magnitudeType: string;
+  depthKm: number;
+  time: number;
+  status: string;
+}
+
 export interface Earthquake extends Coordinates {
   id: string;
   magnitude: number;
@@ -26,6 +35,10 @@ export interface Earthquake extends Coordinates {
   magnitudeType: string;
   catalogs: string[];
   intensity: number | null;
+  reportedIntensity?: number | null;
+  estimatedIntensity?: number | null;
+  eventType?: string;
+  solutions?: EarthquakeSolution[];
   reviewCode: 'A' | 'R' | 'M';
   kind: HazardKind;
 }

@@ -59,7 +59,10 @@ async function fetchEmsc(window: TimeWindow, signal?: AbortSignal): Promise<Eart
       lat, lng, time, updated, source: authority === 'EMSC' ? 'EMSC' : `EMSC · ${authority}`,
       sourceUrl: `https://www.seismicportal.eu/eventdetails.html?unid=${encodeURIComponent(feature.id)}`,
       felt: null, tsunami: false, alert: null, status: 'automatic', significance: Math.round((Number(properties.mag) || 0) * 70),
-      magnitudeType: properties.magtype || '—', catalogs: ['EMSC'], intensity: null, reviewCode: 'A', kind: 'earthquake',
+      magnitudeType: properties.magtype || '—', catalogs: ['EMSC'], intensity: null,
+      reportedIntensity: null, estimatedIntensity: null, eventType: 'earthquake',
+      solutions: [{ agency: authority, magnitude: Number(properties.mag) || 0, magnitudeType: properties.magtype || '—', depthKm: Math.max(0, Number(properties.depth) || 0), time, status: 'automatic' }],
+      reviewCode: 'A', kind: 'earthquake',
     } satisfies Earthquake;
   }).filter((event) => Number.isFinite(event.lat) && Number.isFinite(event.lng));
 }
@@ -80,7 +83,10 @@ async function fetchGeofon(window: TimeWindow, signal?: AbortSignal): Promise<Ea
       place: place || 'Localización por revisar', lat: Number(latitude), lng: Number(longitude), time, updated: time,
       source: 'GEOFON', sourceUrl: `https://geofon.gfz-potsdam.de/eqexplorer/events/${encodeURIComponent(id)}/general`,
       felt: null, tsunami: false, alert: null, status: 'automatic', significance: Math.round((Number(magnitude) || 0) * 70),
-      magnitudeType: magnitudeType || '—', catalogs: [contributor || 'GEOFON'], intensity: null, reviewCode: 'A', kind: 'earthquake',
+      magnitudeType: magnitudeType || '—', catalogs: [contributor || 'GEOFON'], intensity: null,
+      reportedIntensity: null, estimatedIntensity: null, eventType: 'earthquake',
+      solutions: [{ agency: contributor || 'GEOFON', magnitude: Number(magnitude) || 0, magnitudeType: magnitudeType || '—', depthKm: Math.max(0, Number(depth) || 0), time, status: 'automatic' }],
+      reviewCode: 'A', kind: 'earthquake',
     } satisfies Earthquake;
   }).filter((event) => Number.isFinite(event.lat) && Number.isFinite(event.lng) && Number.isFinite(event.time));
 }
@@ -99,12 +105,16 @@ export function mergeEarthquakeCatalogs(events: Earthquake[]): Earthquake[] {
     const duplicate = merged.find((event) => Math.abs(event.time - candidate.time) <= 90_000 && Math.abs(event.magnitude - candidate.magnitude) <= 1.2 && distanceKm(event, candidate) <= 65);
     if (!duplicate) { merged.push(candidate); continue; }
     duplicate.catalogs = [...new Set([...duplicate.catalogs, ...candidate.catalogs])];
+    duplicate.solutions = [...(duplicate.solutions ?? []), ...(candidate.solutions ?? [])].filter((solution, index, all) =>
+      all.findIndex((item) => `${item.agency}:${item.magnitude.toFixed(2)}:${item.time}` === `${solution.agency}:${solution.magnitude.toFixed(2)}:${solution.time}`) === index);
     duplicate.source = duplicate.catalogs.join(' · ');
     duplicate.updated = Math.max(duplicate.updated, candidate.updated);
     if (candidate.status === 'reviewed') { duplicate.status = 'reviewed'; duplicate.reviewCode = 'R'; }
     if (!duplicate.felt && candidate.felt) duplicate.felt = candidate.felt;
     if (!duplicate.alert && candidate.alert) duplicate.alert = candidate.alert;
     if (!duplicate.intensity && candidate.intensity) duplicate.intensity = candidate.intensity;
+    if (!duplicate.reportedIntensity && candidate.reportedIntensity) duplicate.reportedIntensity = candidate.reportedIntensity;
+    if (!duplicate.estimatedIntensity && candidate.estimatedIntensity) duplicate.estimatedIntensity = candidate.estimatedIntensity;
     duplicate.tsunami ||= candidate.tsunami;
   }
   return merged.sort((a, b) => b.time - a.time);
