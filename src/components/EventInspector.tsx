@@ -88,9 +88,10 @@ export function EventInspector({
   const [detailState, setDetailState] = useState<'loading' | 'ready' | 'unavailable' | 'error'>('loading');
   const [activeTab, setActiveTab] = useState<InspectorTab>('summary');
 
+  useEffect(() => { setActiveTab('summary'); }, [event.id]);
+
   useEffect(() => {
     const controller = new AbortController();
-    setActiveTab('summary');
     setDetails(null);
     setDetailState(event.detailUrl ? 'loading' : 'unavailable');
     if (!event.detailUrl) return () => controller.abort();
