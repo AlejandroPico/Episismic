@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import maplibregl, { type GeoJSONSource, type MapLayerMouseEvent, type StyleSpecification } from 'maplibre-gl';
-import { Compass, LoaderCircle, RefreshCw } from 'lucide-react';
+import { LoaderCircle, RefreshCw } from 'lucide-react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Earthquake, MapLayerState, MapStyle, SeismicStation, Volcano } from '../types';
 import { waveRadiusKm } from '../services/travelTimes';
@@ -268,7 +268,6 @@ export function GlobeView({
   const [contextLost, setContextLost] = useState(false);
   const [rendererRevision, setRendererRevision] = useState(0);
   const [zoom, setZoom] = useState(1);
-  const [bearing, setBearing] = useState(0);
   eventsRef.current = events;
   onSelectEventRef.current = onSelectEvent;
   onSelectStationRef.current = onSelectStation;
@@ -316,7 +315,6 @@ export function GlobeView({
         setReady(true);
         setZoom(map.getZoom());
         map.on('zoomend', () => setZoom(map.getZoom()));
-        map.on('rotateend', () => setBearing(map.getBearing()));
         map.on('click', 'earthquake-points', (event: MapLayerMouseEvent) => {
           const id = event.features?.[0]?.properties?.eventId;
           const item = eventsRef.current.find((candidate) => candidate.id === id);
@@ -408,6 +406,31 @@ export function GlobeView({
         window.requestAnimationFrame(() => { map.resize(); map.triggerRepaint(); });
       };
       const canvas = map.getCanvas();
+      let lastRightClickAt = 0;
+      let northTimer = 0;
+      const resetNorth = () => map.easeTo({ bearing: 0, pitch: 0, duration: 650, essential: true });
+      const handleContextMenu = (event: MouseEvent) => {
+        event.preventDefault();
+        if (compactRenderer) return;
+        const now = performance.now();
+        if (now - lastRightClickAt <= 450) {
+          lastRightClickAt = 0;
+          resetNorth();
+        } else lastRightClickAt = now;
+      };
+      const clearNorthTimer = () => window.clearTimeout(northTimer);
+      const scheduleMobileNorth = () => {
+        clearNorthTimer();
+        if (!compactRenderer) return;
+        northTimer = window.setTimeout(() => {
+          if (Math.abs(map.getBearing()) > .1 || Math.abs(map.getPitch()) > .1) resetNorth();
+        }, 10_000);
+      };
+      canvas.addEventListener('contextmenu', handleContextMenu);
+      if (compactRenderer) {
+        map.on('movestart', clearNorthTimer);
+        map.on('moveend', scheduleMobileNorth);
+      }
       canvas.addEventListener('webglcontextlost', handleContextLost, false);
       canvas.addEventListener('webglcontextrestored', handleContextRestored, false);
       let resizeFrame = 0;
@@ -437,6 +460,7 @@ export function GlobeView({
         observer.disconnect();
         window.cancelAnimationFrame(resizeFrame);
         window.clearTimeout(recoveryTimerRef.current);
+        clearNorthTimer();
         cameraTimersRef.current.forEach(window.clearTimeout);
         cameraTimersRef.current = [];
         contextLostRef.current = false;
@@ -445,6 +469,11 @@ export function GlobeView({
         window.removeEventListener('orientationchange', resumeRenderer);
         canvas.removeEventListener('webglcontextlost', handleContextLost);
         canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+        canvas.removeEventListener('contextmenu', handleContextMenu);
+        if (compactRenderer) {
+          map.off('movestart', clearNorthTimer);
+          map.off('moveend', scheduleMobileNorth);
+        }
         try { map.remove(); } catch { /* El navegador puede haber invalidado ya el contexto. */ }
         mapRef.current = null;
       };
@@ -622,9 +651,6 @@ export function GlobeView({
       <button onClick={() => { setContextLost(false); setRendererRevision((revision) => revision + 1); }}><RefreshCw size={14} /> Reiniciar</button>
     </div>}
     {layers.atmosphere && <div className="atmosphere-overlay" aria-hidden="true" />}
-    <div className="orientation-controls" aria-label="Orientación del globo">
-      <button onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: 0, duration: 500 })} title="Norte arriba" aria-label="Poner el norte arriba"><Compass size={18} style={{ transform: `rotate(${-bearing}deg)` }} /><span>N</span></button>
-    </div>
     {layers.legend && <aside className="globe-legend" aria-label="Leyenda de la cartografía sísmica">
       <header><strong>LEYENDA SÍSMICA</strong><span>ZOOM {zoom.toFixed(1)}</span></header>
       <section>

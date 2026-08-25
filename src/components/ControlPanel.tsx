@@ -32,6 +32,7 @@ interface ControlPanelProps {
   status: DataStatus;
   timeWindow: TimeWindow;
   isHistorical: boolean;
+  historicalEventCount: number | null;
   visibleEventCount: number;
   strongestEvent: Earthquake | null;
   geodataReady: boolean;
@@ -49,6 +50,7 @@ interface ControlPanelProps {
   onWaveSpeed: (speed: number) => void;
   onSelectStation: (station: SeismicStation) => void;
   onHistoricalResults: (events: Earthquake[]) => void;
+  onReturnToLive: () => void;
 }
 
 const mapStyles: { id: MapStyle; name: string; description: string }[] = [
@@ -119,8 +121,8 @@ function FiltersPanel({ filters, onFilters }: Pick<ControlPanelProps, 'filters' 
 }
 
 function ArchivePanel({
-  onHistoricalResults, timeWindow, isHistorical, visibleEventCount, strongestEvent, stations, geodataReady,
-}: Pick<ControlPanelProps, 'onHistoricalResults' | 'timeWindow' | 'isHistorical' | 'visibleEventCount' | 'strongestEvent' | 'stations' | 'geodataReady'>) {
+  onHistoricalResults, onReturnToLive, timeWindow, isHistorical, historicalEventCount, visibleEventCount, strongestEvent, stations, geodataReady,
+}: Pick<ControlPanelProps, 'onHistoricalResults' | 'onReturnToLive' | 'timeWindow' | 'isHistorical' | 'historicalEventCount' | 'visibleEventCount' | 'strongestEvent' | 'stations' | 'geodataReady'>) {
   const today = new Date();
   const lastYear = new Date(today); lastYear.setFullYear(today.getFullYear() - 1);
   const [start, setStart] = useState(lastYear.toISOString().slice(0, 10));
@@ -137,7 +139,9 @@ function ArchivePanel({
       const results = await searchHistoricalEarthquakes({ start: new Date(`${start}T00:00:00Z`), end: new Date(`${end}T23:59:59Z`), minMagnitude, limit: 5000 });
       await upsertEarthquakes(results);
       onHistoricalResults(results);
-      setMessage(`${results.length.toLocaleString('es-ES')} eventos recuperados y guardados en SQLite.`);
+      setMessage(results.length === 5000
+        ? '5.000 eventos recuperados: se ha alcanzado el límite de la consulta. Reduce el intervalo o aumenta la magnitud mínima para obtener una muestra completa.'
+        : `${results.length.toLocaleString('es-ES')} eventos recuperados y guardados en SQLite.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'La consulta no se pudo completar.');
     } finally { setLoading(false); }
@@ -152,12 +156,14 @@ function ArchivePanel({
       <article><span>ESTACIONES</span><strong>{stations.length.toLocaleString('es-ES')}</strong><small>{geodataReady ? 'FDSN DISPONIBLE' : 'CARGANDO RED'}</small></article>
     </div>
     <p className="section-intro">Las consultas se incorporan a la base SQLite local y conservan las revisiones posteriores.</p>
+    {isHistorical && <div className="archive-live-return"><div><strong>CATÁLOGO HISTÓRICO ACTIVO · {(historicalEventCount ?? 0).toLocaleString('es-ES')} EVENTOS</strong><span>El globo no está mostrando ahora el flujo de las últimas 24 horas.</span></div><button className="secondary-button" onClick={onReturnToLive}>Volver a tiempo real</button></div>}
     <form className="archive-form" onSubmit={submit}>
       <label>Desde<input type="date" value={start} max={end} onChange={(event) => setStart(event.target.value)} /></label>
       <label>Hasta<input type="date" value={end} min={start} max={today.toISOString().slice(0, 10)} onChange={(event) => setEnd(event.target.value)} /></label>
       <label className="range-field"><span>Magnitud mínima <strong>M{minMagnitude.toFixed(1)}</strong></span><input type="range" min="2.5" max="9" step="0.1" value={minMagnitude} onChange={(event) => setMinMagnitude(Number(event.target.value))} /></label>
-      <button className="primary-button" disabled={loading}>{loading && <LoaderCircle size={16} className="spin" />} Consultar hasta 5.000 eventos</button>
+      <button className="primary-button" disabled={loading}>{loading && <LoaderCircle size={16} className="spin" />} {loading ? 'Consultando catálogo…' : historicalEventCount === null ? 'Consultar catálogo histórico' : `Repetir consulta · ${historicalEventCount.toLocaleString('es-ES')} encontrados`}</button>
     </form>
+    <small className="archive-query-limit">Límite técnico: 5.000 resultados por consulta. No representa el total disponible.</small>
     <p className="form-message">{message}</p>
   </section>;
 }
@@ -198,7 +204,7 @@ function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'a
       <div className="switch-list">
         <label><span><strong>Enfoque automático</strong><small>Desplaza la cámara al detectar un evento nuevo</small></span><input type="checkbox" checked={props.autoFocus} onChange={(event) => props.onAutoFocus(event.target.checked)} /><i /></label>
         <label><span><strong>Reproducción cinematográfica</strong><small>Realiza el vuelo de cámara durante el archivo histórico</small></span><input type="checkbox" checked={props.cinematicPlayback} onChange={(event) => props.onCinematicPlayback(event.target.checked)} /><i /></label>
-        <label><span><strong>Alertas sonoras</strong><small>Avisan también de microseísmos publicados</small></span><input type="checkbox" checked={props.soundEnabled} onChange={(event) => props.onSoundEnabled(event.target.checked)} /><i /></label>
+        <label><span><strong>Alertas sonoras por gravedad</strong><small>Cuatro perfiles: leve, moderada, fuerte y crítica</small></span><input type="checkbox" checked={props.soundEnabled} onChange={(event) => props.onSoundEnabled(event.target.checked)} /><i /></label>
       </div>
       <label className="range-field"><span>Magnitud para enfocar <strong>M{props.autoFocusMagnitude.toFixed(1)}</strong></span><input type="range" min="3" max="8" step="0.1" value={props.autoFocusMagnitude} onChange={(event) => props.onAutoFocusMagnitude(Number(event.target.value))} /></label>
       <label className={`range-field ${props.soundEnabled ? '' : 'disabled-control'}`}><span><Volume2 size={14} /> Sonar desde <strong>M{props.soundMinimumMagnitude.toFixed(1)}</strong></span><input type="range" min="-2" max="6" step="0.1" disabled={!props.soundEnabled} value={props.soundMinimumMagnitude} onChange={(event) => props.onSoundMinimumMagnitude(Number(event.target.value))} /></label>

@@ -209,6 +209,11 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .archive-form input[type="date"] { min-width: 0; height: 34px; padding: 0 7px; border: 1px solid var(--line-strong); color: var(--text); background: var(--panel-soft); color-scheme: dark; }
 :root[data-theme="morning"] .archive-form input[type="date"] { color-scheme: light; }
 .archive-form .range-field, .archive-form .primary-button { grid-column: 1/-1; margin: 0; }
+.archive-live-return { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; margin: 0 0 12px; padding: 9px; border: 1px solid var(--line-strong); border-left: 3px solid var(--accent); background: var(--accent-soft); }
+.archive-live-return > div { min-width: 0; display: grid; gap: 4px; }
+.archive-live-return strong { color: var(--accent); font: 600 8px/1 IBM Plex Mono,monospace; letter-spacing: .07em; }
+.archive-live-return span, .archive-query-limit { color: var(--text-soft); font-size: 8px; line-height: 1.35; }
+.archive-query-limit { display: block; margin-top: 7px; }
 .form-message { margin: 12px 0 0; color: var(--text-soft); font-size: 9px; line-height: 1.45; }
 .inline-search { height: 35px; display: flex; align-items: center; gap: 8px; padding: 0 9px; border: 1px solid var(--line-strong); color: var(--text-soft); }
 .inline-search input { width: 100%; border: 0; outline: 0; color: var(--text); background: transparent; font-size: 10px; }
@@ -827,27 +832,27 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   right: 10px;
   bottom: 48px;
   width: 310px;
-  color: #dfeceb;
-  border: 1px solid rgba(210,228,226,.28);
-  background: rgba(5,18,22,.88);
-  box-shadow: 0 10px 34px rgba(0,0,0,.26);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  background: var(--panel-solid);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(12px);
   font: 500 8px/1.25 IBM Plex Mono, monospace;
   pointer-events: none;
 }
-.globe-legend header { min-height: 31px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-bottom: 1px solid rgba(210,228,226,.18); }
-.globe-legend header strong { color: #fff; letter-spacing: .1em; }
-.globe-legend header span { color: #63dfd0; }
-.globe-legend section { display: grid; gap: 7px; padding: 9px 10px; border-bottom: 1px solid rgba(210,228,226,.14); }
+.globe-legend header { min-height: 31px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-bottom: 1px solid var(--line); }
+.globe-legend header strong { color: var(--text); letter-spacing: .1em; }
+.globe-legend header span { color: var(--accent); }
+.globe-legend section { display: grid; gap: 7px; padding: 9px 10px; border-bottom: 1px solid var(--line); }
 .globe-legend section:last-child { border-bottom: 0; }
-.globe-legend section > span { color: #a8b9b7; font-size: 7px; letter-spacing: .08em; }
-.globe-legend section > small { color: #8ca19f; font: 400 7px/1.35 Inter, sans-serif; }
+.globe-legend section > span { color: var(--text-soft); font-size: 7px; letter-spacing: .08em; }
+.globe-legend section > small { color: var(--text-soft); font: 400 7px/1.35 Inter, sans-serif; }
 .magnitude-legend, .depth-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
 .magnitude-legend i { width: 11px; height: 11px; display: inline-block; margin-left: 3px; border-radius: 50%; }
 .magnitude-legend i:first-child { margin-left: 0; }
-.depth-legend i { width: 12px; height: 12px; display: inline-block; margin-left: 4px; border: 3px solid; border-radius: 50%; background: #314348; }
+.depth-legend i { width: 12px; height: 12px; display: inline-block; margin-left: 4px; border: 3px solid; border-radius: 50%; background: var(--panel-soft); }
 .depth-legend i:first-child { margin-left: 0; }
-.globe-legend .tectonic-legend { display: flex; grid-auto-flow: column; grid-template-columns: 22px auto 22px auto; align-items: center; gap: 6px; color: #b7c5c4; }
+.globe-legend .tectonic-legend { display: flex; grid-auto-flow: column; grid-template-columns: 22px auto 22px auto; align-items: center; gap: 6px; color: var(--text-soft); }
 .tectonic-legend .plate-solid, .tectonic-legend .plate-diffuse { width: 20px; height: 0; border-top: 2px solid #e12834; }
 .tectonic-legend .plate-diffuse { border-top-style: dashed; border-top-color: #a91428; }
 

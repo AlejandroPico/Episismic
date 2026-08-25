@@ -2,11 +2,22 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.0.0` — edición estable y publicable
+**Versión actual:** `1.0.1` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.0.1
+
+- El archivo histórico diferencia el límite técnico de 5.000 del número realmente recuperado.
+- La consulta conserva y muestra su recuento al volver a abrir el panel.
+- Nuevo acceso **Volver a tiempo real**, que restaura el catálogo de las últimas 24 horas.
+- La leyenda sísmica utiliza ahora los colores del tema Mañana, Tarde o Noche.
+- Se retira el botón de orientación norte para despejar la cartografía.
+- En escritorio, un doble clic con el botón derecho devuelve el norte arriba.
+- En dispositivos móviles, el globo recupera el norte tras 10 segundos sin interacción.
+- Las alertas sonoras disponen de perfiles leve, moderado, fuerte y crítico según la magnitud.
 
 ## Episismic 1.0
 

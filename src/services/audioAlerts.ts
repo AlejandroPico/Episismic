@@ -7,6 +7,15 @@ function getContext() {
   return context;
 }
 
+export type SeismicAlertLevel = 'leve' | 'moderada' | 'fuerte' | 'crítica';
+
+export function seismicAlertLevel(magnitude: number): SeismicAlertLevel {
+  if (magnitude >= 6.5) return 'crítica';
+  if (magnitude >= 5) return 'fuerte';
+  if (magnitude >= 3) return 'moderada';
+  return 'leve';
+}
+
 export async function unlockAudioAlerts() {
   try {
     const audio = getContext();
@@ -25,23 +34,34 @@ interface ToneStep {
 }
 
 function patternFor(kind: SeismicActivityKind, magnitude: number): ToneStep[] {
-  const strong = magnitude >= 5;
-  const base = strong ? 190 : magnitude >= 2.5 ? 310 : 460;
-  const volume = strong ? .13 : magnitude >= 2.5 ? .075 : .04;
-  if (kind === 'magnitude') return [
-    { frequency: base, duration: .15, offset: 0, volume, type: 'triangle' },
-    { frequency: base * 1.28, duration: .18, offset: .17, volume: volume * 1.08, type: 'sawtooth' },
-    { frequency: base * 1.58, duration: .22, offset: .38, volume: volume * 1.15, type: 'sawtooth' },
-  ];
-  if (kind === 'corroborated') return [
-    { frequency: base * 1.08, duration: .13, offset: 0, volume: volume * .72, type: 'sine' },
-    { frequency: base * 1.08, duration: .13, offset: .19, volume: volume * .72, type: 'sine' },
-  ];
-  if (kind === 'revision') return [{ frequency: base * 1.2, duration: .12, offset: 0, volume: volume * .45, type: 'sine' }];
-  return [
-    { frequency: base * 1.18, duration: .14, offset: 0, volume, type: strong ? 'sawtooth' : 'triangle' },
-    { frequency: base, duration: .24, offset: .17, volume, type: strong ? 'sawtooth' : 'sine' },
-  ];
+  const level = seismicAlertLevel(magnitude);
+  const kindFactor = kind === 'revision' ? .58 : kind === 'corroborated' ? .72 : kind === 'magnitude' ? 1.08 : 1;
+  const profiles: Record<SeismicAlertLevel, ToneStep[]> = {
+    leve: [
+      { frequency: 520, duration: .1, offset: 0, volume: .035, type: 'sine' },
+      { frequency: 420, duration: .13, offset: .13, volume: .03, type: 'sine' },
+    ],
+    moderada: [
+      { frequency: 370, duration: .13, offset: 0, volume: .065, type: 'triangle' },
+      { frequency: 295, duration: .2, offset: .16, volume: .065, type: 'triangle' },
+    ],
+    fuerte: [
+      { frequency: 250, duration: .16, offset: 0, volume: .105, type: 'sawtooth' },
+      { frequency: 330, duration: .16, offset: .2, volume: .11, type: 'sawtooth' },
+      { frequency: 220, duration: .26, offset: .4, volume: .12, type: 'triangle' },
+    ],
+    crítica: [
+      { frequency: 180, duration: .22, offset: 0, volume: .15, type: 'sawtooth' },
+      { frequency: 285, duration: .22, offset: .25, volume: .16, type: 'sawtooth' },
+      { frequency: 180, duration: .22, offset: .5, volume: .16, type: 'sawtooth' },
+      { frequency: 315, duration: .3, offset: .75, volume: .17, type: 'sawtooth' },
+    ],
+  };
+  return profiles[level].map((step, index) => ({
+    ...step,
+    frequency: step.frequency * (kind === 'magnitude' ? 1 + index * .08 : 1),
+    volume: step.volume * kindFactor,
+  }));
 }
 
 export function playSeismicAlert(magnitude: number, kind: SeismicActivityKind = 'new', delayMs = 0) {

@@ -221,6 +221,15 @@ export default function App() {
     if (events[0]) selectEvent(events[0]);
   };
 
+  const returnToLive = () => {
+    setHistoricalEvents(null);
+    setTimeWindow('day');
+    setSelectedEvent(null);
+    setPulseEvent(null);
+    setActivePanel(null);
+    setHistoryOpen(true);
+  };
+
   return (
     <div className={`app-shell ${historyOpen ? 'with-history' : ''}`}>
       <TopBar
@@ -264,6 +273,7 @@ export default function App() {
           status={status}
           timeWindow={timeWindow}
           isHistorical={historicalEvents !== null}
+          historicalEventCount={historicalEvents?.length ?? null}
           visibleEventCount={visibleEvents.length}
           strongestEvent={strongest}
           geodataReady={geodataReady}
@@ -281,6 +291,7 @@ export default function App() {
           onWaveSpeed={setWaveSpeed}
           onSelectStation={selectStation}
           onHistoricalResults={loadHistorical}
+          onReturnToLive={returnToLive}
         />}
 
         {selectedEvent && <EventInspector
