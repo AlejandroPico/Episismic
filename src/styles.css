@@ -20,6 +20,7 @@
   --warm: #ffb84d;
   --danger: #ff5a64;
   --shadow: 0 22px 65px rgba(0, 0, 0, .38);
+  --globe-space: #050a0f;
 }
 
 :root[data-theme="morning"] {
@@ -37,6 +38,7 @@
   --warm: #c67113;
   --danger: #c93845;
   --shadow: 0 22px 65px rgba(18, 54, 52, .2);
+  --globe-space: #c8dcdf;
 }
 
 :root[data-theme="afternoon"] {
@@ -53,6 +55,7 @@
   --accent-soft: rgba(123, 216, 203, .13);
   --warm: #ffb45c;
   --danger: #ff6f6f;
+  --globe-space: #463942;
 }
 
 * { box-sizing: border-box; }
@@ -978,11 +981,11 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 
 /* Composición estable: evita fotogramas negros al mover o ampliar el globo. */
 .map-stage { isolation: isolate; }
-.globe-host { overflow: hidden; contain: strict; isolation: isolate; background: #071015; touch-action: none; }
-.maplibre-host { contain: layout paint size; background: #071015; touch-action: none; }
+.globe-host { overflow: hidden; contain: strict; isolation: isolate; background: var(--globe-space); touch-action: none; }
+.maplibre-host { contain: layout paint size; background: var(--globe-space); touch-action: none; }
 .maplibre-host .maplibregl-map,
 .maplibre-host .maplibregl-canvas-container,
-.maplibre-host .maplibregl-canvas { background: #071015; touch-action: none; }
+.maplibre-host .maplibregl-canvas { background: var(--globe-space); touch-action: none; }
 .maplibre-host .maplibregl-canvas { display: block; outline: none; backface-visibility: hidden; }
 
 .summary-hud,
@@ -1337,6 +1340,27 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .real-waveform-provenance { min-height: 36px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 6px 8px; color: var(--text-soft); border: 1px solid var(--line-strong); border-top: 0; font-size: 7px; }
 .real-waveform-provenance > span:first-child { color: var(--accent); font: 600 7px/1 IBM Plex Mono,monospace; }
 .real-waveform-provenance i { width: 6px; height: 6px; display: inline-block; margin-right: 5px; border-radius: 50%; background: #52dfa1; box-shadow: 0 0 8px rgba(82,223,161,.7); }
+.live-station-monitor { min-width: 0; overflow: hidden; border: 1px solid var(--line-strong); background: #373737; }
+.live-monitor-toolbar { min-height: 36px; display: grid; grid-template-columns: minmax(0,1fr) auto 32px; align-items: center; border-bottom: 1px solid #606060; color: #d9d9d9; background: #303030; }
+.live-channel-tabs { min-width: 0; display: flex; align-self: stretch; }
+.live-channel-tabs button { min-width: 50px; padding: 0 10px; border: 0; border-right: 1px solid #555; color: #aaa; background: transparent; font: 600 8px/1 IBM Plex Mono,monospace; cursor: pointer; }
+.live-channel-tabs button:hover, .live-channel-tabs button.active { color: #fff200; background: #454545; box-shadow: inset 0 -2px #fff200; }
+.live-stream-state { display: flex; align-items: center; gap: 6px; padding: 0 10px; color: #c8c8c8; font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .07em; }
+.live-stream-state.online { color: #66efa8; }
+.live-monitor-refresh { width: 32px; height: 35px; display: grid; place-items: center; padding: 0; border: 0; border-left: 1px solid #555; color: #d0d0d0; background: transparent; cursor: pointer; }
+.live-monitor-refresh:hover { color: #fff200; background: #454545; }
+.live-monitor-identity { min-height: 29px; display: flex; align-items: center; gap: 13px; padding: 0 9px; border-bottom: 1px solid #606060; color: #bcbcbc; font: 500 7px/1 IBM Plex Mono,monospace; }
+.live-monitor-identity strong { color: #fff; font-size: 8px; }
+.live-monitor-identity span:last-child { margin-left: auto; }
+.live-seismogram-canvas { width: 100%; height: 360px; display: block; background: #373737; }
+.live-monitor-empty { min-height: 360px; display: grid; place-items: center; align-content: center; gap: 8px; color: #c8c8c8; text-align: center; }
+.live-monitor-empty img { width: 100%; height: 360px; display: block; object-fit: contain; background: #fff; }
+.live-monitor-empty strong { color: #fff; font: 600 10px/1.2 IBM Plex Mono,monospace; }
+.live-monitor-empty span { max-width: 440px; padding: 0 20px; font-size: 8px; line-height: 1.5; }
+.live-monitor-provenance { min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 9px; border-top: 1px solid #606060; color: #bcbcbc; background: #303030; font: 500 7px/1 IBM Plex Mono,monospace; }
+.live-monitor-provenance > span:first-child { color: #ffe600; }
+.live-monitor-provenance i { width: 7px; height: 7px; display: inline-block; margin-right: 5px; border-radius: 50%; background: #d3a737; }
+.live-monitor-provenance i.online { background: #52dfa1; box-shadow: 0 0 8px rgba(82,223,161,.7); }
 .station-synthetic-note.real { border-left-color: #52dfa1; }
 .station-waveform-controls { grid-template-columns: 150px repeat(2,minmax(0,1fr)) 34px; padding: 9px 0; }
 .station-synthetic-note { display: flex; align-items: center; gap: 7px; margin: 0; padding: 7px 8px; color: var(--text-soft); border-left: 2px solid var(--warm); background: color-mix(in srgb,var(--warm) 5%,transparent); font-size: 7px; line-height: 1.4; }
@@ -1429,6 +1453,13 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   .real-station-components img, .real-channel-unavailable { height: 180px; }
   .real-waveform-provenance { grid-template-columns: 1fr auto; }
   .real-waveform-provenance > span:nth-child(2) { grid-column: 1/-1; grid-row: 2; }
+  .live-monitor-toolbar { grid-template-columns: minmax(0,1fr) 32px; }
+  .live-stream-state { grid-column: 1/-1; grid-row: 2; min-height: 27px; border-top: 1px solid #555; }
+  .live-monitor-refresh { grid-column: 2; grid-row: 1; }
+  .live-monitor-identity { flex-wrap: wrap; gap: 5px 10px; padding: 6px 8px; }
+  .live-monitor-identity span:last-child { margin-left: 0; }
+  .live-seismogram-canvas, .live-monitor-empty, .live-monitor-empty img { height: 300px; }
+  .live-monitor-provenance { align-items: flex-start; flex-direction: column; justify-content: center; min-height: 46px; gap: 4px; }
   .station-network-grid, .station-metadata-grid, .station-data-actions { grid-template-columns: 1fr; }
   .station-network-grid article, .station-metadata-grid > span, .station-data-actions > a, .station-data-actions > button { border-right: 0; border-bottom: 1px solid var(--line); }
   .station-network-grid article:last-child, .station-metadata-grid > span:last-child, .station-data-actions > :last-child { border-bottom: 0; }

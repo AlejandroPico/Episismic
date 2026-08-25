@@ -35,12 +35,43 @@ type FeatureCollection = {
   features: Array<{ type: 'Feature'; geometry: { type: 'Point' | 'LineString' | 'Polygon'; coordinates: unknown }; properties: Record<string, unknown> }>;
 };
 
-function createStyle(): StyleSpecification {
+type ResolvedTheme = 'morning' | 'afternoon' | 'night';
+
+const GLOBE_THEME = {
+  morning: {
+    space: '#c8dcdf',
+    politicalFill: '#d7dfd0',
+    politicalBorder: '#678783',
+    label: '#253534',
+    labelHalo: 'rgba(244,248,241,.92)',
+  },
+  afternoon: {
+    space: '#463942',
+    politicalFill: '#394746',
+    politicalBorder: '#c0a98f',
+    label: '#f2e9dc',
+    labelHalo: 'rgba(34,25,27,.92)',
+  },
+  night: {
+    space: '#050a0f',
+    politicalFill: '#172633',
+    politicalBorder: '#8ca4b6',
+    label: '#f4f7f5',
+    labelHalo: 'rgba(2,9,12,.95)',
+  },
+} satisfies Record<ResolvedTheme, Record<string, string>>;
+
+function currentResolvedTheme(): ResolvedTheme {
+  const value = document.documentElement.dataset.theme;
+  return value === 'morning' || value === 'afternoon' ? value : 'night';
+}
+
+function createStyle(backgroundColor = GLOBE_THEME.night.space): StyleSpecification {
   return {
     version: 8,
     glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
     sources: {},
-    layers: [{ id: 'space', type: 'background', paint: { 'background-color': '#071015' } }],
+    layers: [{ id: 'space', type: 'background', paint: { 'background-color': backgroundColor } }],
   };
 }
 
@@ -268,6 +299,7 @@ export function GlobeView({
   const [contextLost, setContextLost] = useState(false);
   const [rendererRevision, setRendererRevision] = useState(0);
   const [zoom, setZoom] = useState(1);
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(currentResolvedTheme);
   eventsRef.current = events;
   onSelectEventRef.current = onSelectEvent;
   onSelectStationRef.current = onSelectStation;
@@ -277,12 +309,19 @@ export function GlobeView({
   }, [stations]);
 
   useEffect(() => {
+    const observer = new MutationObserver(() => setResolvedTheme(currentResolvedTheme()));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    setResolvedTheme(currentResolvedTheme());
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (!hostRef.current || failed || mapRef.current) return;
     try {
       const compactRenderer = compactRendererRef.current;
       const pixelRatio = Math.min(window.devicePixelRatio || 1, compactRenderer ? 1.35 : 2);
       const map = new maplibregl.Map({
-        container: hostRef.current, style: createStyle(), center: [3, 27], zoom: 1.05,
+        container: hostRef.current, style: createStyle(GLOBE_THEME[currentResolvedTheme()].space), center: [3, 27], zoom: 1.05,
         minZoom: 0.15, maxZoom: 20, maxPitch: 76, pitch: 0, bearing: 0,
         renderWorldCopies: false, attributionControl: false, cooperativeGestures: false, fadeDuration: 0,
         pixelRatio,
@@ -505,13 +544,16 @@ export function GlobeView({
     setVisibility(map, ['satellite-base'], mapStyle === 'satellite');
     setVisibility(map, ['relief-base'], mapStyle === 'relief');
     setVisibility(map, ['bathymetry-base'], mapStyle === 'bathymetry');
-    map.setPaintProperty('space', 'background-color', mapStyle === 'political' ? '#010205' : '#050a0f');
+    const palette = GLOBE_THEME[resolvedTheme];
+    map.setPaintProperty('space', 'background-color', palette.space);
+    map.setPaintProperty('political-fill', 'fill-color', palette.politicalFill);
+    map.setPaintProperty('political-border', 'line-color', palette.politicalBorder);
     const flat = mapStyle === 'political';
-    map.setPaintProperty('country-labels', 'text-color', flat ? '#253534' : '#f4f7f5');
-    map.setPaintProperty('country-labels', 'text-halo-color', flat ? 'rgba(244,244,226,.9)' : 'rgba(2,9,12,.95)');
-    map.setPaintProperty('place-labels', 'text-color', flat ? '#354746' : '#eaf6f5');
-    map.setPaintProperty('place-labels', 'text-halo-color', flat ? 'rgba(244,244,226,.92)' : 'rgba(2,9,12,.95)');
-  }, [mapStyle, ready]);
+    map.setPaintProperty('country-labels', 'text-color', flat ? palette.label : '#f4f7f5');
+    map.setPaintProperty('country-labels', 'text-halo-color', flat ? palette.labelHalo : 'rgba(2,9,12,.95)');
+    map.setPaintProperty('place-labels', 'text-color', flat ? palette.label : '#eaf6f5');
+    map.setPaintProperty('place-labels', 'text-halo-color', flat ? palette.labelHalo : 'rgba(2,9,12,.95)');
+  }, [mapStyle, ready, resolvedTheme]);
 
   useEffect(() => {
     const map = mapRef.current;

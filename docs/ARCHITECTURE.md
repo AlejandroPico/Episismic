@@ -25,20 +25,20 @@ flowchart TD
 
 La actualización de un evento no reemplaza silenciosamente su historia. El resumen se actualiza y `event_updates` conserva cada `source_updated_at` distinto.
 
-## Telemetría instrumental y futuro SeedLink
+## Telemetría instrumental en tiempo real
 
-La edición 1.0.2 consulta el inventario de canales del proveedor FDSN correspondiente y muestra ventanas de datos instrumentales reales mediante el servicio gráfico oficial de EarthScope. Si un canal o intervalo no está disponible, la interfaz declara la ausencia de datos y no fabrica una traza.
+La edición 1.1.0 incorpora una ruta instrumental real completamente ejecutable desde el navegador:
 
-Los navegadores no hablan SeedLink por TCP de forma fiable y GitHub Pages no ejecuta procesos persistentes. El streaming continuo de baja latencia requerirá posteriormente un ingestor independiente, compatible con Python o Java, que:
+1. FDSN Station localiza el canal activo y prioriza HH, BH, EH, HN, LH y SH.
+2. El cliente abre `wss://rtserve.earthscope.org/seedlink` y se suscribe al identificador NSLC exacto.
+3. `seisplotjs` negocia SeedLink, decodifica cada paquete MiniSEED y entrega sus muestras y marcas UTC.
+4. Episismic conserva los bloques en una ventana temporal, elimina duplicados y descarta datos ya fuera de pantalla.
+5. El canvas aplica un pasa-banda Butterworth, agrupa mínimos y máximos por píxel y dibuja la señal sin convertirla en una imagen estática.
+6. Si no llegan paquetes por WebSocket, FDSN Dataselect recupera el mismo canal y la misma ventana como respaldo instrumental real.
 
-- conserva la resolución de redes y canales mediante FDSN Station;
-- mantiene conexiones SeedLink;
-- decodifica miniSEED;
-- calcula métricas y detecciones sin enviar todas las muestras al cliente;
-- expone WebSocket para telemetría y alertas;
-- archiva segmentos de onda fuera del repositorio Git.
+El navegador no puede abrir los SeedLink TCP tradicionales en el puerto 18000. Por ello el directo inmediato cubre los canales federados por el WebSocket público de EarthScope; GEOFON, NCEDC, BMKG u otras redes continúan mediante FDSN cuando no están presentes allí. Extender el directo a todos sus servidores TCP requerirá un puente SeedLink→WebSocket propio, pero la interfaz nunca suplanta un fallo con muestras inventadas.
 
-La web seguirá funcionando con USGS aunque ese servicio no esté disponible.
+La web seguirá funcionando con los catálogos sísmicos aunque la telemetría instrumental no esté disponible.
 
 ## Rendimiento
 
@@ -52,7 +52,7 @@ La web seguirá funcionando con USGS aunque ese servicio no esté disponible.
 - Tamaño y contraste de los símbolos ajustados sin ocultar eventos por niveles de detalle.
 - Símbolos WebGL y halos separados para conservar contraste sin extrusiones ni elementos DOM por estación.
 
-Próximos pasos técnicos: Web Worker dedicado para SQLite y servicio SeedLink/WebSocket para detecciones de forma de onda previas a los catálogos.
+Próximos pasos técnicos: Web Worker dedicado para SQLite y puente SeedLink TCP→WebSocket multirred para ampliar el directo más allá de EarthScope.
 
 ## Multirriesgo
 

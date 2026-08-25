@@ -21,7 +21,8 @@
 ### EarthScope
 
 - FDSN Station para descubrir redes, estaciones, ubicaciones y canales instrumentales.
-- FDSN Dataselect para miniSEED real y Timeseriesplot para representar ventanas instrumentales sin una simulación local.
+- SeedLink WebSocket público para telemetría de baja latencia y FDSN Dataselect para recuperar miniSEED real cuando el flujo no está disponible.
+- Timeseriesplot permanece como último respaldo gráfico oficial si el navegador no puede leer directamente la respuesta binaria.
 
 ### NCEDC y BMKG
 
@@ -35,6 +36,12 @@
 ### PB2002
 
 - Límites de placas y orógenos vectoriales; se conserva placa A/B y fuente de cada tramo.
+
+## Implementación instrumental
+
+- El cliente utiliza `seisplotjs` 3.2.7 para negociar SeedLink y decodificar MiniSEED.
+- Los canales se solicitan por red, estación, ubicación y componente exactos.
+- Los datos se etiquetan como **SeedLink en directo**, **FDSN reciente** o **sin muestras**, sin estados ambiguos ni generación sintética.
 
 ## Preparadas
 

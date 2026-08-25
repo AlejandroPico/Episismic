@@ -67,7 +67,7 @@ export function StationInspector({ station, stations, events, onClose, onFocus, 
           <label><span>Frecuencia superior <strong>{maxFrequency.toFixed(1)} Hz</strong></span><input type="range" min="0.2" max="10" step="0.1" value={maxFrequency} onChange={(event) => setMaxFrequency(Math.max(Number(event.target.value), minFrequency + .1))} /></label>
           <button className="waveform-reset" onClick={() => { setMinFrequency(.5); setMaxFrequency(5); setTimeWindowSeconds(600); }} title="Restablecer monitor"><RotateCcw size={15} /></button>
         </div>
-        <p className="station-synthetic-note real"><Activity size={13} /> Episismic ya no genera trazas sintéticas. La vista utiliza muestras instrumentales archivadas y representadas por servicios oficiales; puede existir latencia y no equivale a una conexión SeedLink por TCP.</p>
+        <p className="station-synthetic-note real"><Activity size={13} /> Episismic no genera trazas sintéticas. El monitor recibe paquetes MiniSEED por SeedLink WebSocket cuando la red está federada en EarthScope y completa las interrupciones con muestras FDSN reales del proveedor.</p>
       </section>}
 
       {activeTab === 'network' && <section className="station-tab-panel station-network-tab" role="tabpanel">

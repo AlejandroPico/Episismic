@@ -37,13 +37,23 @@ function component(channel: string) {
   return value === '1' ? 'N' : value === '2' ? 'E' : value;
 }
 
-export function selectThreeComponentChannels(channels: FdsnChannel[], now = Date.now()) {
-  const active = channels.filter((item) => {
+function activeChannels(channels: FdsnChannel[], now: number) {
+  return channels.filter((item) => {
     const start = item.startTime ? new Date(item.startTime).getTime() : Number.NEGATIVE_INFINITY;
     const end = item.endTime ? new Date(item.endTime).getTime() : Number.POSITIVE_INFINITY;
     return start <= now && end >= now - 86_400_000;
   });
-  const priority = ['HH', 'BH', 'EH', 'HN', 'LH', 'SH'];
+}
+
+const CHANNEL_PRIORITY = ['HH', 'BH', 'EH', 'HN', 'LH', 'SH'];
+
+function channelRank(channel: string) {
+  const index = CHANNEL_PRIORITY.indexOf(channel.slice(0, 2));
+  return index < 0 ? CHANNEL_PRIORITY.length : index;
+}
+
+export function selectThreeComponentChannels(channels: FdsnChannel[], now = Date.now()) {
+  const active = activeChannels(channels, now);
   const groups = new Map<string, FdsnChannel[]>();
   for (const item of active) {
     const key = `${item.location}|${item.channel.slice(0, 2)}`;
@@ -55,17 +65,55 @@ export function selectThreeComponentChannels(channels: FdsnChannel[], now = Date
       return components.has('Z') && components.has('N') && components.has('E');
     })
     .sort((a, b) => {
-      const rank = (value: string) => { const index = priority.indexOf(value); return index < 0 ? priority.length : index; };
-      return rank(a[0].channel.slice(0, 2)) - rank(b[0].channel.slice(0, 2));
+      return channelRank(a[0].channel) - channelRank(b[0].channel);
     })
     .map((items) => ['Z', 'N', 'E'].map((axis) => items.find((item) => component(item.channel) === axis)!))[0] ?? [];
 }
 
-export async function discoverStationChannels(station: SeismicStation, signal?: AbortSignal) {
+export function selectMonitorChannels(channels: FdsnChannel[], now = Date.now()) {
+  const groups = new Map<string, FdsnChannel[]>();
+  for (const item of activeChannels(channels, now)) {
+    const key = `${item.location}|${item.channel.slice(0, 2)}`;
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+  const axes = ['Z', 'N', '1', 'E', '2'];
+  const best = [...groups.values()]
+    .filter((items) => items.some((item) => component(item.channel) === 'Z'))
+    .sort((a, b) => {
+      const componentDifference = new Set(b.map((item) => component(item.channel))).size - new Set(a.map((item) => component(item.channel))).size;
+      return componentDifference || channelRank(a[0].channel) - channelRank(b[0].channel);
+    })[0] ?? [];
+  return best
+    .filter((item, index, items) => items.findIndex((candidate) => component(candidate.channel) === component(item.channel)) === index)
+    .sort((a, b) => axes.indexOf(component(a.channel) || '') - axes.indexOf(component(b.channel) || ''))
+    .slice(0, 3);
+}
+
+async function queryChannelInventory(station: SeismicStation, root: string, signal?: AbortSignal) {
   const query = new URLSearchParams({ net: station.network, sta: station.code, level: 'channel', format: 'text', includerestricted: 'false' });
-  const response = await fetch(`${fdsnServiceRoot(station)}/fdsnws/station/1/query?${query}`, { signal, headers: { Accept: 'text/plain' } });
+  const response = await fetch(`${root}/fdsnws/station/1/query?${query}`, { signal, headers: { Accept: 'text/plain' } });
   if (!response.ok) throw new Error(`Inventario FDSN respondió ${response.status}`);
-  return selectThreeComponentChannels(parseFdsnChannels(await response.text()));
+  return parseFdsnChannels(await response.text());
+}
+
+export async function discoverStationChannels(station: SeismicStation, signal?: AbortSignal) {
+  return selectThreeComponentChannels(await queryChannelInventory(station, fdsnServiceRoot(station), signal));
+}
+
+export async function discoverStationMonitorChannels(station: SeismicStation, signal?: AbortSignal) {
+  const roots = [...new Set([fdsnServiceRoot(station), SERVICE_ROOTS.EarthScope])];
+  let lastError: unknown;
+  for (const root of roots) {
+    try {
+      const selected = selectMonitorChannels(await queryChannelInventory(station, root, signal));
+      if (selected.length) return selected;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') throw error;
+      lastError = error;
+    }
+  }
+  if (lastError) throw lastError;
+  return [];
 }
 
 export function fdsnStationLinks(station: SeismicStation, now = new Date(), channels: FdsnChannel[] = []) {

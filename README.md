@@ -2,11 +2,22 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.0.2` — edición estable y publicable
+**Versión actual:** `1.1.0` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.1.0
+
+- El espacio exterior y la cartografía política vuelven a adoptar colores propios de los temas Mañana, Tarde y Noche; se eliminan los fondos WebGL fijados a negro durante la estabilización del renderizador.
+- Nuevo monitor instrumental en tiempo real inspirado en la experiencia de GlobalQuake y construido de forma independiente para la web.
+- Suscripción al canal NSLC exacto mediante SeedLink WebSocket público de EarthScope.
+- Decodificación MiniSEED en el navegador, búfer temporal, escala robusta y representación canvas de alta densidad.
+- Selector de componentes Z/N/E o Z/1/2, latencia, frecuencia de muestreo y contador de muestras reales.
+- Filtro pasa-banda Butterworth ajustable y escala logarítmica de frecuencia equivalente al monitor de referencia.
+- Si SeedLink no ofrece el canal, se consultan muestras miniSEED reales mediante FDSN Dataselect; si tampoco existen, se declara la ausencia sin generar una señal.
+- Diseño adaptado a móvil y escritorio, con actualización continua sin reconstruir el globo.
 
 ## Novedades de 1.0.2
 
@@ -76,8 +87,8 @@ Cuando un terremoto queda seleccionado, los frentes de onda se reproducen, se di
 
 La ficha de estación incluye:
 
-- monitor de tres componentes basado en canales instrumentales reales publicados mediante FDSN;
-- filtros de frecuencia, ganancia y ventana temporal;
+- monitor SeedLink WebSocket en tiempo real con respaldo FDSN miniSEED y selección de componentes instrumentales;
+- filtro pasa-banda, escala de frecuencia, latencia y ventana temporal configurables;
 - número de estaciones de la red, densidad local y estación más próxima;
 - cobertura azimutal en ocho sectores;
 - percentil de elevación, hemisferios, zona geográfica y periodo operativo;
@@ -87,7 +98,7 @@ La ficha de estación incluye:
 - fase temporal de la propagación, intensidad estimada y puntuación de detectabilidad;
 - exportaciones GeoJSON, JSON y CSV.
 
-Episismic no genera formas de onda sintéticas. Cuando no existe telemetría pública para una estación o ventana, informa de la ausencia de datos sin fabricar una señal.
+Episismic no genera formas de onda sintéticas. Los paquetes SeedLink y las respuestas FDSN se decodifican como miniSEED real; cuando no existe telemetría pública para una estación o ventana, se informa de la ausencia sin fabricar una señal.
 
 ## Alertas y reproducción
 
@@ -165,13 +176,13 @@ La serie `1.x` constituye la edición estable y publicable. A partir de 1.0, las
 ## Fuentes
 
 - Terremotos: [USGS](https://earthquake.usgs.gov/), [EMSC](https://www.seismicportal.eu/) y [GEOFON](https://geofon.gfz-potsdam.de/).
-- Estaciones: [EarthScope](https://service.earthscope.org/fdsnws/station/1/), GEOFON, NCEDC y BMKG.
+- Estaciones: [EarthScope](https://service.earthscope.org/fdsnws/station/1/), [EarthScope SeedLink](https://rtserve.earthscope.org/), GEOFON, NCEDC y BMKG.
 - Volcanes: [Smithsonian Global Volcanism Program](https://volcano.si.edu/).
 - Tectónica: [PB2002](https://github.com/fraxen/tectonicplates), basado en Peter Bird.
 - Cartografía: MapLibre GL JS, Natural Earth, Esri, OpenTopoMap, GEBCO/NOAA y OpenStreetMap según la capa activa.
 
-Cada fuente conserva su atribución, prioridad, licencia y enlace original cuando están disponibles.
+Cada fuente conserva su atribución, prioridad, licencia y enlace original cuando están disponibles. Las referencias de software reutilizado o estudiado se recogen en [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Aviso
 
-Episismic 1.0 es la primera edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.1 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.

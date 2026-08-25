@@ -1,7 +1,7 @@
 {
   "name": "episismic",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "maplibre-gl": "5.7.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "seisplotjs": "3.2.7",
     "sql.js": "1.13.0"
   },
   "devDependencies": {
