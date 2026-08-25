@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Earthquake } from '../types';
-import { aftershockDecay, associatedSequence, cumulativeEnergy, depthDistribution, frequencyMagnitude, hypocentralMigration, sequenceIndicators, temporalRate } from './seismicAnalysis';
+import { aftershockDecay, associatedSequence, azimuthDistribution, cumulativeEnergy, depthDistribution, depthTimeProfile, frequencyMagnitude, hypocentralMigration, momentBalance, sampleQuality, sequenceCsv, sequenceIndicators, spatialFootprint, temporalRate } from './seismicAnalysis';
 
 const event = (id: string, magnitude: number, depthKm: number, time: number, lat = 0, lng = 0) => ({ id, magnitude, depthKm, time, lat, lng } as Earthquake);
 
@@ -39,5 +39,22 @@ describe('análisis estadístico de secuencias', () => {
     const indicators = sequenceIndicators(main, migrating);
     expect(indicators.strongestAftershock?.id).toBe('m1');
     expect(indicators.bathGap).toBe(2);
+  });
+
+  it('resume geometría, profundidad y momento sísmico', () => {
+    const east = event('east', 4, 24, main.time + 86_400_000, 0, .2);
+    const sequence = [main, east, event('east-2', 3.5, 30, main.time + 172_800_000, 0, .4)];
+    expect(azimuthDistribution(main, sequence).dominantBearingDeg).toBeCloseTo(105);
+    expect(depthTimeProfile(main, sequence).at(-1)?.depthKm).toBe(30);
+    expect(momentBalance(main, sequence).equivalentMagnitude).toBeGreaterThanOrEqual(main.magnitude);
+    expect(spatialFootprint(main, sequence).radius90Km).toBeGreaterThan(40);
+  });
+
+  it('puntúa la muestra y exporta un CSV utilizable', () => {
+    const quality = sampleQuality(main, nearby);
+    expect(quality.score).toBeGreaterThan(0);
+    const csv = sequenceCsv(nearby);
+    expect(csv).toContain('fecha_iso');
+    expect(csv.split('\n')).toHaveLength(nearby.length + 1);
   });
 });

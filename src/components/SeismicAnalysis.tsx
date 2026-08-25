@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Earthquake } from '../types';
-import { aftershockDecay, associatedSequence, cumulativeEnergy, depthDistribution, frequencyMagnitude, hypocentralMigration, sequenceIndicators, temporalRate } from '../services/seismicAnalysis';
+import { aftershockDecay, associatedSequence, azimuthDistribution, cumulativeEnergy, depthDistribution, depthTimeProfile, frequencyMagnitude, hypocentralMigration, momentBalance, sampleQuality, sequenceCsv, sequenceIndicators, spatialFootprint, temporalRate } from '../services/seismicAnalysis';
 
 const WIDTH = 320;
 const HEIGHT = 118;
@@ -69,11 +69,47 @@ function RateChart({ bins }: { bins: ReturnType<typeof temporalRate>['bins'] }) 
   })}{bins.length === 0 && <rect x={PAD} y={HEIGHT - PAD - 1} width={width} height="1" className="analysis-rate-bar" />}</svg>;
 }
 
+function AzimuthChart({ bins }: { bins: ReturnType<typeof azimuthDistribution>['bins'] }) {
+  const maximum = Math.max(1, ...bins.map((bin) => bin.count));
+  const centerX = WIDTH / 2;
+  const centerY = HEIGHT / 2 + 2;
+  return <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="Distribución azimutal de los eventos"><circle className="analysis-radar-grid" cx={centerX} cy={centerY} r="42" /><circle className="analysis-radar-grid" cx={centerX} cy={centerY} r="21" />{bins.map((bin) => {
+    const angle = (bin.startDeg + bin.endDeg) / 2 * Math.PI / 180;
+    const length = 5 + bin.count / maximum * 37;
+    return <line key={bin.startDeg} className="analysis-azimuth-spoke" x1={centerX} y1={centerY} x2={centerX + Math.sin(angle) * length} y2={centerY - Math.cos(angle) * length}><title>{bin.startDeg.toFixed(0)}–{bin.endDeg.toFixed(0)}°: {bin.count} eventos</title></line>;
+  })}<text className="analysis-compass-label" x={centerX} y="10">N</text><text className="analysis-compass-label" x={centerX} y={HEIGHT - 2}>S</text><text className="analysis-compass-label" x={WIDTH - 13} y={centerY + 2}>E</text><text className="analysis-compass-label" x="8" y={centerY + 2}>O</text></svg>;
+}
+
+function DepthTimeChart({ points }: { points: ReturnType<typeof depthTimeProfile> }) {
+  const minimumDay = Math.min(...points.map((point) => point.days));
+  const maximumDay = Math.max(...points.map((point) => point.days));
+  const maximumDepth = Math.max(1, ...points.map((point) => point.depthKm));
+  const dayRange = Math.max(.1, maximumDay - minimumDay);
+  return <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="Profundidad de los eventos a lo largo del tiempo"><path className="analysis-gridline" d={`M${PAD},${PAD}V${HEIGHT - PAD}H${WIDTH - PAD}`} />{points.slice(-180).map((point, index) => {
+    const x = PAD + (point.days - minimumDay) / dayRange * (WIDTH - PAD * 2);
+    const y = PAD + point.depthKm / maximumDepth * (HEIGHT - PAD * 2);
+    return <circle key={`${point.time}:${index}`} className="analysis-point warm" cx={x} cy={y} r={Math.max(2.2, Math.min(5.8, point.magnitude * .72))}><title>{point.days.toFixed(1)} d · {point.depthKm.toFixed(1)} km · M{point.magnitude.toFixed(1)}</title></circle>;
+  })}</svg>;
+}
+
 function formatEnergy(value: number) {
   if (value >= 1e15) return `${(value / 1e15).toFixed(2)} PJ`;
   if (value >= 1e12) return `${(value / 1e12).toFixed(2)} TJ`;
   if (value >= 1e9) return `${(value / 1e9).toFixed(2)} GJ`;
   return `${(value / 1e6).toFixed(2)} MJ`;
+}
+
+function formatMoment(value: number) {
+  return `${value.toExponential(2).replace('e+', ' × 10^')} N·m`;
+}
+
+function downloadText(filename: string, contents: string, mime: string) {
+  const url = URL.createObjectURL(new Blob([contents], { type: mime }));
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function SeismicAnalysis({ event, events }: { event: Earthquake; events: Earthquake[] }) {
@@ -85,6 +121,11 @@ export function SeismicAnalysis({ event, events }: { event: Earthquake; events: 
   const migration = useMemo(() => hypocentralMigration(event, sequence), [event, sequence]);
   const rate = useMemo(() => temporalRate(sequence), [sequence]);
   const indicators = useMemo(() => sequenceIndicators(event, sequence), [event, sequence]);
+  const azimuth = useMemo(() => azimuthDistribution(event, sequence), [event, sequence]);
+  const depthTime = useMemo(() => depthTimeProfile(event, sequence), [event, sequence]);
+  const moment = useMemo(() => momentBalance(event, sequence), [event, sequence]);
+  const footprint = useMemo(() => spatialFootprint(event, sequence), [event, sequence]);
+  const quality = useMemo(() => sampleQuality(event, sequence), [event, sequence]);
   const maximumDecay = Math.max(1, ...decay.map((point) => Math.max(point.count, point.expected)));
   const maximumDepthCount = Math.max(1, ...depths.map((bin) => bin.count));
 
@@ -97,6 +138,12 @@ export function SeismicAnalysis({ event, events }: { event: Earthquake; events: 
     <article className="analysis-card"><header><div><span>MIGRACIÓN HIPOCENTRAL</span><strong>{migration.rateKmPerDay == null ? 'tendencia insuficiente' : `${migration.rateKmPerDay >= 0 ? '+' : ''}${migration.rateKmPerDay.toFixed(1)} km/día`}</strong></div><small>distancia al epicentro</small></header><MigrationChart points={migration.points} /><div className="analysis-axis-label">TIEMPO → · DISTANCIA ↑ · COLOR = PROF.</div></article>
     <article className="analysis-card"><header><div><span>RITMO DE ACTIVIDAD</span><strong>{rate.peakEventsPerDay.toFixed(1)} eventos/día máx.</strong></div><small>mediana Δt {rate.medianIntervalHours == null ? '—' : `${rate.medianIntervalHours.toFixed(1)} h`}</small></header><RateChart bins={rate.bins} /></article>
     <article className="analysis-card sequence-indicators"><header><div><span>INDICADORES DE SECUENCIA</span><strong>Ley de Båth ΔM {indicators.bathGap?.toFixed(1) ?? '—'}</strong></div><small>diagnóstico provisional</small></header><div><span>Réplica máxima<strong>{indicators.strongestAftershock ? `M${indicators.strongestAftershock.magnitude.toFixed(1)}` : '—'}</strong></span><span>Productividad M≥{(event.magnitude - 2).toFixed(1)}<strong>{indicators.productivity}</strong></span><span>Desplaz. centroide<strong>{indicators.centroidOffsetKm?.toFixed(1) ?? '—'} km</strong></span><span>Prof. media<strong>{indicators.meanDepthKm?.toFixed(1) ?? '—'} km</strong></span></div></article>
+    <article className="analysis-card"><header><div><span>DISTRIBUCIÓN AZIMUTAL</span><strong>{azimuth.dominantBearingDeg == null ? 'sin dirección dominante' : `rumbo ${azimuth.dominantBearingDeg.toFixed(0)}°`}</strong></div><small>anisotropía {azimuth.anisotropy == null ? '—' : azimuth.anisotropy.toFixed(2)}</small></header><AzimuthChart bins={azimuth.bins} /></article>
+    <article className="analysis-card"><header><div><span>PROFUNDIDAD / TIEMPO</span><strong>{Math.min(...depthTime.map((point) => point.depthKm)).toFixed(1)}–{Math.max(...depthTime.map((point) => point.depthKm)).toFixed(1)} km</strong></div><small>profundidad positiva ↓</small></header><DepthTimeChart points={depthTime} /></article>
+    <article className="analysis-card moment-card"><header><div><span>BALANCE DE MOMENTO</span><strong>Mw equivalente {moment.equivalentMagnitude?.toFixed(2) ?? '—'}</strong></div><small>momento escalar agregado</small></header><div className="moment-balance"><strong>{formatMoment(moment.totalMomentNm)}</strong><span><i style={{ width: `${moment.mainFraction * 100}%` }} /></span><small>Evento principal: {(moment.mainFraction * 100).toFixed(1)}% del momento total</small></div></article>
+    <article className="analysis-card footprint-card"><header><div><span>HUELLA ESPACIAL</span><strong>R90 {footprint.radius90Km?.toFixed(1) ?? '—'} km</strong></div><small>área circular equivalente</small></header><div><span>Radio mediano<strong>{footprint.medianRadiusKm?.toFixed(1) ?? '—'} km</strong></span><span>Radio máximo<strong>{footprint.maximumRadiusKm?.toFixed(1) ?? '—'} km</strong></span><span>Área R90<strong>{footprint.area90Km2?.toLocaleString('es-ES', { maximumFractionDigits: 0 }) ?? '—'} km²</strong></span></div></article>
+    <article className="analysis-card quality-card"><header><div><span>CALIDAD DE LA MUESTRA</span><strong>{quality.label} · {quality.score}/100</strong></div><small>no equivale a pronóstico</small></header><div className="quality-meter"><span><i style={{ width: `${quality.score}%` }} /></span><div><small>Revisados<strong>{(quality.reviewedFraction * 100).toFixed(0)}%</strong></small><small>Agencias<strong>{quality.agencyCount}</strong></small><small>Eventos<strong>{sequence.length}</strong></small></div></div></article>
+    <article className="analysis-card export-card"><header><div><span>EXPORTAR INFORME</span><strong>Serie científica reproducible</strong></div><small>CSV / JSON</small></header><div><button onClick={() => downloadText(`episismic-${event.id}.csv`, sequenceCsv(sequence), 'text/csv;charset=utf-8')}>DESCARGAR CSV</button><button onClick={() => downloadText(`episismic-${event.id}.json`, JSON.stringify({ generatedAt: new Date().toISOString(), mainEvent: event, sequence, analysis: { frequency, energy, migration, rate, indicators, azimuth, moment, footprint, quality } }, null, 2), 'application/json')}>DESCARGAR JSON</button><p>Incluye el evento principal, catálogo asociado y métricas calculadas en esta ficha.</p></div></article>
     <p className="analysis-note">Estadística provisional calculada sobre el catálogo actualmente cargado; la completitud y los parámetros pueden cambiar al incorporarse revisiones.</p>
   </div>;
 }

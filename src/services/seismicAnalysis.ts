@@ -7,6 +7,8 @@ export interface DepthBin { label: string; minimum: number; maximum: number; cou
 export interface EnergyPoint { time: number; joules: number; cumulativeJoules: number; cumulativeFraction: number }
 export interface MigrationPoint { time: number; days: number; distanceKm: number; depthKm: number; magnitude: number }
 export interface RateBin { startTime: number; endTime: number; count: number; eventsPerDay: number }
+export interface AzimuthBin { startDeg: number; endDeg: number; count: number }
+export interface DepthTimePoint { time: number; days: number; depthKm: number; magnitude: number }
 
 export function associatedSequence(mainEvent: Earthquake, events: Earthquake[]) {
   const radiusKm = Math.min(350, Math.max(45, 12 * 2 ** Math.max(0, mainEvent.magnitude - 3)));
@@ -122,4 +124,88 @@ export function sequenceIndicators(mainEvent: Earthquake, sequence: Earthquake[]
     centroidOffsetKm: centroid ? haversineKm(mainEvent, centroid) : null,
     meanDepthKm: centroid?.depthKm ?? null,
   };
+}
+
+function initialBearing(from: Earthquake, to: Earthquake) {
+  const toRadians = Math.PI / 180;
+  const lat1 = from.lat * toRadians;
+  const lat2 = to.lat * toRadians;
+  const deltaLongitude = (to.lng - from.lng) * toRadians;
+  const y = Math.sin(deltaLongitude) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLongitude);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+export function azimuthDistribution(mainEvent: Earthquake, sequence: Earthquake[], sectors = 12) {
+  const count = Math.max(4, Math.round(sectors));
+  const width = 360 / count;
+  const bins: AzimuthBin[] = Array.from({ length: count }, (_, index) => ({ startDeg: index * width, endDeg: (index + 1) * width, count: 0 }));
+  const neighbours = sequence.filter((event) => event.id !== mainEvent.id && haversineKm(mainEvent, event) > .01);
+  let vectorX = 0;
+  let vectorY = 0;
+  for (const event of neighbours) {
+    const bearing = initialBearing(mainEvent, event);
+    bins[Math.min(count - 1, Math.floor(bearing / width))].count += 1;
+    vectorX += Math.cos(bearing * Math.PI / 180);
+    vectorY += Math.sin(bearing * Math.PI / 180);
+  }
+  const dominant = bins.reduce<AzimuthBin | null>((best, bin) => !best || bin.count > best.count ? bin : best, null);
+  return {
+    bins,
+    dominantBearingDeg: dominant && dominant.count > 0 ? (dominant.startDeg + dominant.endDeg) / 2 : null,
+    anisotropy: neighbours.length ? Math.hypot(vectorX, vectorY) / neighbours.length : null,
+  };
+}
+
+export function depthTimeProfile(mainEvent: Earthquake, sequence: Earthquake[]) {
+  return sequence.map<DepthTimePoint>((event) => ({
+    time: event.time,
+    days: (event.time - mainEvent.time) / 86_400_000,
+    depthKm: event.depthKm,
+    magnitude: event.magnitude,
+  })).sort((a, b) => a.time - b.time);
+}
+
+function scalarMomentNm(magnitude: number) { return 10 ** (1.5 * magnitude + 9.1); }
+
+export function momentBalance(mainEvent: Earthquake, sequence: Earthquake[]) {
+  const totalMomentNm = sequence.reduce((sum, event) => sum + scalarMomentNm(event.magnitude), 0);
+  const mainMomentNm = scalarMomentNm(mainEvent.magnitude);
+  const equivalentMagnitude = totalMomentNm > 0 ? (Math.log10(totalMomentNm) - 9.1) / 1.5 : null;
+  return { totalMomentNm, equivalentMagnitude, mainFraction: totalMomentNm > 0 ? mainMomentNm / totalMomentNm : 0 };
+}
+
+export function spatialFootprint(mainEvent: Earthquake, sequence: Earthquake[]) {
+  const distances = sequence.map((event) => haversineKm(mainEvent, event)).sort((a, b) => a - b);
+  if (!distances.length) return { medianRadiusKm: null as number | null, radius90Km: null as number | null, maximumRadiusKm: null as number | null, area90Km2: null as number | null };
+  const middle = Math.floor(distances.length / 2);
+  const medianRadiusKm = distances.length % 2 ? distances[middle] : (distances[middle - 1] + distances[middle]) / 2;
+  const radius90Km = distances[Math.min(distances.length - 1, Math.ceil(distances.length * .9) - 1)];
+  return { medianRadiusKm, radius90Km, maximumRadiusKm: distances.at(-1) ?? 0, area90Km2: Math.PI * radius90Km ** 2 };
+}
+
+export function sampleQuality(mainEvent: Earthquake, sequence: Earthquake[]) {
+  if (!sequence.length) return { score: 0, label: 'Sin muestra', reviewedFraction: 0, agencyCount: 0 };
+  const reviewed = sequence.filter((event) => event.status === 'reviewed' || event.reviewCode === 'R').length / sequence.length;
+  const agencies = new Set(sequence.flatMap((event) => event.catalogs?.length ? event.catalogs : [event.source]).filter(Boolean)).size;
+  const timeSpanDays = (sequence.at(-1)!.time - sequence[0].time) / 86_400_000;
+  const sampleScore = Math.min(35, sequence.length / 25 * 35);
+  const reviewScore = reviewed * 25;
+  const agencyScore = Math.min(20, agencies / 3 * 20);
+  const spanScore = Math.min(15, timeSpanDays / 7 * 15);
+  const mainScore = mainEvent.status === 'reviewed' || mainEvent.reviewCode === 'R' ? 5 : 2;
+  const score = Math.round(Math.min(100, sampleScore + reviewScore + agencyScore + spanScore + mainScore));
+  const label = score >= 80 ? 'Alta' : score >= 60 ? 'Buena' : score >= 40 ? 'Limitada' : 'Preliminar';
+  return { score, label, reviewedFraction: reviewed, agencyCount: agencies };
+}
+
+function csvCell(value: string | number | boolean | null | undefined) {
+  const text = value == null ? '' : String(value);
+  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+export function sequenceCsv(sequence: Earthquake[]) {
+  const header = ['id', 'fecha_iso', 'magnitud', 'tipo_magnitud', 'profundidad_km', 'latitud', 'longitud', 'lugar', 'fuente', 'estado'];
+  const rows = sequence.map((event) => [event.id, new Date(event.time).toISOString(), event.magnitude, event.magnitudeType, event.depthKm, event.lat, event.lng, event.place, event.source, event.status]);
+  return [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\n');
 }
