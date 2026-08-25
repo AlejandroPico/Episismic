@@ -1220,6 +1220,31 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .export-card button { min-height: 34px; border: 1px solid var(--line-strong); color: var(--accent); background: transparent; font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .05em; cursor: pointer; }
 .export-card button:hover { color: var(--bg-deep); background: var(--accent); }
 .export-card p { grid-column: 1/-1; margin: 3px 0 0; color: var(--text-soft); font-size: 7px; line-height: 1.45; }
+.diagnostic-bars { height: 118px; display: grid; grid-template-columns: repeat(6,1fr); align-items: end; gap: 7px; padding: 12px 11px 21px; }
+.diagnostic-bars span { position: relative; height: 100%; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid var(--line-strong); }
+.diagnostic-bars i { width: 50%; min-height: 2px; background: linear-gradient(to top,var(--accent),var(--warm)); opacity: .8; }
+.diagnostic-bars strong { position: absolute; bottom: calc(100% + 3px); color: var(--text); font: 600 6px/1 IBM Plex Mono,monospace; }
+.diagnostic-bars small { position: absolute; top: calc(100% + 6px); color: var(--text-soft); font: 500 6px/1 IBM Plex Mono,monospace; white-space: nowrap; }
+.diagnostic-empty { min-height: 118px; display: grid; place-items: center; margin: 0; padding: 12px; color: var(--text-soft); font-size: 7px; line-height: 1.5; text-align: center; }
+.diagnostic-scatter-point { fill: var(--warm); }
+.diagnostic-metric-card > div { min-height: 118px; display: grid; align-content: center; gap: 10px; padding: 13px; }
+.diagnostic-metric-card > div > span { display: grid; gap: 5px; color: var(--text-soft); font-size: 7px; }
+.diagnostic-metric-card > div strong { overflow: hidden; color: var(--text); font: 600 10px/1.25 IBM Plex Mono,monospace; text-overflow: ellipsis; white-space: nowrap; }
+.diagnostic-metric-card > div p, .outlier-card p, .classification-card p { margin: 0; color: var(--text-soft); font-size: 7px; line-height: 1.5; }
+.diagnostic-meter, .consensus-card > div > span, .classification-card > div > span { height: 8px; display: block; overflow: hidden; border: 1px solid var(--line-strong); background: var(--panel-soft); }
+.diagnostic-meter i, .consensus-card > div > span i, .classification-card > div > span i { height: 100%; display: block; background: linear-gradient(90deg,var(--accent),var(--warm)); }
+.outlier-card > div { min-height: 118px; display: grid; align-content: center; padding: 8px 11px; }
+.outlier-card > div > span { min-height: 20px; display: grid; grid-template-columns: 42px 1fr; align-items: center; gap: 7px; border-bottom: 1px solid var(--line); }
+.outlier-card > div > span:last-child { border-bottom: 0; }
+.outlier-card > div strong { color: var(--warm); font: 600 8px/1 IBM Plex Mono,monospace; }
+.outlier-card > div i { overflow: hidden; color: var(--text-soft); font: 500 7px/1 IBM Plex Mono,monospace; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.consensus-card > div { min-height: 118px; display: grid; grid-template-columns: repeat(2,1fr); align-content: center; gap: 10px; padding: 13px; }
+.consensus-card > div > span { grid-column: 1/-1; }
+.consensus-card > div > small { display: grid; gap: 5px; color: var(--text-soft); font-size: 7px; }
+.consensus-card > div strong { color: var(--text); font: 600 9px/1 IBM Plex Mono,monospace; }
+.classification-card > div { min-height: 118px; display: grid; grid-template-columns: 42px 1fr; align-content: center; align-items: center; gap: 10px; padding: 13px; }
+.classification-card > div > strong { color: var(--accent); font: 600 15px/1 IBM Plex Mono,monospace; }
+.classification-card p { grid-column: 1/-1; }
 .analysis-note { grid-column: 1/-1; margin: 0; padding: 6px 8px; color: var(--text-soft); border-left: 2px solid var(--accent); background: var(--accent-soft); font-size: 7px; line-height: 1.4; }
 
 @media (max-width: 620px) {
