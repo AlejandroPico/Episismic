@@ -2,11 +2,21 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.0.1` — edición estable y publicable
+**Versión actual:** `1.0.2` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.0.2
+
+- Eliminadas por completo las trazas sísmicas sintéticas del monitor de estación.
+- El monitor descubre los canales publicados por cada centro FDSN y representa datos instrumentales reales mediante el servicio gráfico oficial de EarthScope.
+- Los accesos StationXML, inventario de canales y miniSEED se enrutan a EarthScope, GEOFON, NCEDC o BMKG según la procedencia de cada estación.
+- Cuando una estación o una ventana no tiene datos públicos, la aplicación lo indica y no genera una señal sustitutiva.
+- **Eventos detectables** pasa a llamarse **Eventos relacionados**: muestra candidatos filtrados por distancia o compatibilidad teórica y no los presenta como detecciones confirmadas.
+- La ficha de estación crece hasta 980 × 720 px en escritorio y mantiene adaptación específica para móvil.
+- Las alertas visuales, sonoras y del sistema solo se emiten para terremotos cuyo origen tenga como máximo 15 minutos; las revisiones antiguas actualizan los datos sin reactivar alarmas.
 
 ## Novedades de 1.0.1
 
@@ -27,7 +37,7 @@ La versión 1.0.0 consolida la primera edición estable de Episismic y completa 
 - ondas P, S y superficiales reproducidas continuamente mientras el evento permanece seleccionado;
 - análisis de secuencias, Gutenberg–Richter, Omori, energía, momento, migración y profundidad;
 - diagnóstico avanzado de intervalos, correlaciones, difusión, anomalías y consenso de catálogos;
-- monitor de estación BHZ/BHN/BHE, contexto de red, cobertura azimutal y acceso FDSN;
+- telemetría instrumental de estación, contexto de red, cobertura azimutal y acceso FDSN;
 - asociación entre estaciones y terremotos con llegadas previstas, azimut, intensidad y detectabilidad;
 - evaluación de impacto con PGA, PGV, radios MMI, ruptura y riesgos secundarios;
 - informes descargables CSV, JSON, GeoJSON y Markdown, además de impresión/PDF mediante el navegador.
@@ -66,7 +76,7 @@ Cuando un terremoto queda seleccionado, los frentes de onda se reproducen, se di
 
 La ficha de estación incluye:
 
-- monitor sintético sincronizado de tres componentes BHZ, BHN y BHE;
+- monitor de tres componentes basado en canales instrumentales reales publicados mediante FDSN;
 - filtros de frecuencia, ganancia y ventana temporal;
 - número de estaciones de la red, densidad local y estación más próxima;
 - cobertura azimutal en ocho sectores;
@@ -77,7 +87,7 @@ La ficha de estación incluye:
 - fase temporal de la propagación, intensidad estimada y puntuación de detectabilidad;
 - exportaciones GeoJSON, JSON y CSV.
 
-Las formas de onda sintéticas se identifican expresamente como simulación. Nunca se presentan como telemetría SeedLink real.
+Episismic no genera formas de onda sintéticas. Cuando no existe telemetría pública para una estación o ventana, informa de la ausencia de datos sin fabricar una señal.
 
 ## Alertas y reproducción
 

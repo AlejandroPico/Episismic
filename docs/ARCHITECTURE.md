@@ -4,7 +4,7 @@
 
 Episismic se divide en cuatro sistemas para evitar que el volumen de estaciones, formas de onda o capas bloquee el globo:
 
-1. **Adquisición:** adaptadores FDSN/GeoJSON/SeedLink convierten fuentes externas al dominio común.
+1. **Adquisición:** adaptadores FDSN y GeoJSON convierten fuentes externas al dominio común; el navegador consulta inventarios y ventanas instrumentales sin generar señales.
 2. **Persistencia:** SQLite conserva el catálogo, todas las revisiones y metadatos; el navegador lo ejecuta en WebAssembly.
 3. **Dominio:** terremotos, estaciones, alertas y futuros riesgos no dependen de React ni de MapLibre.
 4. **Presentación:** React administra paneles y filtros; MapLibre renderiza teselas y GeoJSON en WebGL.
@@ -25,11 +25,13 @@ flowchart TD
 
 La actualización de un evento no reemplaza silenciosamente su historia. El resumen se actualiza y `event_updates` conserva cada `source_updated_at` distinto.
 
-## Ingesta en directo futura
+## Telemetría instrumental y futuro SeedLink
 
-Los navegadores no hablan SeedLink de forma fiable y GitHub Pages no ejecuta procesos persistentes. La segunda fase añadirá un servicio de ingesta independiente, compatible con Python o Java, que:
+La edición 1.0.2 consulta el inventario de canales del proveedor FDSN correspondiente y muestra ventanas de datos instrumentales reales mediante el servicio gráfico oficial de EarthScope. Si un canal o intervalo no está disponible, la interfaz declara la ausencia de datos y no fabrica una traza.
 
-- descubre redes mediante FDSN Station;
+Los navegadores no hablan SeedLink por TCP de forma fiable y GitHub Pages no ejecuta procesos persistentes. El streaming continuo de baja latencia requerirá posteriormente un ingestor independiente, compatible con Python o Java, que:
+
+- conserva la resolución de redes y canales mediante FDSN Station;
 - mantiene conexiones SeedLink;
 - decodifica miniSEED;
 - calcula métricas y detecciones sin enviar todas las muestras al cliente;

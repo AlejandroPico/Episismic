@@ -59,17 +59,19 @@ export function associateStationEvents(station: SeismicStation, events: Earthqua
 }
 
 export function stationEventSummary(station: SeismicStation, events: Earthquake[], now = Date.now()) {
-  const associations = associateStationEvents(station, events, now);
-  const nearest = [...associations].sort((a, b) => a.distanceKm - b.distanceKm)[0] ?? null;
-  const strongest = associations.reduce<(typeof associations)[number] | null>((maximum, item) => !maximum || item.event.magnitude > maximum.event.magnitude ? item : maximum, null);
+  const allAssociations = associateStationEvents(station, events, now);
+  const associations = allAssociations.filter((item) => item.distanceKm <= 1000 || item.detectionScore >= 40)
+    .sort((a, b) => b.detectionScore - a.detectionScore || b.event.time - a.event.time);
+  const nearest = [...allAssociations].sort((a, b) => a.distanceKm - b.distanceKm)[0] ?? null;
+  const strongest = allAssociations.reduce<(typeof allAssociations)[number] | null>((maximum, item) => !maximum || item.event.magnitude > maximum.event.magnitude ? item : maximum, null);
   return {
     associations,
     nearest,
     strongest,
-    within500Km: associations.filter((item) => item.distanceKm <= 500).length,
-    within1000Km: associations.filter((item) => item.distanceKm <= 1000).length,
-    within5000Km: associations.filter((item) => item.distanceKm <= 5000).length,
-    probableDetections: associations.filter((item) => item.detectionScore >= 40).length,
+    within500Km: allAssociations.filter((item) => item.distanceKm <= 500).length,
+    within1000Km: allAssociations.filter((item) => item.distanceKm <= 1000).length,
+    within5000Km: allAssociations.filter((item) => item.distanceKm <= 5000).length,
+    probableDetections: allAssociations.filter((item) => item.detectionScore >= 40).length,
   };
 }
 

@@ -5,12 +5,12 @@ import { elevationContext, fdsnStationLinks, geographicContext, nearestStation, 
 import { stationAssociationsCsv, stationEventSummary } from '../services/stationEventAnalysis';
 import { formatTravelTime } from '../services/travelTimes';
 import { formatDateTime, formatRelativeTime, magnitudeColor } from '../utils/format';
-import { Waveform } from './Waveform';
+import { RealStationMonitor } from './RealStationMonitor';
 
 type StationTab = 'monitor' | 'events' | 'network' | 'metadata' | 'data';
 
 const tabs: Array<{ id: StationTab; label: string }> = [
-  { id: 'monitor', label: 'Monitor 3C' }, { id: 'events', label: 'Eventos detectables' }, { id: 'network', label: 'Red y cobertura' },
+  { id: 'monitor', label: 'Telemetría real' }, { id: 'events', label: 'Eventos relacionados' }, { id: 'network', label: 'Red y cobertura' },
   { id: 'metadata', label: 'Metadatos' }, { id: 'data', label: 'Datos FDSN' },
 ];
 
@@ -30,16 +30,14 @@ export function StationInspector({ station, stations, events, onClose, onFocus, 
   const [associationFocusId, setAssociationFocusId] = useState<string | null>(null);
   const [minFrequency, setMinFrequency] = useState(.5);
   const [maxFrequency, setMaxFrequency] = useState(5);
-  const [timeWindowSeconds, setTimeWindowSeconds] = useState(120);
-  const [gain, setGain] = useState(1);
+  const [timeWindowSeconds, setTimeWindowSeconds] = useState(600);
 
   useEffect(() => {
     setActiveTab('monitor');
     setAssociationFocusId(null);
     setMinFrequency(.5);
     setMaxFrequency(5);
-    setTimeWindowSeconds(120);
-    setGain(1);
+    setTimeWindowSeconds(600);
   }, [station.id]);
 
   const membership = useMemo(() => networkMembership(station, stations), [station, stations]);
@@ -62,17 +60,14 @@ export function StationInspector({ station, stations, events, onClose, onFocus, 
     <nav className="event-inspector-tabs station-inspector-tabs" role="tablist" aria-label="Secciones de la estación">{tabs.map((tab) => <button key={tab.id} role="tab" aria-selected={activeTab === tab.id} className={activeTab === tab.id ? 'active' : ''} onClick={() => setActiveTab(tab.id)}>{tab.label}</button>)}</nav>
     <div className="station-inspector-scroll">
       {activeTab === 'monitor' && <section className="station-tab-panel station-monitor-tab" role="tabpanel">
-        <div className="station-components">
-          {(['BHZ', 'BHN', 'BHE'] as const).map((channel) => <article key={channel}><div className="waveform-title"><span>{channel} · 20 MUESTRAS/S · COUNTS</span><em>TRAZA SINTÉTICA</em></div><Waveform seed={`${station.id}:${channel}`} minFrequency={minFrequency} maxFrequency={maxFrequency} timeWindowSeconds={timeWindowSeconds} gain={gain} /></article>)}
-        </div>
+        <RealStationMonitor station={station} minFrequency={minFrequency} maxFrequency={maxFrequency} timeWindowSeconds={timeWindowSeconds} />
         <div className="waveform-controls station-waveform-controls">
-          <div className="waveform-zoom-control"><span>VENTANA TEMPORAL</span><button onClick={() => setTimeWindowSeconds((value) => Math.min(300, value + 30))} title="Alejar sismograma"><Minus size={14} /></button><strong>{timeWindowSeconds} s</strong><button onClick={() => setTimeWindowSeconds((value) => Math.max(30, value - 30))} title="Acercar sismograma"><Plus size={14} /></button></div>
+          <div className="waveform-zoom-control"><span>VENTANA REAL</span><button onClick={() => setTimeWindowSeconds((value) => Math.min(1800, value + 120))} title="Ampliar ventana"><Minus size={14} /></button><strong>{Math.round(timeWindowSeconds / 60)} min</strong><button onClick={() => setTimeWindowSeconds((value) => Math.max(120, value - 120))} title="Reducir ventana"><Plus size={14} /></button></div>
           <label><span>Frecuencia inferior <strong>{minFrequency.toFixed(1)} Hz</strong></span><input type="range" min="0.1" max="9.5" step="0.1" value={minFrequency} onChange={(event) => setMinFrequency(Math.min(Number(event.target.value), maxFrequency - .1))} /></label>
           <label><span>Frecuencia superior <strong>{maxFrequency.toFixed(1)} Hz</strong></span><input type="range" min="0.2" max="10" step="0.1" value={maxFrequency} onChange={(event) => setMaxFrequency(Math.max(Number(event.target.value), minFrequency + .1))} /></label>
-          <label><span>Ganancia visual <strong>{gain.toFixed(1)}×</strong></span><input type="range" min="0.4" max="3" step="0.1" value={gain} onChange={(event) => setGain(Number(event.target.value))} /></label>
-          <button className="waveform-reset" onClick={() => { setMinFrequency(.5); setMaxFrequency(5); setTimeWindowSeconds(120); setGain(1); }} title="Restablecer monitor"><RotateCcw size={15} /></button>
+          <button className="waveform-reset" onClick={() => { setMinFrequency(.5); setMaxFrequency(5); setTimeWindowSeconds(600); }} title="Restablecer monitor"><RotateCcw size={15} /></button>
         </div>
-        <p className="station-synthetic-note"><Activity size={13} /> Las tres componentes están sincronizadas y claramente identificadas como simulación local; no representan una transmisión SeedLink.</p>
+        <p className="station-synthetic-note real"><Activity size={13} /> Episismic ya no genera trazas sintéticas. La vista utiliza muestras instrumentales archivadas y representadas por servicios oficiales; puede existir latencia y no equivale a una conexión SeedLink por TCP.</p>
       </section>}
 
       {activeTab === 'network' && <section className="station-tab-panel station-network-tab" role="tabpanel">
@@ -86,23 +81,25 @@ export function StationInspector({ station, stations, events, onClose, onFocus, 
       </section>}
 
       {activeTab === 'events' && <section className="station-tab-panel station-events-tab" role="tabpanel">
+        <p className="station-event-method-note"><Activity size={13} /> Esta sección cruza la estación con el catálogo sísmico y calcula si la señal podría ser apreciable. Un terremoto lejano puede aparecer si su magnitud es suficiente, pero solo la telemetría real permite confirmar que la estación lo registró.</p>
         <div className="station-event-summary">
           <article><span>EVENTO MÁS PRÓXIMO</span><strong>{eventSummary.nearest ? `${eventSummary.nearest.distanceKm.toFixed(0)} km` : '—'}</strong><small>{eventSummary.nearest?.event.place ?? 'Sin catálogo'}</small></article>
           <article><span>MAYOR MAGNITUD</span><strong style={{ color: eventSummary.strongest ? magnitudeColor(eventSummary.strongest.event.magnitude) : undefined }}>{eventSummary.strongest ? `M${eventSummary.strongest.event.magnitude.toFixed(1)}` : '—'}</strong><small>{eventSummary.strongest?.event.place ?? 'Sin catálogo'}</small></article>
           <article><span>RADIO DE 1.000 KM</span><strong>{eventSummary.within1000Km}</strong><small>{eventSummary.within500Km} dentro de 500 km</small></article>
-          <article><span>DETECCIÓN PROBABLE</span><strong>{eventSummary.probableDetections}</strong><small>puntuación ≥ 40/100</small></article>
+          <article><span>CANDIDATOS COMPATIBLES</span><strong>{eventSummary.probableDetections}</strong><small>estimación ≥ 40/100</small></article>
         </div>
         {focusedAssociation && <div className="station-event-detail">
-          <header><div><span>ASOCIACIÓN SELECCIONADA</span><strong>M{focusedAssociation.event.magnitude.toFixed(1)} · {focusedAssociation.event.place}</strong><small>{formatRelativeTime(focusedAssociation.event.time)} · {phaseLabels[focusedAssociation.phase]}</small></div><button onClick={() => onSelectEvent(focusedAssociation.event)}>ABRIR TERREMOTO</button></header>
+          <header><div><span>ASOCIACIÓN TEÓRICA SELECCIONADA</span><strong>M{focusedAssociation.event.magnitude.toFixed(1)} · {focusedAssociation.event.place}</strong><small>{formatRelativeTime(focusedAssociation.event.time)} · llegada calculada: {phaseLabels[focusedAssociation.phase]}</small></div><button onClick={() => onSelectEvent(focusedAssociation.event)}>ABRIR TERREMOTO</button></header>
           <div className="station-event-metrics">
             <span>Distancia<strong>{focusedAssociation.distanceKm.toFixed(1)} km</strong></span><span>Azimut / back-azimut<strong>{focusedAssociation.azimuthDeg.toFixed(0)}° / {focusedAssociation.backAzimuthDeg.toFixed(0)}°</strong></span>
             <span>Llegada P<strong>{formatTravelTime(focusedAssociation.pSeconds)}</strong><small>{formatDateTime(focusedAssociation.pArrivalTime)}</small></span><span>Llegada S<strong>{formatTravelTime(focusedAssociation.sSeconds)}</strong><small>{formatDateTime(focusedAssociation.sArrivalTime)}</small></span>
             <span>Superficiales<strong>{formatTravelTime(focusedAssociation.surfaceSeconds)}</strong><small>{formatDateTime(focusedAssociation.surfaceArrivalTime)}</small></span><span>Desfase P–S<strong>{formatTravelTime(focusedAssociation.psLagSeconds)}</strong></span>
-            <span>Intensidad estimada<strong>MMI {focusedAssociation.estimatedIntensity}</strong></span><span>Detectabilidad<strong>{focusedAssociation.detectionScore}/100 · {focusedAssociation.detectionLabel}</strong></span>
+            <span>Intensidad estimada<strong>MMI {focusedAssociation.estimatedIntensity}</strong></span><span>Compatibilidad teórica<strong>{focusedAssociation.detectionScore}/100 · {focusedAssociation.detectionLabel}</strong></span>
           </div>
         </div>}
+        {!focusedAssociation && <div className="station-event-empty"><strong>Sin candidatos compatibles</strong><span>No se muestran eventos globales débiles o demasiado lejanos para esta estación.</span></div>}
         <div className="station-event-list">{eventSummary.associations.slice(0, 20).map((item) => <button key={item.event.id} className={focusedAssociation?.event.id === item.event.id ? 'active' : ''} onClick={() => setAssociationFocusId(item.event.id)}><i style={{ background: magnitudeColor(item.event.magnitude) }} /><strong>M{item.event.magnitude.toFixed(1)}</strong><span>{item.event.place}</span><small>{item.distanceKm.toFixed(0)} km</small><em>{phaseLabels[item.phase]}</em></button>)}</div>
-        <div className="station-event-footer"><span>{eventSummary.within5000Km} eventos dentro de 5.000 km · se muestran los 20 más recientes</span><button onClick={() => downloadText(`${station.id}-eventos.csv`, stationAssociationsCsv(station, events), 'text/csv;charset=utf-8')}><Download size={13} /> EXPORTAR CSV</button></div>
+        <div className="station-event-footer"><span>{eventSummary.associations.length} candidatos por distancia o señal estimada · no son detecciones instrumentales confirmadas</span><button onClick={() => downloadText(`${station.id}-eventos.csv`, stationAssociationsCsv(station, events), 'text/csv;charset=utf-8')}><Download size={13} /> EXPORTAR CSV</button></div>
       </section>}
 
       {activeTab === 'metadata' && <section className="station-tab-panel station-metadata-tab" role="tabpanel">
@@ -119,11 +116,12 @@ export function StationInspector({ station, stations, events, onClose, onFocus, 
       {activeTab === 'data' && <section className="station-tab-panel station-data-tab" role="tabpanel">
         <div className="station-data-actions">
           <a href={links.stationXml} target="_blank" rel="noreferrer"><Database size={17} /><span><strong>StationXML</strong><small>Respuesta instrumental y metadatos de canal</small></span><ExternalLink size={14} /></a>
-          <a href={links.miniSeed} target="_blank" rel="noreferrer"><Activity size={17} /><span><strong>miniSEED · última hora</strong><small>Solicitud BH? preparada en FDSN Dataselect</small></span><ExternalLink size={14} /></a>
+          <a href={links.miniSeed} target="_blank" rel="noreferrer"><Activity size={17} /><span><strong>miniSEED real · última hora</strong><small>{links.provider} FDSN Dataselect · canales disponibles</small></span><ExternalLink size={14} /></a>
+          <a href={links.channelInventory} target="_blank" rel="noreferrer"><RadioTower size={17} /><span><strong>Inventario de canales</strong><small>Ubicación, componente, frecuencia y periodo operativo</small></span><ExternalLink size={14} /></a>
           <button onClick={() => downloadText(`${station.id}.geojson`, stationGeoJson(station), 'application/geo+json')}><Download size={17} /><span><strong>Descargar GeoJSON</strong><small>Punto 3D y propiedades de la estación</small></span></button>
           <button onClick={() => downloadText(`${station.id}.json`, JSON.stringify({ station, network: membership, nearest, density, coverage, elevation, operation, geography, links }, null, 2), 'application/json')}><Download size={17} /><span><strong>Descargar informe JSON</strong><small>Metadatos y diagnóstico de red</small></span></button>
         </div>
-        <p className="station-data-warning">Las solicitudes FDSN dependen de la disponibilidad pública de EarthScope y de que la red mantenga canales BH activos. Episismic no presenta la traza sintética como dato instrumental real.</p>
+        <p className="station-data-warning">Las solicitudes se dirigen al proveedor real de la estación: {links.provider}. Un error 404 o una respuesta vacía significa que ese centro no conserva muestras para el canal o la ventana solicitada; Episismic no las sustituye por datos inventados.</p>
         <a className="station-source-link" href={station.dataUrl} target="_blank" rel="noreferrer">Abrir fuente original de metadatos <ExternalLink size={14} /></a>
       </section>}
     </div>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { fallbackEarthquakes } from '../data/fallbackEarthquakes';
 import { getStoredEarthquakes, upsertEarthquakes } from '../services/database';
 import { fetchCombinedEarthquakes } from '../services/catalog';
+import { isRecentForAlert } from '../services/activityFreshness';
 import type { DataStatus, Earthquake, SeismicActivity, TimeWindow } from '../types';
 import { windowStart } from '../utils/format';
 
@@ -23,9 +24,10 @@ export function useEarthquakes(timeWindow: TimeWindow) {
       const changes: SeismicActivity[] = [];
       if (initialized.current) {
         for (const event of live) {
+          if (!isRecentForAlert(event)) continue;
           const previous = knownEvents.current.get(event.id);
           if (!previous) {
-            if (Date.now() - event.time < 12 * 60_000) changes.push({ event, previous: null, kind: 'new' });
+            changes.push({ event, previous: null, kind: 'new' });
             continue;
           }
           if (event.updated <= previous.updated) continue;
@@ -53,11 +55,7 @@ export function useEarthquakes(timeWindow: TimeWindow) {
     } catch (error) {
       const cached = await getStoredEarthquakes(windowStart(timeWindow)).catch(() => []);
       setEvents(cached.length ? cached : fallbackEarthquakes.filter((event) => event.time >= windowStart(timeWindow)));
-      setStatus({
-        state: cached.length ? 'cached' : 'error',
-        lastUpdated: null,
-        message: error instanceof Error ? error.message : 'No se pudo actualizar el catálogo',
-      });
+      setStatus({ state: cached.length ? 'cached' : 'error', lastUpdated: null, message: error instanceof Error ? error.message : 'No se pudo actualizar el catálogo' });
     } finally {
       window.clearTimeout(timeout);
     }
@@ -68,9 +66,7 @@ export function useEarthquakes(timeWindow: TimeWindow) {
     knownEvents.current.clear();
     void refresh();
     const interval = window.setInterval(() => void refresh(true), 30_000);
-    const catchUp = () => {
-      if (!document.hidden) void refresh(true);
-    };
+    const catchUp = () => { if (!document.hidden) void refresh(true); };
     document.addEventListener('visibilitychange', catchUp);
     window.addEventListener('online', catchUp);
     return () => {

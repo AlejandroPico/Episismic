@@ -1,5 +1,6 @@
 import type { SeismicStation } from '../types';
 import { haversineKm } from '../utils/format';
+import { fdsnStationLinks as buildFdsnStationLinks } from './fdsnWaveforms';
 
 function bearing(from: SeismicStation, to: SeismicStation) {
   const rad = Math.PI / 180;
@@ -62,14 +63,7 @@ export function geographicContext(station: SeismicStation) {
 }
 
 export function fdsnStationLinks(station: SeismicStation, now = new Date()) {
-  const end = now.toISOString();
-  const start = new Date(now.getTime() - 3_600_000).toISOString();
-  const stationQuery = new URLSearchParams({ net: station.network, sta: station.code, level: 'response', format: 'xml' });
-  const dataQuery = new URLSearchParams({ net: station.network, sta: station.code, loc: '*', cha: 'BH?', starttime: start, endtime: end });
-  return {
-    stationXml: `https://service.earthscope.org/fdsnws/station/1/query?${stationQuery}`,
-    miniSeed: `https://service.earthscope.org/fdsnws/dataselect/1/query?${dataQuery}`,
-  };
+  return buildFdsnStationLinks(station, now);
 }
 
 export function stationGeoJson(station: SeismicStation) {

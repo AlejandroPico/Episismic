@@ -16,12 +16,17 @@
 ### GEOFON / GFZ
 
 - FDSN Event en formato texto para el catálogo automático y revisado de GEOFON.
-- FDSN Station para completar metadatos de estaciones públicas.
+- FDSN Station y Dataselect para inventario de canales y descarga instrumental pública.
 
 ### EarthScope
 
-- FDSN Station para descubrir redes y estaciones activas con canales BH, HH, EH o SH.
-- El servicio `dataselect` y las conexiones SeedLink se incorporarán desde el ingestor, no desde el hilo principal del navegador.
+- FDSN Station para descubrir redes, estaciones, ubicaciones y canales instrumentales.
+- FDSN Dataselect para miniSEED real y Timeseriesplot para representar ventanas instrumentales sin una simulación local.
+
+### NCEDC y BMKG
+
+- FDSN Station y Dataselect se resuelven contra el centro propietario de cada estación.
+- Una respuesta vacía o 404 se interpreta como ausencia de datos públicos para la selección; nunca se sustituye por muestras generadas.
 
 ### Smithsonian GVP
 
