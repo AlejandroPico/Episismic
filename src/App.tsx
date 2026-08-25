@@ -301,7 +301,7 @@ export default function App() {
           onToggleComparison={toggleComparison}
           onClearComparison={() => setComparisonEvents([])}
         />}
-        {selectedStation && <StationInspector station={selectedStation} stations={stations} onClose={() => setSelectedStation(null)} onFocus={() => focus(selectedStation, 0.9)} />}
+        {selectedStation && <StationInspector station={selectedStation} stations={stations} events={sourceEvents} onClose={() => setSelectedStation(null)} onFocus={() => focus(selectedStation, 0.9)} onSelectEvent={selectEvent} />}
 
         {notice && <div className="event-notice" style={{ '--notice-color': magnitudeColor(notice.event.magnitude) } as React.CSSProperties}>
           <div className="notice-magnitude"><BellRing size={14} /><strong>{formatMagnitude(notice.event.magnitude)}</strong></div>

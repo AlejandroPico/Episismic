@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, Database, Download, ExternalLink, LocateFixed, Minus, Plus, RadioTower, RotateCcw, X } from 'lucide-react';
-import type { SeismicStation } from '../types';
+import type { Earthquake, SeismicStation } from '../types';
 import { elevationContext, fdsnStationLinks, geographicContext, nearestStation, networkMembership, operationalSpan, stationAzimuthCoverage, stationDensity, stationGeoJson } from '../services/stationAnalysis';
+import { stationAssociationsCsv, stationEventSummary } from '../services/stationEventAnalysis';
+import { formatTravelTime } from '../services/travelTimes';
+import { formatDateTime, formatRelativeTime, magnitudeColor } from '../utils/format';
 import { Waveform } from './Waveform';
 
-type StationTab = 'monitor' | 'network' | 'metadata' | 'data';
+type StationTab = 'monitor' | 'events' | 'network' | 'metadata' | 'data';
 
 const tabs: Array<{ id: StationTab; label: string }> = [
-  { id: 'monitor', label: 'Monitor 3C' }, { id: 'network', label: 'Red y cobertura' },
+  { id: 'monitor', label: 'Monitor 3C' }, { id: 'events', label: 'Eventos detectables' }, { id: 'network', label: 'Red y cobertura' },
   { id: 'metadata', label: 'Metadatos' }, { id: 'data', label: 'Datos FDSN' },
 ];
 
@@ -20,8 +23,11 @@ function downloadText(filename: string, contents: string, mime: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-export function StationInspector({ station, stations, onClose, onFocus }: { station: SeismicStation; stations: SeismicStation[]; onClose: () => void; onFocus: () => void }) {
+const phaseLabels = { 'before-p': 'Esperando P', p: 'P recibida', s: 'S recibida', surface: 'Ondas superficiales', complete: 'Paso completado' } as const;
+
+export function StationInspector({ station, stations, events, onClose, onFocus, onSelectEvent }: { station: SeismicStation; stations: SeismicStation[]; events: Earthquake[]; onClose: () => void; onFocus: () => void; onSelectEvent: (event: Earthquake) => void }) {
   const [activeTab, setActiveTab] = useState<StationTab>('monitor');
+  const [associationFocusId, setAssociationFocusId] = useState<string | null>(null);
   const [minFrequency, setMinFrequency] = useState(.5);
   const [maxFrequency, setMaxFrequency] = useState(5);
   const [timeWindowSeconds, setTimeWindowSeconds] = useState(120);
@@ -29,6 +35,7 @@ export function StationInspector({ station, stations, onClose, onFocus }: { stat
 
   useEffect(() => {
     setActiveTab('monitor');
+    setAssociationFocusId(null);
     setMinFrequency(.5);
     setMaxFrequency(5);
     setTimeWindowSeconds(120);
@@ -43,6 +50,8 @@ export function StationInspector({ station, stations, onClose, onFocus }: { stat
   const operation = useMemo(() => operationalSpan(station), [station]);
   const geography = useMemo(() => geographicContext(station), [station]);
   const links = useMemo(() => fdsnStationLinks(station), [station]);
+  const eventSummary = useMemo(() => stationEventSummary(station, events), [station, events]);
+  const focusedAssociation = eventSummary.associations.find((item) => item.event.id === associationFocusId) ?? eventSummary.associations[0] ?? null;
 
   return <section className="station-inspector compact-station-inspector">
     <header>
@@ -74,6 +83,26 @@ export function StationInspector({ station, stations, onClose, onFocus }: { stat
           <article><Activity size={17} /><span>CONTEXTO DE ELEVACIÓN</span><strong>Percentil {elevation.percentile.toFixed(0)}</strong><small>{elevation.label} · {station.elevationM.toLocaleString('es-ES')} m</small></article>
         </div>
         <div className="station-coverage-card"><header><div><span>COBERTURA AZIMUTAL · 1.000 KM</span><strong>{coverage.label} · {(coverage.coverage * 100).toFixed(0)}%</strong></div><small>8 sectores de 45°</small></header><div className="station-coverage-rose">{coverage.sectors.map((count, index) => <i key={index} title={`${index * 45}–${(index + 1) * 45}°: ${count} estaciones`} style={{ '--sector': index, '--strength': Math.min(1, count / Math.max(1, ...coverage.sectors)) } as React.CSSProperties} />)}<strong>{(coverage.coverage * 100).toFixed(0)}%</strong></div></div>
+      </section>}
+
+      {activeTab === 'events' && <section className="station-tab-panel station-events-tab" role="tabpanel">
+        <div className="station-event-summary">
+          <article><span>EVENTO MÁS PRÓXIMO</span><strong>{eventSummary.nearest ? `${eventSummary.nearest.distanceKm.toFixed(0)} km` : '—'}</strong><small>{eventSummary.nearest?.event.place ?? 'Sin catálogo'}</small></article>
+          <article><span>MAYOR MAGNITUD</span><strong style={{ color: eventSummary.strongest ? magnitudeColor(eventSummary.strongest.event.magnitude) : undefined }}>{eventSummary.strongest ? `M${eventSummary.strongest.event.magnitude.toFixed(1)}` : '—'}</strong><small>{eventSummary.strongest?.event.place ?? 'Sin catálogo'}</small></article>
+          <article><span>RADIO DE 1.000 KM</span><strong>{eventSummary.within1000Km}</strong><small>{eventSummary.within500Km} dentro de 500 km</small></article>
+          <article><span>DETECCIÓN PROBABLE</span><strong>{eventSummary.probableDetections}</strong><small>puntuación ≥ 40/100</small></article>
+        </div>
+        {focusedAssociation && <div className="station-event-detail">
+          <header><div><span>ASOCIACIÓN SELECCIONADA</span><strong>M{focusedAssociation.event.magnitude.toFixed(1)} · {focusedAssociation.event.place}</strong><small>{formatRelativeTime(focusedAssociation.event.time)} · {phaseLabels[focusedAssociation.phase]}</small></div><button onClick={() => onSelectEvent(focusedAssociation.event)}>ABRIR TERREMOTO</button></header>
+          <div className="station-event-metrics">
+            <span>Distancia<strong>{focusedAssociation.distanceKm.toFixed(1)} km</strong></span><span>Azimut / back-azimut<strong>{focusedAssociation.azimuthDeg.toFixed(0)}° / {focusedAssociation.backAzimuthDeg.toFixed(0)}°</strong></span>
+            <span>Llegada P<strong>{formatTravelTime(focusedAssociation.pSeconds)}</strong><small>{formatDateTime(focusedAssociation.pArrivalTime)}</small></span><span>Llegada S<strong>{formatTravelTime(focusedAssociation.sSeconds)}</strong><small>{formatDateTime(focusedAssociation.sArrivalTime)}</small></span>
+            <span>Superficiales<strong>{formatTravelTime(focusedAssociation.surfaceSeconds)}</strong><small>{formatDateTime(focusedAssociation.surfaceArrivalTime)}</small></span><span>Desfase P–S<strong>{formatTravelTime(focusedAssociation.psLagSeconds)}</strong></span>
+            <span>Intensidad estimada<strong>MMI {focusedAssociation.estimatedIntensity}</strong></span><span>Detectabilidad<strong>{focusedAssociation.detectionScore}/100 · {focusedAssociation.detectionLabel}</strong></span>
+          </div>
+        </div>}
+        <div className="station-event-list">{eventSummary.associations.slice(0, 20).map((item) => <button key={item.event.id} className={focusedAssociation?.event.id === item.event.id ? 'active' : ''} onClick={() => setAssociationFocusId(item.event.id)}><i style={{ background: magnitudeColor(item.event.magnitude) }} /><strong>M{item.event.magnitude.toFixed(1)}</strong><span>{item.event.place}</span><small>{item.distanceKm.toFixed(0)} km</small><em>{phaseLabels[item.phase]}</em></button>)}</div>
+        <div className="station-event-footer"><span>{eventSummary.within5000Km} eventos dentro de 5.000 km · se muestran los 20 más recientes</span><button onClick={() => downloadText(`${station.id}-eventos.csv`, stationAssociationsCsv(station, events), 'text/csv;charset=utf-8')}><Download size={13} /> EXPORTAR CSV</button></div>
       </section>}
 
       {activeTab === 'metadata' && <section className="station-tab-panel station-metadata-tab" role="tabpanel">
