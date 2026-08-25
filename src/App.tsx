@@ -84,16 +84,18 @@ export default function App() {
     setFocusTarget({ ...target, altitude, cinematic, token: Date.now() });
   }, []);
 
-  const selectEvent = useCallback((event: Earthquake, animate = true) => {
+  const selectEvent = useCallback((event: Earthquake) => {
     setSelectedEvent(event);
     setSelectedStation(null);
+    setPulseEvent(event);
     focus(event, event.magnitude >= 6 ? 1.05 : 1.28);
-    if (animate) setWavePaused(false);
+    setWavePaused(false);
   }, [focus]);
 
   const selectStation = useCallback((station: SeismicStation) => {
     setSelectedStation(station);
     setSelectedEvent(null);
+    setPulseEvent(null);
     focus(station, 0.92);
     if (window.innerWidth < 820) setActivePanel(null);
   }, [focus]);
@@ -189,7 +191,7 @@ export default function App() {
 
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { setActivePanel(null); setHistoryOpen(false); setSelectedEvent(null); setSelectedStation(null); }
+      if (event.key === 'Escape') { setActivePanel(null); setHistoryOpen(false); setSelectedEvent(null); setSelectedStation(null); setPulseEvent(null); }
       if (event.key.toLowerCase() === 'l' && !(event.target instanceof HTMLInputElement)) { setHistoryOpen(false); setActivePanel((panel) => panel === 'layers' ? null : 'layers'); }
       if (event.key.toLowerCase() === 'h' && !(event.target instanceof HTMLInputElement)) { setActivePanel(null); setHistoryOpen((open) => !open); }
     };
@@ -216,7 +218,7 @@ export default function App() {
     setHistoricalEvents(events);
     setActivePanel(null);
     setHistoryOpen(true);
-    if (events[0]) selectEvent(events[0], false);
+    if (events[0]) selectEvent(events[0]);
   };
 
   return (

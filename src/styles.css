@@ -1158,3 +1158,40 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 @media (max-height: 610px) and (orientation: landscape) {
   .scientific-event-inspector.compact-event-inspector { top: 56px; bottom: 0; left: 0; right: auto; width: min(520px,58vw); max-height: none; height: calc(100dvh - 56px); }
 }
+
+/* Análisis estadístico de la secuencia seleccionada. */
+.analysis-tab { padding: 8px; }
+.seismic-analysis-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+.analysis-card { min-width: 0; border: 1px solid var(--line-strong); background: color-mix(in srgb,var(--accent) 3%,var(--panel-solid)); }
+.analysis-card > header { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.analysis-card > header > div { min-width: 0; display: grid; gap: 4px; }
+.analysis-card > header span { color: var(--accent); font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .08em; }
+.analysis-card > header strong { overflow: hidden; color: var(--text); font: 600 9px/1 IBM Plex Mono,monospace; text-overflow: ellipsis; white-space: nowrap; }
+.analysis-card > header small { color: var(--text-soft); font: 500 7px/1.25 IBM Plex Mono,monospace; text-align: right; }
+.analysis-card > svg { width: 100%; height: 118px; display: block; }
+.analysis-gridline { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+.analysis-line { fill: none; stroke: var(--accent); stroke-width: 1.8; }
+.analysis-line.warm { stroke: var(--warm); }
+.analysis-point { fill: var(--accent); stroke: var(--panel-solid); stroke-width: 1; }
+.analysis-point.warm { fill: var(--warm); }
+.decay-bars { height: 102px; display: grid; grid-template-columns: repeat(14,1fr); align-items: end; gap: 2px; padding: 8px 8px 17px; border-bottom: 1px solid var(--line); }
+.decay-bars > i { position: relative; height: 100%; display: flex; align-items: flex-end; justify-content: center; font-style: normal; }
+.decay-bars > i span { width: 58%; height: var(--observed); min-height: 1px; background: var(--accent); opacity: .74; }
+.decay-bars > i b { position: absolute; right: 4%; bottom: var(--expected); left: 4%; height: 1px; background: var(--warm); transform: translateY(50%); }
+.decay-bars > i small { position: absolute; top: calc(100% + 5px); color: var(--text-soft); font: 500 5px/1 IBM Plex Mono,monospace; }
+.analysis-legend { min-height: 24px; display: flex; align-items: center; gap: 13px; padding: 0 8px; color: var(--text-soft); font: 500 6px/1 IBM Plex Mono,monospace; }
+.analysis-legend span { display: flex; align-items: center; gap: 5px; }
+.analysis-legend i { width: 9px; height: 5px; display: block; background: var(--accent); }
+.analysis-legend i.expected { height: 1px; background: var(--warm); }
+.depth-analysis-bars { height: 105px; display: grid; grid-template-columns: repeat(6,1fr); align-items: end; gap: 7px; padding: 9px 11px 19px; }
+.depth-analysis-bars span { position: relative; height: 100%; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid var(--line-strong); }
+.depth-analysis-bars i { width: 48%; min-height: 3px; background: linear-gradient(to top,var(--accent),var(--warm)); opacity: .78; }
+.depth-analysis-bars strong { position: absolute; bottom: calc(100% + 3px); color: var(--text); font: 600 6px/1 IBM Plex Mono,monospace; }
+.depth-analysis-bars small { position: absolute; top: calc(100% + 5px); color: var(--text-soft); font: 500 6px/1 IBM Plex Mono,monospace; white-space: nowrap; }
+.analysis-axis-label { min-height: 21px; display: grid; place-items: center; color: var(--text-soft); border-top: 1px solid var(--line); font: 500 6px/1 IBM Plex Mono,monospace; letter-spacing: .08em; }
+.analysis-note { grid-column: 1/-1; margin: 0; padding: 6px 8px; color: var(--text-soft); border-left: 2px solid var(--accent); background: var(--accent-soft); font-size: 7px; line-height: 1.4; }
+
+@media (max-width: 620px) {
+  .seismic-analysis-grid { grid-template-columns: 1fr; }
+  .analysis-card > svg { height: 104px; }
+}

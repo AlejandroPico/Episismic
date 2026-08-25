@@ -261,7 +261,7 @@ export function GlobeView({
   const cameraTimersRef = useRef<number[]>([]);
   const contextLostRef = useRef(false);
   const recoveryTimerRef = useRef(0);
-  const waveClockRef = useRef({ eventId: '', simulatedSeconds: 0 });
+  const waveClockRef = useRef({ eventId: '', simulatedSeconds: 0, fadeStartedAt: 0, restartAt: 0 });
   const compactRendererRef = useRef(window.matchMedia('(max-width: 900px), (pointer: coarse)').matches);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(!hasWebGL());
@@ -547,7 +547,7 @@ export function GlobeView({
     const wave = pulseEvent;
     const source = map.getSource('wave') as GeoJSONSource;
     if (!wave) {
-      waveClockRef.current = { eventId: '', simulatedSeconds: 0 };
+      waveClockRef.current = { eventId: '', simulatedSeconds: 0, fadeStartedAt: 0, restartAt: 0 };
       source.setData(asCollection([]) as never);
       map.setPaintProperty('p-wave', 'line-opacity', 0);
       map.setPaintProperty('s-wave', 'line-opacity', 0);
@@ -557,7 +557,7 @@ export function GlobeView({
       map.setPaintProperty('surface-wave-halo', 'line-opacity', 0);
       return;
     }
-    if (waveClockRef.current.eventId !== wave.id) waveClockRef.current = { eventId: wave.id, simulatedSeconds: 0 };
+    if (waveClockRef.current.eventId !== wave.id) waveClockRef.current = { eventId: wave.id, simulatedSeconds: 0, fadeStartedAt: 0, restartAt: 0 };
     if (wavePaused) return;
     let frame = 0;
     let lastUpdate = 0;
@@ -567,6 +567,10 @@ export function GlobeView({
     const animate = (time: number) => {
       const deltaSeconds = Math.min(.25, (time - previousTime) / 1000);
       previousTime = time;
+      if (waveClockRef.current.restartAt > time) {
+        frame = requestAnimationFrame(animate);
+        return;
+      }
       waveClockRef.current.simulatedSeconds += deltaSeconds * waveSpeed;
       if (time - lastUpdate >= updateInterval) {
         const seconds = waveClockRef.current.simulatedSeconds;
@@ -574,14 +578,21 @@ export function GlobeView({
         const sRadius = Math.min(maxRadiusKm, waveRadiusKm('S', seconds, wave.depthKm));
         const surfaceRadius = Math.min(maxRadiusKm, waveRadiusKm('SURFACE', seconds, wave.depthKm));
         source.setData(waveCollection(wave, pRadius, sRadius, surfaceRadius) as never);
-        map.setPaintProperty('p-wave', 'line-opacity', pRadius >= maxRadiusKm ? 0 : .8);
-        map.setPaintProperty('s-wave', 'line-opacity', sRadius >= maxRadiusKm ? 0 : .9);
-        map.setPaintProperty('surface-wave', 'line-opacity', surfaceRadius >= maxRadiusKm ? 0 : .86);
-        map.setPaintProperty('p-wave-halo', 'line-opacity', pRadius >= maxRadiusKm ? 0 : .25);
-        map.setPaintProperty('s-wave-halo', 'line-opacity', sRadius >= maxRadiusKm ? 0 : .28);
-        map.setPaintProperty('surface-wave-halo', 'line-opacity', surfaceRadius >= maxRadiusKm ? 0 : .3);
+        if (surfaceRadius >= maxRadiusKm && waveClockRef.current.fadeStartedAt === 0) waveClockRef.current.fadeStartedAt = time;
+        const fade = waveClockRef.current.fadeStartedAt > 0 ? Math.max(0, 1 - (time - waveClockRef.current.fadeStartedAt) / 1_150) : 1;
+        map.setPaintProperty('p-wave', 'line-opacity', pRadius >= maxRadiusKm ? 0 : .8 * fade);
+        map.setPaintProperty('s-wave', 'line-opacity', sRadius >= maxRadiusKm ? 0 : .9 * fade);
+        map.setPaintProperty('surface-wave', 'line-opacity', .86 * fade);
+        map.setPaintProperty('p-wave-halo', 'line-opacity', pRadius >= maxRadiusKm ? 0 : .25 * fade);
+        map.setPaintProperty('s-wave-halo', 'line-opacity', sRadius >= maxRadiusKm ? 0 : .28 * fade);
+        map.setPaintProperty('surface-wave-halo', 'line-opacity', .3 * fade);
         lastUpdate = time;
-        if (surfaceRadius >= maxRadiusKm) return;
+        if (fade === 0) {
+          source.setData(asCollection([]) as never);
+          waveClockRef.current.simulatedSeconds = 0;
+          waveClockRef.current.fadeStartedAt = 0;
+          waveClockRef.current.restartAt = time + 450;
+        }
       }
       if (contextLostRef.current) {
         source.setData(asCollection([]) as never);
