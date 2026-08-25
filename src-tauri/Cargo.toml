@@ -1,6 +1,6 @@
 [package]
 name = "episismic"
-version = "0.10.0"
+version = "1.0.0"
 description = "Observatorio geofísico mundial"
 authors = ["Alejandro Pico"]
 edition = "2021"

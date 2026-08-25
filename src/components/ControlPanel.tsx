@@ -225,9 +225,9 @@ function AboutPanel({ latestRelease }: Pick<ControlPanelProps, 'latestRelease'>)
   const asset = latestRelease ? assetForPlatform(latestRelease, platform) : null;
   const updateAvailable = Boolean(latestRelease && isNewerVersion(latestRelease.version));
   return <section className="control-section prose-panel about-panel-content">
-    <div className="about-identity"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><div><p className="eyebrow">OBSERVATORIO GEOFÍSICO MUNDIAL</p><h3>EPISISMIC</h3><span>Versión {APP_VERSION} · Desarrollado por Alejandro Pico</span></div></div>
-    <p>Episismic convierte catálogos sísmicos públicos y cartografía científica en un observatorio tridimensional abierto: epicentros, estaciones FDSN, volcanes, límites tectónicos, archivo histórico y material educativo en una sola interfaz.</p>
-    <p>El proyecto nace centrado en terremotos y está estructurado para incorporar posteriormente volcanismo operativo, huracanes, grandes tormentas, incendios y otros riesgos naturales sin mezclar sus modelos de datos.</p>
+    <div className="about-identity"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><div><p className="eyebrow">OBSERVATORIO GEOFÍSICO MUNDIAL</p><h3>EPISISMIC</h3><span>Versión {APP_VERSION} · Edición estable · Desarrollado por Alejandro Pico</span></div></div>
+    <p>Episismic 1.0 es la edición estable y publicable del observatorio tridimensional abierto: integra catálogos sísmicos públicos, estaciones FDSN, volcanes, límites tectónicos, archivo histórico, análisis científico y material educativo en una sola interfaz.</p>
+    <p>La arquitectura 1.x queda consolidada para ampliar el proyecto con volcanismo, huracanes, grandes tormentas, incendios y otros riesgos naturales sin mezclar sus modelos de datos.</p>
     <div className="about-principles"><span><strong>3</strong>catálogos sísmicos</span><span><strong>80.000+</strong>estaciones públicas</span><span><strong>SQLite</strong>archivo local</span></div>
     <div className="desktop-download-card">
       <MonitorDown size={28} />
@@ -240,7 +240,7 @@ function AboutPanel({ latestRelease }: Pick<ControlPanelProps, 'latestRelease'>)
         <Download size={15} /> {asset ? `Descargar ${(asset.size / 1024 / 1024).toFixed(0)} MB` : 'Ver descargas'}
       </a>
     </div>
-    <p className="safety-note">Aplicación informativa y educativa. Para emergencias y decisiones de protección civil deben seguirse siempre los avisos de los organismos oficiales.</p>
+    <p className="safety-note">Edición estable de carácter informativo y educativo. Las estimaciones no sustituyen alertas oficiales; para emergencias y decisiones de protección civil deben seguirse siempre los avisos de los organismos competentes.</p>
     <div className="about-links">
       <a href="https://alejandropico.github.io/Portfolio/" target="_blank" rel="noreferrer"><span><small>AUTOR</small>Portfolio de Alejandro Pico</span><ExternalLink size={14} /></a>
       <a href="https://github.com/AlejandroPico/Episismic" target="_blank" rel="noreferrer"><span><small>PROYECTO ABIERTO</small>Código, fuentes y documentación</span><ExternalLink size={14} /></a>

@@ -1,16 +1,16 @@
 # Episismic
 
-Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación experimental de impacto.
+Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `0.10.0` (previa a 1.0)
+**Versión actual:** `1.0.0` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
 
-## Novedades de 0.10.0
+## Episismic 1.0
 
-La versión 0.10.0 completa los objetivos funcionales 11–98, 115 y 121:
+La versión 1.0.0 consolida la primera edición estable de Episismic y completa los objetivos funcionales 11–98, 115 y 121:
 
 - ficha compacta del terremoto organizada por pestañas;
 - ondas P, S y superficiales reproducidas continuamente mientras el evento permanece seleccionado;
@@ -18,7 +18,7 @@ La versión 0.10.0 completa los objetivos funcionales 11–98, 115 y 121:
 - diagnóstico avanzado de intervalos, correlaciones, difusión, anomalías y consenso de catálogos;
 - monitor de estación BHZ/BHN/BHE, contexto de red, cobertura azimutal y acceso FDSN;
 - asociación entre estaciones y terremotos con llegadas previstas, azimut, intensidad y detectabilidad;
-- evaluación experimental de impacto con PGA, PGV, radios MMI, ruptura y riesgos secundarios;
+- evaluación de impacto con PGA, PGV, radios MMI, ruptura y riesgos secundarios;
 - informes descargables CSV, JSON, GeoJSON y Markdown, además de impresión/PDF mediante el navegador.
 
 El antiguo objetivo 9 de niveles de detalle y agrupación se mantiene retirado. Los terremotos, estaciones y volcanes se representan mediante símbolos individuales a cualquier escala.
@@ -45,7 +45,7 @@ La ficha mantiene el mapa visible y distribuye la información en pestañas:
 - **Secuencia:** precursores, réplicas, enjambres y reproducción cinematográfica.
 - **Análisis:** magnitud/tiempo, valor b, Omori, profundidad, energía, migración, ritmo, momento, huella, calidad y exportación.
 - **Diagnóstico:** acumulación, intervalos, valor b móvil, correlaciones, difusión, anomalías, consenso y clasificación automática.
-- **Impacto:** intensidad, PGA, PGV, radios MMI, geometría de ruptura, riesgos secundarios y prioridad operativa experimental.
+- **Impacto:** intensidad, PGA, PGV, radios MMI, geometría de ruptura, riesgos secundarios y prioridad operativa estimada.
 - **Ondas:** simulador interior y llegadas P, S y superficiales.
 - **Revisiones y comparación:** evolución de soluciones y comparación de hasta cuatro terremotos.
 
@@ -63,7 +63,7 @@ La ficha de estación incluye:
 - enlaces StationXML y miniSEED preparados mediante servicios FDSN;
 - catálogo de terremotos potencialmente detectables;
 - distancia, azimut, back-azimut, llegadas P/S/superficiales y desfase P–S;
-- fase temporal de la propagación, intensidad estimada y puntuación experimental de detectabilidad;
+- fase temporal de la propagación, intensidad estimada y puntuación de detectabilidad;
 - exportaciones GeoJSON, JSON y CSV.
 
 Las formas de onda sintéticas se identifican expresamente como simulación. Nunca se presentan como telemetría SeedLink real.
@@ -78,7 +78,7 @@ Las formas de onda sintéticas se identifican expresamente como simulación. Nun
 - Recuperación del catálogo al volver a la pestaña o recuperar la conexión.
 - Recuperación automática ante pérdida del contexto WebGL.
 
-Episismic es informativo y experimental. No sustituye alertas tempranas, ShakeMap, PAGER, protección civil ni análisis de una agencia sismológica.
+Episismic 1.0 es una aplicación estable, abierta e informativa. No sustituye alertas tempranas, ShakeMap, PAGER, protección civil ni el análisis de una agencia sismológica.
 
 ## Arquitectura
 
@@ -139,7 +139,7 @@ Episismic utiliza versionado semántico. La versión se mantiene sincronizada en
 - `src-tauri/Cargo.toml`;
 - `src-tauri/tauri.conf.json`.
 
-La serie `0.x` continúa siendo previa a 1.0. Los instaladores actuales no incluyen firma comercial de Windows/macOS y las actualizaciones silenciosas no se activarán sin una clave privada de firma custodiada fuera del repositorio.
+La serie `1.x` constituye la edición estable y publicable. A partir de 1.0, las versiones menores incorporarán funcionalidad compatible y las revisiones corregirán errores sin romper los formatos públicos. Los instaladores actuales no incluyen firma comercial de Windows/macOS y las actualizaciones silenciosas no se activarán sin una clave privada de firma custodiada fuera del repositorio.
 
 ## Fuentes
 
@@ -153,4 +153,4 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 
 ## Aviso
 
-Episismic es un proyecto abierto, educativo y experimental desarrollado por Alejandro Pico. No debe utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.0 es la primera edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
