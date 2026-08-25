@@ -997,3 +997,59 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   .sequence-summary span { border-right: 0; border-bottom: 1px solid var(--line); }
   .sequence-summary span:last-child { border-bottom: 0; }
 }
+
+/* Simulación física de ondas y llegadas previstas. */
+.wave-simulator { position: absolute; z-index: 24; top: 62px; right: 10px; width: min(450px,calc(100% - 20px)); max-height: calc(100% - 116px); overflow-y: auto; color: #dfeceb; border: 1px solid rgba(210,228,226,.3); background: #071519; box-shadow: 0 12px 42px rgba(0,0,0,.34); scrollbar-width: thin; scrollbar-color: rgba(83,214,199,.4) transparent; }
+.app-shell.with-history .wave-simulator { right: 386px; }
+.wave-simulator > header { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 8px 7px 11px; border-bottom: 1px solid rgba(210,228,226,.2); }
+.wave-simulator > header > div { min-width: 0; display: grid; gap: 5px; }
+.wave-simulator > header span { color: #53d6c7; font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .1em; }
+.wave-simulator > header strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.wave-simulator-controls { min-height: 37px; display: flex; align-items: center; gap: 3px; padding: 4px 6px; border-bottom: 1px solid rgba(210,228,226,.16); }
+.wave-simulator-controls button { min-width: 29px; height: 27px; display: grid; place-items: center; padding: 0 6px; border: 0; border-right: 1px solid rgba(210,228,226,.16); color: #aabfbd; background: transparent; font: 600 7px/1 IBM Plex Mono,monospace; cursor: pointer; }
+.wave-simulator-controls button:hover, .wave-simulator-controls button.active { color: #071318; background: #53d6c7; }
+.wave-simulator-controls > span { margin-left: auto; color: #ffcf5a; font: 600 8px/1 IBM Plex Mono,monospace; white-space: nowrap; }
+.wave-speed-options { display: flex; }
+.wave-cross-section { display: grid; grid-template-columns: minmax(0,1fr) 86px; align-items: center; border-bottom: 1px solid rgba(210,228,226,.16); background: radial-gradient(circle at 48% 42%,rgba(46,107,119,.2),transparent 58%); }
+.wave-cross-section svg { width: 100%; height: 220px; display: block; }
+.wave-cross-section svg text { fill: #8ea5a3; font: 600 7px IBM Plex Mono,monospace; letter-spacing: .07em; }
+.earth-mantle { fill: #102f38; stroke: #6ab5b2; stroke-width: 2; }
+.earth-core-outer { fill: #5b342c; stroke: #cf825a; stroke-width: 1.5; }
+.earth-core-inner { fill: #d9a453; stroke: #ffe1a0; stroke-width: 1.5; }
+.earth-crust { fill: none; stroke: #a5d6d0; stroke-width: 4; }
+.wave-source { fill: #fff; stroke: #ff5b5b; stroke-width: 3; }
+.wave-shell { stroke-width: 3; opacity: .9; }
+.wave-shell-p, .legend-p { stroke: #4db9ff; fill: #4db9ff; }
+.wave-shell-s, .legend-s { stroke: #ff6659; fill: #ff6659; }
+.wave-shell-surface, .legend-surface { stroke: #ffd05a; fill: #ffd05a; stroke-dasharray: 5 3; }
+.wave-cross-section > div { display: grid; border-left: 1px solid rgba(210,228,226,.16); }
+.wave-cross-section > div span { display: grid; gap: 4px; padding: 10px 8px; color: #8ea5a3; border-bottom: 1px solid rgba(210,228,226,.14); font: 500 7px/1 IBM Plex Mono,monospace; }
+.wave-cross-section > div span:last-child { border-bottom: 0; }
+.wave-cross-section > div strong { color: #eef8f7; font-size: 8px; }
+.station-arrival-heading { min-height: 28px; display: flex; align-items: center; gap: 7px; padding: 0 9px; color: #53d6c7; border-bottom: 1px solid rgba(210,228,226,.14); font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .07em; }
+.station-arrival-list article { min-height: 30px; display: grid; grid-template-columns: 1fr 55px 95px 95px; align-items: center; gap: 5px; padding: 0 8px; border-bottom: 1px solid rgba(210,228,226,.1); font: 500 7px/1 IBM Plex Mono,monospace; }
+.station-arrival-list article strong { color: #dfeceb; }
+.station-arrival-list article span { color: #8ea5a3; }
+.station-arrival-list article span.arrived { color: #52dfa1; }
+.wave-simulator > footer { padding: 8px 10px; color: #829794; font-size: 7px; line-height: 1.45; }
+.wave-speed-setting { display: grid; gap: 8px; margin: 14px 0; }
+.wave-speed-setting > span { color: var(--text-soft); font-size: 9px; }
+.wave-speed-setting > div { display: grid; grid-template-columns: repeat(5,1fr); border: 1px solid var(--line); }
+.wave-speed-setting button { min-height: 28px; border: 0; border-right: 1px solid var(--line); color: var(--text-soft); background: transparent; font: 600 8px/1 IBM Plex Mono,monospace; cursor: pointer; }
+.wave-speed-setting button:last-child { border-right: 0; }
+.wave-speed-setting button.active { color: var(--bg-deep); background: var(--accent); }
+
+@media (max-width: 900px) {
+  .wave-simulator, .app-shell.with-history .wave-simulator { position: fixed; z-index: 88; top: 58px; right: 8px; left: 8px; width: auto; max-height: calc(100dvh - 66px); }
+  .station-arrival-list article { grid-template-columns: 1fr 46px 83px 83px; }
+}
+
+@media (max-width: 560px) {
+  .wave-simulator-controls { flex-wrap: wrap; }
+  .wave-simulator-controls > span { width: 100%; padding: 3px 5px; text-align: right; }
+  .wave-cross-section { grid-template-columns: 1fr; }
+  .wave-cross-section > div { grid-template-columns: repeat(3,1fr); border-top: 1px solid rgba(210,228,226,.16); border-left: 0; }
+  .wave-cross-section > div span { border-right: 1px solid rgba(210,228,226,.14); border-bottom: 0; }
+  .station-arrival-list article { grid-template-columns: 1fr 72px 72px; }
+  .station-arrival-list article > span:nth-child(2) { display: none; }
+}

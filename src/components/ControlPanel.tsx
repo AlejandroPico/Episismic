@@ -26,6 +26,8 @@ interface ControlPanelProps {
   autoFocusMagnitude: number;
   soundEnabled: boolean;
   soundMinimumMagnitude: number;
+  cinematicPlayback: boolean;
+  waveSpeed: number;
   stations: SeismicStation[];
   status: DataStatus;
   timeWindow: TimeWindow;
@@ -43,6 +45,8 @@ interface ControlPanelProps {
   onAutoFocusMagnitude: (magnitude: number) => void;
   onSoundEnabled: (active: boolean) => void;
   onSoundMinimumMagnitude: (magnitude: number) => void;
+  onCinematicPlayback: (active: boolean) => void;
+  onWaveSpeed: (speed: number) => void;
   onSelectStation: (station: SeismicStation) => void;
   onHistoricalResults: (events: Earthquake[]) => void;
 }
@@ -184,7 +188,7 @@ function StationsPanel({ stations, status, layers, onLayers, onSelectStation }: 
   </section>;
 }
 
-function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'autoFocusMagnitude' | 'soundEnabled' | 'soundMinimumMagnitude' | 'onTheme' | 'onAutoFocus' | 'onAutoFocusMagnitude' | 'onSoundEnabled' | 'onSoundMinimumMagnitude'>) {
+function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'autoFocusMagnitude' | 'soundEnabled' | 'soundMinimumMagnitude' | 'cinematicPlayback' | 'waveSpeed' | 'onTheme' | 'onAutoFocus' | 'onAutoFocusMagnitude' | 'onSoundEnabled' | 'onSoundMinimumMagnitude' | 'onCinematicPlayback' | 'onWaveSpeed'>) {
   const [stats, setStats] = useState<{ events: number; updates: number; sizeBytes: number } | null>(null);
   useEffect(() => { void getDatabaseStats().then(setStats); }, []);
   return <>
@@ -192,10 +196,12 @@ function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'a
       <h3><BellRing size={16} /> Detección y enfoque</h3>
       <div className="switch-list">
         <label><span><strong>Enfoque automático</strong><small>Desplaza la cámara al detectar un evento nuevo</small></span><input type="checkbox" checked={props.autoFocus} onChange={(event) => props.onAutoFocus(event.target.checked)} /><i /></label>
+        <label><span><strong>Reproducción cinematográfica</strong><small>Realiza el vuelo de cámara durante el archivo histórico</small></span><input type="checkbox" checked={props.cinematicPlayback} onChange={(event) => props.onCinematicPlayback(event.target.checked)} /><i /></label>
         <label><span><strong>Alertas sonoras</strong><small>Avisan también de microseísmos publicados</small></span><input type="checkbox" checked={props.soundEnabled} onChange={(event) => props.onSoundEnabled(event.target.checked)} /><i /></label>
       </div>
       <label className="range-field"><span>Magnitud para enfocar <strong>M{props.autoFocusMagnitude.toFixed(1)}</strong></span><input type="range" min="3" max="8" step="0.1" value={props.autoFocusMagnitude} onChange={(event) => props.onAutoFocusMagnitude(Number(event.target.value))} /></label>
       <label className={`range-field ${props.soundEnabled ? '' : 'disabled-control'}`}><span><Volume2 size={14} /> Sonar desde <strong>M{props.soundMinimumMagnitude.toFixed(1)}</strong></span><input type="range" min="-2" max="6" step="0.1" disabled={!props.soundEnabled} value={props.soundMinimumMagnitude} onChange={(event) => props.onSoundMinimumMagnitude(Number(event.target.value))} /></label>
+      <div className="wave-speed-setting"><span>Velocidad inicial de ondas</span><div>{[1, 10, 30, 60, 120].map((speed) => <button key={speed} className={props.waveSpeed === speed ? 'active' : ''} onClick={() => props.onWaveSpeed(speed)}>{speed}×</button>)}</div></div>
       <p className="safety-note">Episismic es un observatorio informativo. Las animaciones y estimaciones no sustituyen los sistemas oficiales de alerta temprana.</p>
     </section>
     <section className="control-section">

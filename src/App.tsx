@@ -7,6 +7,7 @@ import { GlobeView } from './components/GlobeView';
 import { StationInspector } from './components/StationInspector';
 import { Timeline } from './components/Timeline';
 import { TopBar, type PanelId } from './components/TopBar';
+import { WaveSimulator } from './components/WaveSimulator';
 import { useEarthquakes } from './hooks/useEarthquakes';
 import { useGeodata } from './hooks/useGeodata';
 import { playSeismicAlert, unlockAudioAlerts } from './services/audioAlerts';
@@ -59,6 +60,10 @@ export default function App() {
   const [autoFocusMagnitude, setAutoFocusMagnitude] = useState(() => loadPreference('auto-focus-magnitude', 5));
   const [soundEnabled, setSoundEnabled] = useState(() => loadPreference('sound-enabled', true));
   const [soundMinimumMagnitude, setSoundMinimumMagnitude] = useState(() => loadPreference('sound-minimum-magnitude', -1));
+  const [waveSpeed, setWaveSpeed] = useState(() => loadPreference('wave-speed', 60));
+  const [wavePaused, setWavePaused] = useState(false);
+  const [waveInterior, setWaveInterior] = useState(() => loadPreference('wave-interior', true));
+  const [cinematicPlayback, setCinematicPlayback] = useState(() => loadPreference('cinematic-playback', true));
   const [filters, setFilters] = useState<Filters>({ minMagnitude: -2, maxDepthKm: 700, query: '', significantOnly: false });
   const [notice, setNotice] = useState<SeismicActivity | null>(null);
   const [latestRelease, setLatestRelease] = useState<LatestRelease | null>(null);
@@ -83,7 +88,7 @@ export default function App() {
     focus(event, event.magnitude >= 6 ? 1.05 : 1.28);
     if (animate) {
       setPulseEvent(event);
-      window.setTimeout(() => setPulseEvent((current) => current?.id === event.id ? null : current), 30_000);
+      setWavePaused(false);
     }
   }, [focus]);
 
@@ -98,9 +103,9 @@ export default function App() {
     setSelectedEvent(event);
     setSelectedStation(null);
     setPulseEvent(event);
-    focus(event, event.magnitude >= 6 ? 1.05 : 1.28, true);
-    window.setTimeout(() => setPulseEvent((current) => current?.id === event.id ? null : current), 12_000);
-  }, [focus]);
+    setWavePaused(false);
+    focus(event, event.magnitude >= 6 ? 1.05 : 1.28, cinematicPlayback);
+  }, [cinematicPlayback, focus]);
 
   useEffect(() => {
     const activity = activities[0];
@@ -152,6 +157,9 @@ export default function App() {
   useEffect(() => { localStorage.setItem('episismic:auto-focus-magnitude', JSON.stringify(autoFocusMagnitude)); }, [autoFocusMagnitude]);
   useEffect(() => { localStorage.setItem('episismic:sound-enabled', JSON.stringify(soundEnabled)); }, [soundEnabled]);
   useEffect(() => { localStorage.setItem('episismic:sound-minimum-magnitude', JSON.stringify(soundMinimumMagnitude)); }, [soundMinimumMagnitude]);
+  useEffect(() => { localStorage.setItem('episismic:wave-speed', JSON.stringify(waveSpeed)); }, [waveSpeed]);
+  useEffect(() => { localStorage.setItem('episismic:wave-interior', JSON.stringify(waveInterior)); }, [waveInterior]);
+  useEffect(() => { localStorage.setItem('episismic:cinematic-playback', JSON.stringify(cinematicPlayback)); }, [cinematicPlayback]);
 
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
@@ -206,6 +214,8 @@ export default function App() {
           selectedStation={selectedStation}
           focusTarget={focusTarget}
           pulseEvent={pulseEvent}
+          waveSpeed={waveSpeed}
+          wavePaused={wavePaused}
           onSelectEvent={selectEvent}
           onSelectStation={selectStation}
         />
@@ -220,6 +230,8 @@ export default function App() {
           autoFocusMagnitude={autoFocusMagnitude}
           soundEnabled={soundEnabled}
           soundMinimumMagnitude={soundMinimumMagnitude}
+          cinematicPlayback={cinematicPlayback}
+          waveSpeed={waveSpeed}
           stations={stations}
           status={status}
           timeWindow={timeWindow}
@@ -237,12 +249,25 @@ export default function App() {
           onAutoFocusMagnitude={setAutoFocusMagnitude}
           onSoundEnabled={setSoundEnabled}
           onSoundMinimumMagnitude={setSoundMinimumMagnitude}
+          onCinematicPlayback={setCinematicPlayback}
+          onWaveSpeed={setWaveSpeed}
           onSelectStation={selectStation}
           onHistoricalResults={loadHistorical}
         />}
 
         {selectedEvent && <EventInspector event={selectedEvent} events={sourceEvents} onClose={() => setSelectedEvent(null)} onFocus={() => focus(selectedEvent, 1.05)} />}
         {selectedStation && <StationInspector station={selectedStation} onClose={() => setSelectedStation(null)} onFocus={() => focus(selectedStation, 0.9)} />}
+        {pulseEvent && <WaveSimulator
+          event={pulseEvent}
+          stations={stations}
+          speed={waveSpeed}
+          paused={wavePaused}
+          showInterior={waveInterior}
+          onSpeed={setWaveSpeed}
+          onPaused={setWavePaused}
+          onInterior={setWaveInterior}
+          onClose={() => setPulseEvent(null)}
+        />}
 
         {notice && <div className="event-notice" style={{ '--notice-color': magnitudeColor(notice.event.magnitude) } as React.CSSProperties}>
           <div className="notice-magnitude"><BellRing size={14} /><strong>{formatMagnitude(notice.event.magnitude)}</strong></div>
