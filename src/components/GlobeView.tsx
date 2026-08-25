@@ -4,6 +4,7 @@ import { Compass, LoaderCircle, RefreshCw } from 'lucide-react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Earthquake, MapLayerState, MapStyle, SeismicStation, Volcano } from '../types';
 import { waveRadiusKm } from '../services/travelTimes';
+import { estimateIntensityZones } from '../services/shakeMap';
 
 const COUNTRIES_URL = `${import.meta.env.BASE_URL}data/countries.geojson`;
 const PLACES_URL = `${import.meta.env.BASE_URL}data/places.geojson`;
@@ -31,7 +32,7 @@ interface GlobeViewProps {
 
 type FeatureCollection = {
   type: 'FeatureCollection';
-  features: Array<{ type: 'Feature'; geometry: { type: 'Point' | 'LineString'; coordinates: unknown }; properties: Record<string, unknown> }>;
+  features: Array<{ type: 'Feature'; geometry: { type: 'Point' | 'LineString' | 'Polygon'; coordinates: unknown }; properties: Record<string, unknown> }>;
 };
 
 function createStyle(): StyleSpecification {
@@ -111,6 +112,15 @@ function waveCollection(origin: { lat: number; lng: number }, pRadiusKm: number,
   return asCollection(features);
 }
 
+function shakeMapCollection(event: Earthquake | null): FeatureCollection {
+  if (!event) return asCollection([]);
+  return asCollection(estimateIntensityZones(event).map((zone) => {
+    const ring = Array.from({ length: 121 }, (_, index) => destinationPoint(event, index * 3, zone.radiusKm));
+    ring.push(ring[0]);
+    return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: { intensity: zone.intensity, color: zone.color, label: zone.label } };
+  }));
+}
+
 function graticuleGeoJson(): FeatureCollection {
   const features: FeatureCollection['features'] = [];
   for (let lat = -75; lat <= 75; lat += 15) {
@@ -173,6 +183,7 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addSource('stations', { type: 'geojson', data: asCollection([]) as never });
   map.addSource('volcanoes', { type: 'geojson', data: asCollection([]) as never });
   map.addSource('wave', { type: 'geojson', data: asCollection([]) as never });
+  map.addSource('shakemap', { type: 'geojson', data: asCollection([]) as never });
 
   map.addLayer({ id: 'satellite-base', type: 'raster', source: 'satellite', layout: { visibility: 'none' }, paint: { 'raster-resampling': 'linear', 'raster-fade-duration': 0 } });
   map.addLayer({ id: 'relief-base', type: 'raster', source: 'relief', layout: { visibility: 'none' }, paint: { 'raster-resampling': 'linear', 'raster-fade-duration': 0, 'raster-saturation': -0.12 } });
@@ -187,6 +198,9 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addLayer({ id: 'graticule-lines', type: 'line', source: 'graticule', layout: { visibility: 'none' }, paint: { 'line-color': '#405a5f', 'line-opacity': 0.22, 'line-width': 0.55 } });
   map.addLayer({ id: 'orogen-lines', type: 'line', source: 'plate-orogens', paint: { 'line-color': '#a91428', 'line-opacity': 0.64, 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 0.45, 5, 1, 11, 1.75], 'line-dasharray': [2.4, 1.8] } as never });
   map.addLayer({ id: 'plate-lines', type: 'line', source: 'plate-boundaries', paint: { 'line-color': '#e12834', 'line-opacity': 0.9, 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 0.72, 5, 1.45, 11, 2.8] } as never });
+
+  map.addLayer({ id: 'shakemap-fill', type: 'fill', source: 'shakemap', paint: { 'fill-color': ['get', 'color'], 'fill-opacity': ['interpolate', ['linear'], ['get', 'intensity'], 2, .08, 6, .15, 10, .25] } as never });
+  map.addLayer({ id: 'shakemap-outline', type: 'line', source: 'shakemap', paint: { 'line-color': ['get', 'color'], 'line-opacity': .58, 'line-width': ['interpolate', ['linear'], ['zoom'], 0, .55, 8, 1.35, 16, 2] } as never });
 
   map.addLayer({ id: 'volcano-clusters', type: 'circle', source: 'volcanoes', filter: ['has', 'point_count'], paint: { 'circle-color': '#b84c35', 'circle-radius': ['step', ['get', 'point_count'], 7, 10, 10, 40, 14], 'circle-stroke-color': '#fff1df', 'circle-stroke-width': 1, 'circle-opacity': 0.86 } as never });
   map.addLayer({ id: 'volcano-cluster-count', type: 'symbol', source: 'volcanoes', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Open Sans Regular'], 'text-size': 9 }, paint: { 'text-color': '#fff' } });
@@ -223,9 +237,12 @@ function addSourceAndLayers(map: maplibregl.Map) {
   } as never });
   map.addLayer({ id: 'earthquake-labels', type: 'symbol', source: 'earthquakes', minzoom: 3.6, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['get', 'magnitudeText'], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3.6, 7.5, 9, 9.5, 16, 12], 'text-anchor': 'center', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': ['case', ['<', ['get', 'magnitude'], 5], '#132326', '#ffffff'], 'text-halo-color': 'rgba(255,255,255,.16)', 'text-halo-width': .5 } as never });
 
-  map.addLayer({ id: 'p-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 'p'], paint: { 'line-color': '#4db9ff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1.4, 8, 2.1, 16, 2.8], 'line-opacity': 0 } as never });
-  map.addLayer({ id: 's-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 's'], paint: { 'line-color': '#ff6659', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1.6, 8, 2.4, 16, 3.1], 'line-opacity': 0 } as never });
-  map.addLayer({ id: 'surface-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 'surface'], paint: { 'line-color': '#ffd05a', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1.2, 8, 2, 16, 2.8], 'line-dasharray': [2, 1.4], 'line-opacity': 0 } as never });
+  map.addLayer({ id: 'p-wave-halo', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 'p'], paint: { 'line-color': '#4db9ff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 7, 8, 10, 16, 14], 'line-blur': 5, 'line-opacity': 0 } as never });
+  map.addLayer({ id: 's-wave-halo', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 's'], paint: { 'line-color': '#ff6659', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 8, 8, 11, 16, 15], 'line-blur': 5, 'line-opacity': 0 } as never });
+  map.addLayer({ id: 'surface-wave-halo', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 'surface'], paint: { 'line-color': '#ffd05a', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 7, 8, 10, 16, 14], 'line-blur': 5, 'line-opacity': 0 } as never });
+  map.addLayer({ id: 'p-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 'p'], paint: { 'line-color': '#a8e2ff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 2.4, 8, 3.3, 16, 4.2], 'line-opacity': 0 } as never });
+  map.addLayer({ id: 's-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 's'], paint: { 'line-color': '#ff8a80', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 2.6, 8, 3.6, 16, 4.5], 'line-opacity': 0 } as never });
+  map.addLayer({ id: 'surface-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 'surface'], paint: { 'line-color': '#ffe08a', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 2.2, 8, 3.2, 16, 4.2], 'line-dasharray': [2, 1.4], 'line-opacity': 0 } as never });
 
   map.addLayer({ id: 'country-labels', type: 'symbol', source: 'countries', minzoom: 0, maxzoom: 9, layout: { 'text-field': ['coalesce', ['get', 'NAME_ES'], ['get', 'ADMIN'], ['get', 'NAME']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 0, 8, 5, 12, 8, 15], 'text-transform': 'uppercase', 'text-letter-spacing': 0.08, 'text-allow-overlap': false }, paint: { 'text-color': '#253534', 'text-halo-color': 'rgba(244,244,226,.88)', 'text-halo-width': 1.4 } as never });
   map.addLayer({ id: 'place-labels', type: 'symbol', source: 'places', minzoom: 3, filter: ['<=', ['to-number', ['get', 'scalerank']], 7], layout: { 'text-field': ['coalesce', ['get', 'name'], ['get', 'nameascii']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 9, 8, 12, 14, 15], 'text-allow-overlap': false }, paint: { 'text-color': '#eaf6f5', 'text-halo-color': 'rgba(2,9,12,.95)', 'text-halo-width': 1.6 } as never });
@@ -470,7 +487,8 @@ export function GlobeView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    setVisibility(map, ['earthquake-clusters', 'earthquake-cluster-count', 'earthquake-halos', 'earthquake-rings', 'earthquake-points', 'earthquake-labels', 'earthquake-selected', 'p-wave', 's-wave', 'surface-wave'], layers.earthquakes);
+    setVisibility(map, ['earthquake-clusters', 'earthquake-cluster-count', 'earthquake-halos', 'earthquake-rings', 'earthquake-points', 'earthquake-labels', 'earthquake-selected', 'p-wave-halo', 's-wave-halo', 'surface-wave-halo', 'p-wave', 's-wave', 'surface-wave'], layers.earthquakes);
+    setVisibility(map, ['shakemap-fill', 'shakemap-outline'], layers.shakeMap);
     setVisibility(map, ['station-cluster-halo', 'station-clusters', 'station-cluster-count', 'station-points', 'station-icons', 'station-labels', 'station-selected'], layers.stations);
     setVisibility(map, ['plate-lines', 'orogen-lines'], layers.plates);
     setVisibility(map, ['volcano-clusters', 'volcano-cluster-count', 'volcano-points', 'volcano-labels'], layers.volcanoes);
@@ -520,7 +538,13 @@ export function GlobeView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    const wave = pulseEvent ?? selectedEvent;
+    (map.getSource('shakemap') as GeoJSONSource).setData(shakeMapCollection(layers.shakeMap ? selectedEvent : null) as never);
+  }, [layers.shakeMap, ready, selectedEvent]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const wave = pulseEvent;
     const source = map.getSource('wave') as GeoJSONSource;
     if (!wave) {
       waveClockRef.current = { eventId: '', simulatedSeconds: 0 };
@@ -528,6 +552,9 @@ export function GlobeView({
       map.setPaintProperty('p-wave', 'line-opacity', 0);
       map.setPaintProperty('s-wave', 'line-opacity', 0);
       map.setPaintProperty('surface-wave', 'line-opacity', 0);
+      map.setPaintProperty('p-wave-halo', 'line-opacity', 0);
+      map.setPaintProperty('s-wave-halo', 'line-opacity', 0);
+      map.setPaintProperty('surface-wave-halo', 'line-opacity', 0);
       return;
     }
     if (waveClockRef.current.eventId !== wave.id) waveClockRef.current = { eventId: wave.id, simulatedSeconds: 0 };
@@ -550,6 +577,9 @@ export function GlobeView({
         map.setPaintProperty('p-wave', 'line-opacity', pRadius >= maxRadiusKm ? 0 : .8);
         map.setPaintProperty('s-wave', 'line-opacity', sRadius >= maxRadiusKm ? 0 : .9);
         map.setPaintProperty('surface-wave', 'line-opacity', surfaceRadius >= maxRadiusKm ? 0 : .86);
+        map.setPaintProperty('p-wave-halo', 'line-opacity', pRadius >= maxRadiusKm ? 0 : .25);
+        map.setPaintProperty('s-wave-halo', 'line-opacity', sRadius >= maxRadiusKm ? 0 : .28);
+        map.setPaintProperty('surface-wave-halo', 'line-opacity', surfaceRadius >= maxRadiusKm ? 0 : .3);
         lastUpdate = time;
         if (surfaceRadius >= maxRadiusKm) return;
       }
@@ -558,6 +588,9 @@ export function GlobeView({
         map.setPaintProperty('p-wave', 'line-opacity', 0);
         map.setPaintProperty('s-wave', 'line-opacity', 0);
         map.setPaintProperty('surface-wave', 'line-opacity', 0);
+        map.setPaintProperty('p-wave-halo', 'line-opacity', 0);
+        map.setPaintProperty('s-wave-halo', 'line-opacity', 0);
+        map.setPaintProperty('surface-wave-halo', 'line-opacity', 0);
         return;
       }
       frame = requestAnimationFrame(animate);
@@ -566,7 +599,7 @@ export function GlobeView({
     return () => {
       cancelAnimationFrame(frame);
     };
-  }, [pulseEvent, selectedEvent, ready, wavePaused, waveSpeed]);
+  }, [pulseEvent, ready, wavePaused, waveSpeed]);
 
   if (failed) return <div className="webgl-fallback" role="status"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><p className="eyebrow">MODO DE COMPATIBILIDAD</p><h2>El globo 3D necesita WebGL</h2><p>Los datos y el historial siguen disponibles. Activa la aceleración gráfica para abrir la cartografía científica.</p></div>;
 

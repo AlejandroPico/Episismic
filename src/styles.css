@@ -732,6 +732,92 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   .waveform-reset { grid-column: 2; grid-row: 1; }
 }
 
+/* Ficha compacta por pestañas: preserva el mapa y aloja la simulación de ondas. */
+.compact-event-inspector { width: min(760px,calc(100% - 28px)); max-height: min(430px,calc(100% - 88px)); display: flex; flex-direction: column; overflow: hidden; }
+.compact-event-inspector > header { min-height: 66px; flex: 0 0 auto; padding: 8px 10px; }
+.compact-event-inspector .event-mag-large { min-width: 64px; }
+.compact-event-inspector .event-mag-large span { font-size: 22px; }
+.compact-event-inspector .event-heading h2 { font-size: 12px; }
+.compare-pin { font: 700 15px/1 IBM Plex Mono,monospace; }
+.compare-pin.active { color: var(--bg-deep); background: var(--accent); }
+.event-inspector-tabs { min-height: 34px; flex: 0 0 auto; display: flex; overflow-x: auto; border-bottom: 1px solid var(--line-strong); background: var(--panel-soft); scrollbar-width: none; }
+.event-inspector-tabs::-webkit-scrollbar { display: none; }
+.event-inspector-tabs button { min-width: max-content; flex: 1 0 auto; padding: 0 11px; border: 0; border-right: 1px solid var(--line); color: var(--text-soft); background: transparent; font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .06em; cursor: pointer; }
+.event-inspector-tabs button:hover { color: var(--text); background: var(--accent-soft); }
+.event-inspector-tabs button.active { color: var(--accent); box-shadow: inset 0 -2px var(--accent); background: color-mix(in srgb,var(--accent) 8%,var(--panel-solid)); }
+.event-inspector-content { min-height: 0; flex: 1 1 auto; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.event-tab-panel { min-height: 100%; }
+.compact-event-inspector .metric-grid article { gap: 3px; padding: 7px 9px; }
+.compact-event-inspector .metric-grid span { font-size: 7px; }
+.compact-event-inspector .metric-grid strong { font-size: 9px; }
+.compact-event-inspector .inspector-flags { gap: 6px 10px; padding: 6px 9px; }
+.compact-event-inspector .inspector-flags span { font-size: 7px; }
+.compact-event-inspector .scientific-summary-grid article { gap: 3px; padding: 8px 8px 8px 30px; }
+.compact-event-inspector .scientific-summary-grid svg { top: 9px; left: 9px; }
+.compact-event-inspector .scientific-summary-grid strong { font-size: 9px; }
+.summary-actions { min-height: 34px; display: flex; align-items: center; gap: 6px; padding: 5px 8px; }
+.summary-actions button, .summary-actions a, .section-lead > button, .compare-panel button { min-height: 25px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; border: 1px solid var(--line-strong); color: var(--text-soft); background: transparent; text-decoration: none; font: 600 7px/1 IBM Plex Mono,monospace; cursor: pointer; }
+.summary-actions button:hover, .summary-actions a:hover, .section-lead > button:hover, .compare-panel button:hover { color: var(--accent); border-color: var(--accent); }
+.summary-actions a { margin-left: auto; }
+.section-lead { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 9px; }
+.section-lead > div { display: grid; gap: 4px; }
+.section-lead strong { font-size: 9px; }
+.section-lead p { margin: 0; color: var(--text-soft); font-size: 7px; line-height: 1.4; }
+.section-lead .primary-button { color: var(--bg-deep); background: var(--accent); }
+.section-lead .primary-button:disabled { opacity: .35; cursor: not-allowed; }
+.sequence-event-list { display: grid !important; grid-template-columns: 1fr !important; margin-top: 9px !important; border: 1px solid var(--line) !important; }
+.sequence-event-list article { min-height: 27px; display: grid; grid-template-columns: 150px 42px minmax(0,1fr); align-items: center; gap: 7px; padding: 0 8px; border-bottom: 1px solid var(--line); font: 500 7px/1 IBM Plex Mono,monospace; }
+.sequence-event-list article:last-child { border-bottom: 0; }
+.sequence-event-list time, .sequence-event-list span { overflow: hidden; color: var(--text-soft); text-overflow: ellipsis; white-space: nowrap; }
+.comparison-table { border: 1px solid var(--line-strong); }
+.comparison-row { min-height: 32px; display: grid; grid-template-columns: minmax(170px,1fr) 45px 72px 42px 78px 29px; align-items: center; border-bottom: 1px solid var(--line); }
+.comparison-row:last-child { border-bottom: 0; }
+.comparison-row > * { min-width: 0; overflow: hidden; padding: 0 7px; color: var(--text-soft); border-right: 1px solid var(--line); font: 500 7px/1 IBM Plex Mono,monospace; text-overflow: ellipsis; white-space: nowrap; }
+.comparison-row > *:last-child { border-right: 0; }
+.comparison-header { min-height: 25px; background: var(--panel-soft); }
+.comparison-header span { color: var(--accent); font-weight: 600; }
+.comparison-row button { min-height: 31px; padding: 0; border: 0; }
+
+.wave-simulator.embedded, .app-shell.with-history .wave-simulator.embedded { position: static; inset: auto; width: 100%; max-height: none; overflow: visible; color: var(--text); border: 0; background: var(--panel-solid); box-shadow: none; }
+.wave-simulator.embedded .wave-simulator-controls { border-color: var(--line); }
+.wave-simulator.embedded .wave-simulator-controls button { color: var(--text-soft); border-color: var(--line); }
+.wave-simulator.embedded .wave-simulator-controls button:hover, .wave-simulator.embedded .wave-simulator-controls button.active { color: var(--bg-deep); background: var(--accent); }
+.wave-simulator.embedded .wave-simulator-controls > span { color: var(--warm); }
+.wave-simulator.embedded .wave-cross-section { grid-template-columns: minmax(0,1fr) 86px; border-color: var(--line); background: radial-gradient(circle at 48% 42%,var(--accent-soft),transparent 58%); }
+.wave-simulator.embedded .wave-cross-section svg { height: 190px; }
+.wave-simulator.embedded .wave-cross-section > div { border-color: var(--line); }
+.wave-simulator.embedded .wave-cross-section > div span { color: var(--text-soft); border-color: var(--line); }
+.wave-simulator.embedded .wave-cross-section > div strong, .wave-simulator.embedded .station-arrival-list article strong { color: var(--text); }
+.wave-simulator.embedded .station-arrival-heading { color: var(--accent); border-color: var(--line); }
+.wave-simulator.embedded .station-arrival-list article { border-color: var(--line); }
+.wave-simulator.embedded .station-arrival-list article span { color: var(--text-soft); }
+.wave-simulator.embedded > footer { color: var(--text-soft); }
+
+@media (max-width: 900px) {
+  .compact-event-inspector { top: auto; bottom: 58px; left: 0; right: 0; width: 100%; height: auto; max-height: 66dvh; transform: none; overflow: hidden; border-left: 0; border-right: 0; }
+  .compact-event-inspector .scientific-summary-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .compact-event-inspector .scientific-summary-grid article { border-bottom: 0; }
+}
+
+@media (max-width: 620px) {
+  .compact-event-inspector { max-height: 70dvh; }
+  .compact-event-inspector > header { min-height: 58px; }
+  .compact-event-inspector .event-heading h2 { max-height: 30px; overflow: hidden; }
+  .compact-event-inspector .scientific-summary-grid { grid-template-columns: 1fr 1fr; }
+  .compact-event-inspector .scientific-summary-grid article:nth-child(2) { border-right: 0; }
+  .compact-event-inspector .scientific-summary-grid article:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .summary-actions { flex-wrap: wrap; }
+  .summary-actions a { margin-left: 0; }
+  .comparison-table { min-width: 540px; }
+  .compare-panel { overflow-x: auto; }
+  .wave-simulator.embedded .wave-cross-section { grid-template-columns: 1fr; }
+  .wave-simulator.embedded .wave-cross-section > div { grid-template-columns: repeat(3,1fr); }
+}
+
+@media (max-height: 610px) and (orientation: landscape) {
+  .compact-event-inspector { top: 56px; bottom: 0; left: 0; right: auto; width: min(520px,58vw); max-height: none; height: calc(100dvh - 56px); }
+}
+
 /* Revisión 0.9: doble escala sísmica, alertas operativas y escritorio nativo. */
 .station-layer-switch { margin: 0 0 12px; padding: 0 9px; border: 1px solid var(--line-strong); background: color-mix(in srgb, var(--accent) 5%, transparent); }
 
@@ -1051,5 +1137,22 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   .wave-cross-section > div { grid-template-columns: repeat(3,1fr); border-top: 1px solid rgba(210,228,226,.16); border-left: 0; }
   .wave-cross-section > div span { border-right: 1px solid rgba(210,228,226,.14); border-bottom: 0; }
   .station-arrival-list article { grid-template-columns: 1fr 72px 72px; }
-  .station-arrival-list article > span:nth-child(2) { display: none; }
+.station-arrival-list article > span:nth-child(2) { display: none; }
+}
+
+/* Precedencia final del inspector integrado frente a los paneles heredados. */
+.scientific-event-inspector.compact-event-inspector { width: min(760px,calc(100% - 28px)); max-height: min(430px,calc(100% - 88px)); display: flex; flex-direction: column; overflow: hidden; }
+.wave-simulator.embedded, .app-shell.with-history .wave-simulator.embedded { position: static; inset: auto; width: 100%; max-height: none; overflow: visible; color: var(--text); border: 0; background: var(--panel-solid); box-shadow: none; }
+
+@media (max-width: 900px) {
+  .scientific-event-inspector.compact-event-inspector { position: fixed; top: auto; bottom: 58px; left: 0; right: 0; width: 100%; height: auto; max-height: 66dvh; transform: none; overflow: hidden; border-left: 0; border-right: 0; }
+  .wave-simulator.embedded, .app-shell.with-history .wave-simulator.embedded { position: static; inset: auto; width: 100%; max-height: none; }
+}
+
+@media (max-width: 620px) {
+  .scientific-event-inspector.compact-event-inspector { max-height: 70dvh; }
+}
+
+@media (max-height: 610px) and (orientation: landscape) {
+  .scientific-event-inspector.compact-event-inspector { top: 56px; bottom: 0; left: 0; right: auto; width: min(520px,58vw); max-height: none; height: calc(100dvh - 56px); }
 }

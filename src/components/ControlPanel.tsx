@@ -67,6 +67,7 @@ const layerDefinitions: { id: keyof MapLayerState; label: string; detail: string
   { id: 'atmosphere', label: 'Atmósfera', detail: 'Halo de lectura del globo' },
   { id: 'graticule', label: 'Retícula geográfica', detail: 'Latitud y longitud' },
   { id: 'legend', label: 'Leyenda sísmica', detail: 'Magnitud, profundidad y tectónica' },
+  { id: 'shakeMap', label: 'Mapa de intensidad', detail: 'Estimación espacial del movimiento' },
 ];
 
 function LayersPanel({ layers, mapStyle, onLayers, onMapStyle }: Pick<ControlPanelProps, 'layers' | 'mapStyle' | 'onLayers' | 'onMapStyle'>) {

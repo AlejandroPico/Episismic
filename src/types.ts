@@ -78,6 +78,7 @@ export interface MapLayerState {
   atmosphere: boolean;
   graticule: boolean;
   legend: boolean;
+  shakeMap: boolean;
 }
 
 export type SeismicActivityKind = 'new' | 'magnitude' | 'corroborated' | 'revision';

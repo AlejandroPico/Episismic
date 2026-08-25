@@ -5,6 +5,7 @@ import { formatTravelTime, nearestStationArrivals, waveRadiusKm } from '../servi
 import { formatMagnitude } from '../utils/format';
 
 interface WaveSimulatorProps {
+  embedded?: boolean;
   event: Earthquake;
   stations: SeismicStation[];
   speed: number;
@@ -13,7 +14,7 @@ interface WaveSimulatorProps {
   onSpeed: (speed: number) => void;
   onPaused: (paused: boolean) => void;
   onInterior: (visible: boolean) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 const SPEEDS = [1, 10, 30, 60, 120];
@@ -45,7 +46,7 @@ function WaveCrossSection({ event, elapsedSeconds }: { event: Earthquake; elapse
   </div>;
 }
 
-export function WaveSimulator({ event, stations, speed, paused, showInterior, onSpeed, onPaused, onInterior, onClose }: WaveSimulatorProps) {
+export function WaveSimulator({ embedded = false, event, stations, speed, paused, showInterior, onSpeed, onPaused, onInterior, onClose }: WaveSimulatorProps) {
   const [simulatedSeconds, setSimulatedSeconds] = useState(0);
   const lastTickRef = useRef(performance.now());
   const arrivals = useMemo(() => nearestStationArrivals(event, stations, 8), [event, stations]);
@@ -72,8 +73,9 @@ export function WaveSimulator({ event, stations, speed, paused, showInterior, on
     onPaused(false);
   };
 
-  return <aside className={`wave-simulator ${showInterior ? 'interior-open' : ''}`} aria-label="Simulador de propagación sísmica">
-    <header><div><span>PROPAGACIÓN P / S / SUPERFICIAL</span><strong>{formatMagnitude(event.magnitude)} · {event.place}</strong></div><button className="icon-button" onClick={onClose} title="Cerrar simulación"><X size={16} /></button></header>
+  const Root = embedded ? 'div' : 'aside';
+  return <Root className={`wave-simulator ${embedded ? 'embedded' : ''} ${showInterior ? 'interior-open' : ''}`} aria-label="Simulador de propagación sísmica">
+    {!embedded && <header><div><span>PROPAGACIÓN P / S / SUPERFICIAL</span><strong>{formatMagnitude(event.magnitude)} · {event.place}</strong></div>{onClose && <button className="icon-button" onClick={onClose} title="Cerrar simulación"><X size={16} /></button>}</header>}
     <div className="wave-simulator-controls">
       <button onClick={() => onPaused(!paused)} title={paused ? 'Continuar simulación' : 'Pausar simulación'}>{paused ? <Play size={14} /> : <Pause size={14} />}</button>
       <button onClick={reset} title="Reiniciar propagación"><RotateCcw size={14} /></button>
@@ -91,5 +93,5 @@ export function WaveSimulator({ event, stations, speed, paused, showInterior, on
       </article>)}
     </div>
     <footer>Los tiempos son predicciones educativas calculadas con velocidades por profundidad; no sustituyen boletines de fase de las redes FDSN.</footer>
-  </aside>;
+  </Root>;
 }

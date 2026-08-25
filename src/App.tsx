@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BellRing, Download, X } from 'lucide-react';
 import { ControlPanel } from './components/ControlPanel';
 import { EventHistory } from './components/EventHistory';
@@ -7,7 +7,6 @@ import { GlobeView } from './components/GlobeView';
 import { StationInspector } from './components/StationInspector';
 import { Timeline } from './components/Timeline';
 import { TopBar, type PanelId } from './components/TopBar';
-import { WaveSimulator } from './components/WaveSimulator';
 import { useEarthquakes } from './hooks/useEarthquakes';
 import { useGeodata } from './hooks/useGeodata';
 import { playSeismicAlert, unlockAudioAlerts } from './services/audioAlerts';
@@ -15,7 +14,7 @@ import { APP_VERSION, RELEASES_URL, fetchLatestRelease, isNativeApp, isNewerVers
 import type {
   Earthquake, Filters, MapLayerState, MapStyle, SeismicActivity, SeismicStation, ThemeMode, TimeWindow,
 } from './types';
-import { formatMagnitude, formatRelativeTime, magnitudeColor } from './utils/format';
+import { formatMagnitude, formatRelativeTime, haversineKm, magnitudeColor } from './utils/format';
 
 const DEFAULT_LAYERS: MapLayerState = {
   earthquakes: true,
@@ -26,6 +25,7 @@ const DEFAULT_LAYERS: MapLayerState = {
   atmosphere: true,
   graticule: false,
   legend: false,
+  shakeMap: true,
 };
 
 const activityLabels = {
@@ -51,6 +51,8 @@ export default function App() {
   const [selectedStation, setSelectedStation] = useState<SeismicStation | null>(null);
   const [focusTarget, setFocusTarget] = useState<{ lat: number; lng: number; altitude?: number; cinematic?: boolean; token: number } | null>(null);
   const [pulseEvent, setPulseEvent] = useState<Earthquake | null>(null);
+  const [comparisonEvents, setComparisonEvents] = useState<Earthquake[]>([]);
+  const sequenceTimersRef = useRef<number[]>([]);
   const [activePanel, setActivePanel] = useState<PanelId>(null);
   const [historyOpen, setHistoryOpen] = useState(() => window.innerWidth > 820);
   const [layers, setLayers] = useState<MapLayerState>(() => ({ ...DEFAULT_LAYERS, ...loadPreference('layers-v2', DEFAULT_LAYERS) }));
@@ -60,7 +62,7 @@ export default function App() {
   const [autoFocusMagnitude, setAutoFocusMagnitude] = useState(() => loadPreference('auto-focus-magnitude', 5));
   const [soundEnabled, setSoundEnabled] = useState(() => loadPreference('sound-enabled', true));
   const [soundMinimumMagnitude, setSoundMinimumMagnitude] = useState(() => loadPreference('sound-minimum-magnitude', -1));
-  const [waveSpeed, setWaveSpeed] = useState(() => loadPreference('wave-speed', 60));
+  const [waveSpeed, setWaveSpeed] = useState(() => loadPreference('wave-speed-v2', 30));
   const [wavePaused, setWavePaused] = useState(false);
   const [waveInterior, setWaveInterior] = useState(() => loadPreference('wave-interior', true));
   const [cinematicPlayback, setCinematicPlayback] = useState(() => loadPreference('cinematic-playback', true));
@@ -86,10 +88,7 @@ export default function App() {
     setSelectedEvent(event);
     setSelectedStation(null);
     focus(event, event.magnitude >= 6 ? 1.05 : 1.28);
-    if (animate) {
-      setPulseEvent(event);
-      setWavePaused(false);
-    }
+    if (animate) setWavePaused(false);
   }, [focus]);
 
   const selectStation = useCallback((station: SeismicStation) => {
@@ -106,6 +105,33 @@ export default function App() {
     setWavePaused(false);
     focus(event, event.magnitude >= 6 ? 1.05 : 1.28, cinematicPlayback);
   }, [cinematicPlayback, focus]);
+
+  const startWave = useCallback((event: Earthquake) => {
+    setPulseEvent(null);
+    setWavePaused(false);
+    window.requestAnimationFrame(() => setPulseEvent(event));
+  }, []);
+
+  const toggleComparison = useCallback((event: Earthquake) => {
+    setComparisonEvents((current) => current.some((item) => item.id === event.id)
+      ? current.filter((item) => item.id !== event.id)
+      : [...current, event].slice(-4));
+  }, []);
+
+  const playSequence = useCallback((mainEvent: Earthquake) => {
+    sequenceTimersRef.current.forEach(window.clearTimeout);
+    sequenceTimersRef.current = [];
+    const radiusKm = Math.min(350, Math.max(45, 12 * 2 ** Math.max(0, mainEvent.magnitude - 3)));
+    const sequence = sourceEvents.filter((candidate) => Math.abs(candidate.time - mainEvent.time) <= 14 * 86_400_000
+      && haversineKm(mainEvent, candidate) <= radiusKm).sort((a, b) => a.time - b.time).slice(0, 30);
+    sequence.forEach((event, index) => {
+      sequenceTimersRef.current.push(window.setTimeout(() => playEvent(event), index * 1_250));
+    });
+  }, [playEvent, sourceEvents]);
+
+  useEffect(() => () => {
+    sequenceTimersRef.current.forEach(window.clearTimeout);
+  }, []);
 
   useEffect(() => {
     const activity = activities[0];
@@ -157,7 +183,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem('episismic:auto-focus-magnitude', JSON.stringify(autoFocusMagnitude)); }, [autoFocusMagnitude]);
   useEffect(() => { localStorage.setItem('episismic:sound-enabled', JSON.stringify(soundEnabled)); }, [soundEnabled]);
   useEffect(() => { localStorage.setItem('episismic:sound-minimum-magnitude', JSON.stringify(soundMinimumMagnitude)); }, [soundMinimumMagnitude]);
-  useEffect(() => { localStorage.setItem('episismic:wave-speed', JSON.stringify(waveSpeed)); }, [waveSpeed]);
+  useEffect(() => { localStorage.setItem('episismic:wave-speed-v2', JSON.stringify(waveSpeed)); }, [waveSpeed]);
   useEffect(() => { localStorage.setItem('episismic:wave-interior', JSON.stringify(waveInterior)); }, [waveInterior]);
   useEffect(() => { localStorage.setItem('episismic:cinematic-playback', JSON.stringify(cinematicPlayback)); }, [cinematicPlayback]);
 
@@ -255,19 +281,25 @@ export default function App() {
           onHistoricalResults={loadHistorical}
         />}
 
-        {selectedEvent && <EventInspector event={selectedEvent} events={sourceEvents} onClose={() => setSelectedEvent(null)} onFocus={() => focus(selectedEvent, 1.05)} />}
-        {selectedStation && <StationInspector station={selectedStation} onClose={() => setSelectedStation(null)} onFocus={() => focus(selectedStation, 0.9)} />}
-        {pulseEvent && <WaveSimulator
-          event={pulseEvent}
+        {selectedEvent && <EventInspector
+          event={selectedEvent}
+          events={sourceEvents}
           stations={stations}
-          speed={waveSpeed}
-          paused={wavePaused}
-          showInterior={waveInterior}
-          onSpeed={setWaveSpeed}
-          onPaused={setWavePaused}
-          onInterior={setWaveInterior}
-          onClose={() => setPulseEvent(null)}
+          comparisonEvents={comparisonEvents}
+          waveSpeed={waveSpeed}
+          wavePaused={wavePaused}
+          waveInterior={waveInterior}
+          onClose={() => { setSelectedEvent(null); setPulseEvent(null); }}
+          onFocus={() => focus(selectedEvent, 1.05)}
+          onStartWave={startWave}
+          onWaveSpeed={setWaveSpeed}
+          onWavePaused={setWavePaused}
+          onWaveInterior={setWaveInterior}
+          onPlaySequence={playSequence}
+          onToggleComparison={toggleComparison}
+          onClearComparison={() => setComparisonEvents([])}
         />}
+        {selectedStation && <StationInspector station={selectedStation} onClose={() => setSelectedStation(null)} onFocus={() => focus(selectedStation, 0.9)} />}
 
         {notice && <div className="event-notice" style={{ '--notice-color': magnitudeColor(notice.event.magnitude) } as React.CSSProperties}>
           <div className="notice-magnitude"><BellRing size={14} /><strong>{formatMagnitude(notice.event.magnitude)}</strong></div>
