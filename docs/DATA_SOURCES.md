@@ -28,6 +28,11 @@
 - El WebSocket público del ORFEUS Data Center anuncia las estaciones que está sirviendo en este momento y entrega sus muestras instrumentales en tiempo real.
 - La sincronización combina ese inventario con `/streams` de EarthScope para excluir estaciones históricas que ya no emiten.
 
+### Catálogos de estaciones
+
+- `stations.json.gz` contiene únicamente estaciones con flujo anunciado por EarthScope u ORFEUS y se muestra al iniciar.
+- Los fragmentos `stations-secondary-00.json.gz` a `stations-secondary-15.json.gz` conservan el resto de las estaciones FDSN catalogadas. Se cargan solo bajo demanda y no implican disponibilidad de señal en directo.
+
 ### NCEDC y BMKG
 
 - FDSN Station y Dataselect se resuelven contra el centro que encontró el canal, no contra una asignación posterior inferida por la ficha.

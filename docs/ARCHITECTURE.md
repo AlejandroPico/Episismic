@@ -27,7 +27,7 @@ La actualización de un evento no reemplaza silenciosamente su historia. El resu
 
 ## Telemetría instrumental en tiempo real
 
-La edición 1.2.0 amplía la ruta instrumental real completamente ejecutable desde el navegador:
+La edición 1.2.1 mantiene la ruta instrumental real completamente ejecutable desde el navegador:
 
 1. FDSN Station consulta en paralelo EarthScope, ORFEUS, GEOFON, NCEDC y BMKG, localiza el canal activo y conserva el centro que realmente lo publicó.
 2. Para canales EarthScope, el cliente abre `wss://rtserve.earthscope.org/seedlink` y se suscribe al identificador NSLC exacto.
@@ -46,8 +46,9 @@ La web seguirá funcionando con los catálogos sísmicos aunque la telemetría i
 - Cartografía por teselas y globo vectorial: no se amplía una textura global fija.
 - Natural Earth de países y ciudades se distribuye con la aplicación para que el modo político no dependa de un host externo.
 - GeoJSON procesado en los Web Workers de MapLibre.
-- La capa de estaciones comienza desactivada. El catálogo comprimido solo se solicita bajo demanda y nunca se construye su GeoJSON mientras la capa está oculta.
-- La sincronización filtra las épocas FDSN históricas mediante los inventarios de flujos que EarthScope y ORFEUS anuncian en ese momento.
+- Las estaciones operativas comienzan visibles y utilizan un catálogo compacto generado con los flujos que EarthScope y ORFEUS anuncian en ese momento.
+- El catálogo ampliado de estaciones históricas o sin directo confirmado se distribuye en fragmentos comprimidos independientes. No se descargan, descomprimen ni transforman a GeoJSON hasta que el usuario activa expresamente su interruptor.
+- Al desactivar cualquiera de las dos capas, sus elementos dejan de formar parte del GeoJSON enviado al globo.
 - Capas WebGL separadas para terremotos, estaciones y volcanes, conservando cada símbolo individual.
 - Actualización multifuente desacoplada a 30 segundos.
 - Persistencia SQLite diferida para agrupar escrituras.

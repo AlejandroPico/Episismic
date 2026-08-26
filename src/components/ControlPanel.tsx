@@ -29,6 +29,9 @@ interface ControlPanelProps {
   cinematicPlayback: boolean;
   waveSpeed: number;
   stations: SeismicStation[];
+  operationalStationCount: number;
+  secondaryStationCount: number;
+  secondaryGeodataReady: boolean;
   status: DataStatus;
   timeWindow: TimeWindow;
   isHistorical: boolean;
@@ -168,7 +171,10 @@ function ArchivePanel({
   </section>;
 }
 
-function StationsPanel({ stations, status, layers, onLayers, onSelectStation }: Pick<ControlPanelProps, 'stations' | 'status' | 'layers' | 'onLayers' | 'onSelectStation'>) {
+function StationsPanel({
+  stations, operationalStationCount, secondaryStationCount, secondaryGeodataReady,
+  status, layers, onLayers, onSelectStation,
+}: Pick<ControlPanelProps, 'stations' | 'operationalStationCount' | 'secondaryStationCount' | 'secondaryGeodataReady' | 'status' | 'layers' | 'onLayers' | 'onSelectStation'>) {
   const [query, setQuery] = useState('');
   const results = useMemo(() => stations.filter((station) => `${station.id} ${station.name} ${station.country}`.toLowerCase().includes(query.toLowerCase())), [query, stations]);
   return <section className="control-section station-catalogue">
@@ -179,13 +185,18 @@ function StationsPanel({ stations, status, layers, onLayers, onSelectStation }: 
     </div>
     <div className="switch-list station-layer-switch">
       <label>
-        <span><strong>Mostrar estaciones en el globo</strong><small>{stations.length.toLocaleString('es-ES')} estaciones públicas disponibles</small></span>
+        <span><strong>Mostrar estaciones operativas</strong><small>{operationalStationCount.toLocaleString('es-ES')} estaciones con flujo anunciado</small></span>
         <input type="checkbox" checked={layers.stations} onChange={() => onLayers({ ...layers, stations: !layers.stations })} />
+        <i />
+      </label>
+      <label>
+        <span><strong>Incluir catálogo ampliado</strong><small>{layers.secondaryStations && !secondaryGeodataReady ? 'Cargando bajo demanda…' : secondaryGeodataReady ? `${secondaryStationCount.toLocaleString('es-ES')} estaciones sin directo confirmado` : 'Estaciones históricas o sin directo · carga bajo demanda'}</small></span>
+        <input type="checkbox" checked={layers.secondaryStations} onChange={() => onLayers({ ...layers, secondaryStations: !layers.secondaryStations })} />
         <i />
       </label>
     </div>
     <label className="inline-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Código, país o estación" /></label>
-    <p className="catalog-count">{results.length.toLocaleString('es-ES')} estaciones · se muestran las primeras {Math.min(results.length, 400).toLocaleString('es-ES')}</p>
+    <p className="catalog-count">{results.length.toLocaleString('es-ES')} estaciones cargadas · se muestran las primeras {Math.min(results.length, 400).toLocaleString('es-ES')}</p>
     <div className="station-list">
       {results.slice(0, 400).map((station) => <button key={station.id} onClick={() => onSelectStation(station)}>
         <span><i className={`station-status ${station.status}`} />{station.id}</span>
@@ -232,7 +243,7 @@ function AboutPanel({ latestRelease }: Pick<ControlPanelProps, 'latestRelease'>)
   const updateAvailable = Boolean(latestRelease && isNewerVersion(latestRelease.version));
   return <section className="control-section prose-panel about-panel-content">
     <div className="about-identity"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><div><p className="eyebrow">OBSERVATORIO GEOFÍSICO MUNDIAL</p><h3>EPISISMIC</h3><span>Versión {APP_VERSION} · Edición estable · Desarrollado por Alejandro Pico</span></div></div>
-    <p>Episismic 1.2 es la edición estable y publicable del observatorio tridimensional abierto: integra catálogos sísmicos públicos, estaciones operativas FDSN/SeedLink, volcanes, límites tectónicos, archivo histórico, análisis científico y material educativo en una sola interfaz.</p>
+    <p>Episismic 1.2.1 es la edición estable y publicable del observatorio tridimensional abierto: integra catálogos sísmicos públicos, estaciones operativas FDSN/SeedLink, un inventario ampliado opcional, volcanes, límites tectónicos, archivo histórico, análisis científico y material educativo en una sola interfaz.</p>
     <p>La arquitectura 1.x queda consolidada para ampliar el proyecto con volcanismo, huracanes, grandes tormentas, incendios y otros riesgos naturales sin mezclar sus modelos de datos.</p>
     <div className="about-principles"><span><strong>3</strong>catálogos sísmicos</span><span><strong>4.000+</strong>estaciones en directo</span><span><strong>SQLite</strong>archivo local</span></div>
     <div className="desktop-download-card">

@@ -242,9 +242,9 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addLayer({ id: 'station-clusters', type: 'circle', source: 'stations', filter: ['has', 'point_count'], paint: { 'circle-color': '#08736f', 'circle-radius': ['step', ['get', 'point_count'], 10, 10, 14, 50, 19, 250, 24], 'circle-stroke-color': '#c9fff8', 'circle-stroke-width': 1.4, 'circle-opacity': 0.94 } as never });
   map.addLayer({ id: 'station-cluster-count', type: 'symbol', source: 'stations', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Open Sans Regular'], 'text-size': 9 }, paint: { 'text-color': '#eafffb' } });
   map.addLayer({ id: 'station-selected', type: 'circle', source: 'stations', filter: ['==', ['get', 'stationId'], ''], paint: { 'circle-color': 'rgba(0,0,0,0)', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 5, 10, 10, 16, 14], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2, 'circle-opacity': 0 } as never });
-  map.addLayer({ id: 'station-points', type: 'circle', source: 'stations', filter: ['!', ['has', 'point_count']], paint: { 'circle-color': '#31e0d0', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 3, 4, 4.2, 8, 5.5, 12, 7.5, 18, 10], 'circle-opacity': 0.28, 'circle-blur': 0.3 } as never });
-  map.addLayer({ id: 'station-icons', type: 'symbol', source: 'stations', filter: ['!', ['has', 'point_count']], layout: { 'icon-image': 'station-node', 'icon-size': ['interpolate', ['linear'], ['zoom'], 0, .72, 6, .78, 12, .9, 20, 1.05], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-optional': false } as never });
-  map.addLayer({ id: 'station-labels', type: 'symbol', source: 'stations', minzoom: 7, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['concat', ['get', 'network'], '.', ['get', 'code']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 7, 8, 12, 10, 18, 13], 'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': '#59e2d4', 'text-halo-color': 'rgba(5,18,21,.96)', 'text-halo-width': 1.5 } as never });
+  map.addLayer({ id: 'station-points', type: 'circle', source: 'stations', filter: ['!', ['has', 'point_count']], paint: { 'circle-color': ['case', ['==', ['get', 'status'], 'online'], '#31e0d0', '#83989c'], 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 3, 4, 4.2, 8, 5.5, 12, 7.5, 18, 10], 'circle-opacity': ['case', ['==', ['get', 'status'], 'online'], .28, .15], 'circle-blur': 0.3 } as never });
+  map.addLayer({ id: 'station-icons', type: 'symbol', source: 'stations', filter: ['!', ['has', 'point_count']], layout: { 'icon-image': 'station-node', 'icon-size': ['interpolate', ['linear'], ['zoom'], 0, .72, 6, .78, 12, .9, 20, 1.05], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'icon-optional': false }, paint: { 'icon-opacity': ['case', ['==', ['get', 'status'], 'online'], 1, .48] } as never });
+  map.addLayer({ id: 'station-labels', type: 'symbol', source: 'stations', minzoom: 7, filter: ['!', ['has', 'point_count']], layout: { 'text-field': ['concat', ['get', 'network'], '.', ['get', 'code']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 7, 8, 12, 10, 18, 13], 'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-optional': true, 'text-allow-overlap': false }, paint: { 'text-color': ['case', ['==', ['get', 'status'], 'online'], '#59e2d4', '#9babad'], 'text-halo-color': 'rgba(5,18,21,.96)', 'text-halo-width': 1.5 } as never });
 
   map.addLayer({ id: 'earthquake-clusters', type: 'circle', source: 'earthquakes', filter: ['has', 'point_count'], paint: { 'circle-color': ['step', ['get', 'point_count'], '#f5b347', 10, '#f17b45', 50, '#e7454f', 250, '#b92842'], 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 19, 50, 25, 250, 32], 'circle-stroke-color': '#fff7ea', 'circle-stroke-width': 1.8, 'circle-opacity': 0.96 } as never });
   map.addLayer({ id: 'earthquake-cluster-count', type: 'symbol', source: 'earthquakes', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Open Sans Regular'], 'text-size': 10 }, paint: { 'text-color': '#fff' } });
@@ -528,8 +528,8 @@ export function GlobeView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    (map.getSource('stations') as GeoJSONSource).setData(stationGeoJson(layers.stations ? stations : []) as never);
-  }, [layers.stations, stations, ready]);
+    (map.getSource('stations') as GeoJSONSource).setData(stationGeoJson(stations) as never);
+  }, [stations, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -560,7 +560,7 @@ export function GlobeView({
     if (!map || !ready) return;
     setVisibility(map, ['earthquake-clusters', 'earthquake-cluster-count', 'earthquake-halos', 'earthquake-rings', 'earthquake-points', 'earthquake-labels', 'earthquake-selected', 'p-wave-halo', 's-wave-halo', 'surface-wave-halo', 'p-wave', 's-wave', 'surface-wave'], layers.earthquakes);
     setVisibility(map, ['shakemap-fill', 'shakemap-outline'], layers.shakeMap);
-    setVisibility(map, ['station-cluster-halo', 'station-clusters', 'station-cluster-count', 'station-points', 'station-icons', 'station-labels', 'station-selected'], layers.stations);
+    setVisibility(map, ['station-cluster-halo', 'station-clusters', 'station-cluster-count', 'station-points', 'station-icons', 'station-labels', 'station-selected'], layers.stations || layers.secondaryStations);
     setVisibility(map, ['plate-lines', 'orogen-lines'], layers.plates);
     setVisibility(map, ['volcano-clusters', 'volcano-cluster-count', 'volcano-points', 'volcano-labels'], layers.volcanoes);
     setVisibility(map, ['reference-label-layer'], layers.labels && (mapStyle === 'political' || mapStyle === 'satellite'));

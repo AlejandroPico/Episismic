@@ -2,11 +2,22 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.2.0` — edición estable y publicable
+**Versión actual:** `1.2.1` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.2.1
+
+- Las 4.266 estaciones operativas vuelven a mostrarse por defecto al abrir la aplicación.
+- El panel **Estaciones** separa **Estaciones operativas** de **Catálogo ampliado**.
+- El catálogo ampliado reúne 76.266 estaciones históricas o sin directo confirmado y permanece desactivado, sin descarga ni procesamiento, hasta que el usuario lo activa.
+- Las estaciones ampliadas se representan con menor intensidad para distinguirlas de las operativas.
+- Telemetría real adopta las paletas Mañana, Tarde y Noche tanto en el marco como dentro del canvas.
+- Canal, NSLC, proveedor/estado, frecuencia de muestreo, latencia, recuento y ventana temporal quedan reunidos en una sola cabecera.
+- Se eliminan el pie explicativo y las indicaciones duplicadas de directo; la ayuda de interacción queda disponible en un botón discreto.
+- La gráfica gana altura y superficie útil en escritorio y móvil sin aumentar la ficha.
 
 ## Novedades de 1.2.0
 
@@ -74,7 +85,7 @@ El antiguo objetivo 9 de niveles de detalle y agrupación se mantiene retirado. 
 - Catálogo deduplicado de USGS/ComCat, EMSC y GEOFON, actualizado cada 30 segundos.
 - Historial de una hora, 24 horas, siete días y 30 días.
 - Consulta histórica de hasta 5.000 eventos y persistencia SQLite en el navegador.
-- Más de 4.000 estaciones anunciadas actualmente por EarthScope y ORFEUS, con metadatos resueltos mediante EarthScope, GEOFON, NCEDC y BMKG.
+- Más de 4.000 estaciones operativas anunciadas actualmente por EarthScope y ORFEUS, más un catálogo ampliado opcional de más de 76.000 estaciones históricas o sin directo confirmado.
 - Catálogo Smithsonian GVP de volcanes holocenos y límites tectónicos PB2002.
 - Símbolos individuales persistentes: no se sustituyen por clústeres al alejar o acercar la cámara.
 
@@ -196,4 +207,4 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 
 ## Aviso
 
-Episismic 1.2 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.2.1 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.

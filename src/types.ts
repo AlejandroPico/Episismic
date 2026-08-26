@@ -72,6 +72,7 @@ export interface Volcano extends Coordinates {
 export interface MapLayerState {
   earthquakes: boolean;
   stations: boolean;
+  secondaryStations: boolean;
   plates: boolean;
   volcanoes: boolean;
   labels: boolean;

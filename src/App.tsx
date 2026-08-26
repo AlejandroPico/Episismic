@@ -18,7 +18,8 @@ import { formatMagnitude, formatRelativeTime, haversineKm, magnitudeColor } from
 
 const DEFAULT_LAYERS: MapLayerState = {
   earthquakes: true,
-  stations: false,
+  stations: true,
+  secondaryStations: false,
   plates: true,
   volcanoes: true,
   labels: true,
@@ -45,8 +46,15 @@ function loadPreference<T>(key: string, fallback: T): T {
 export default function App() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('day');
   const { events: liveEvents, status, activities, refresh } = useEarthquakes(timeWindow);
-  const [stationCatalogueRequested, setStationCatalogueRequested] = useState(false);
-  const { stations, volcanoes, stationsReady } = useGeodata(stationCatalogueRequested);
+  const [stationCatalogueRequested, setStationCatalogueRequested] = useState(true);
+  const [secondaryCatalogueRequested, setSecondaryCatalogueRequested] = useState(false);
+  const {
+    stations: operationalStations,
+    secondaryStations,
+    volcanoes,
+    stationsReady,
+    secondaryStationsReady,
+  } = useGeodata(stationCatalogueRequested, secondaryCatalogueRequested);
   const [historicalEvents, setHistoricalEvents] = useState<Earthquake[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Earthquake | null>(null);
   const [selectedStation, setSelectedStation] = useState<SeismicStation | null>(null);
@@ -56,7 +64,7 @@ export default function App() {
   const sequenceTimersRef = useRef<number[]>([]);
   const [activePanel, setActivePanel] = useState<PanelId>(null);
   const [historyOpen, setHistoryOpen] = useState(() => window.innerWidth > 820);
-  const [layers, setLayers] = useState<MapLayerState>(() => ({ ...DEFAULT_LAYERS, ...loadPreference('layers-v3', DEFAULT_LAYERS) }));
+  const [layers, setLayers] = useState<MapLayerState>(() => ({ ...DEFAULT_LAYERS, ...loadPreference('layers-v4', DEFAULT_LAYERS) }));
   const [mapStyle, setMapStyle] = useState<MapStyle>(() => loadPreference('map-style-v2', 'political'));
   const [theme, setTheme] = useState<ThemeMode>(() => loadPreference('theme', 'automatic'));
   const [autoFocus, setAutoFocus] = useState(() => loadPreference('auto-focus', true));
@@ -71,6 +79,12 @@ export default function App() {
   const [notice, setNotice] = useState<SeismicActivity | null>(null);
   const [latestRelease, setLatestRelease] = useState<LatestRelease | null>(null);
   const [updateDismissed, setUpdateDismissed] = useState(false);
+
+  const stations = useMemo(() => [...operationalStations, ...secondaryStations], [operationalStations, secondaryStations]);
+  const mapStations = useMemo(() => [
+    ...(layers.stations ? operationalStations : []),
+    ...(layers.secondaryStations ? secondaryStations : []),
+  ], [layers.secondaryStations, layers.stations, operationalStations, secondaryStations]);
 
   const sourceEvents = historicalEvents ?? liveEvents;
   const visibleEvents = useMemo(() => sourceEvents.filter((event) => {
@@ -182,9 +196,10 @@ export default function App() {
 
   useEffect(() => {
     if (layers.stations || activePanel === 'stations' || selectedEvent || selectedStation) setStationCatalogueRequested(true);
-  }, [activePanel, layers.stations, selectedEvent, selectedStation]);
+    if (layers.secondaryStations) setSecondaryCatalogueRequested(true);
+  }, [activePanel, layers.secondaryStations, layers.stations, selectedEvent, selectedStation]);
 
-  useEffect(() => { localStorage.setItem('episismic:layers-v3', JSON.stringify(layers)); }, [layers]);
+  useEffect(() => { localStorage.setItem('episismic:layers-v4', JSON.stringify(layers)); }, [layers]);
   useEffect(() => { localStorage.setItem('episismic:map-style-v2', JSON.stringify(mapStyle)); }, [mapStyle]);
   useEffect(() => { localStorage.setItem('episismic:auto-focus', JSON.stringify(autoFocus)); }, [autoFocus]);
   useEffect(() => { localStorage.setItem('episismic:auto-focus-magnitude', JSON.stringify(autoFocusMagnitude)); }, [autoFocusMagnitude]);
@@ -248,7 +263,7 @@ export default function App() {
       <main className="map-stage">
         <GlobeView
           events={visibleEvents}
-          stations={stations}
+          stations={mapStations}
           volcanoes={volcanoes}
           layers={layers}
           mapStyle={mapStyle}
@@ -275,6 +290,9 @@ export default function App() {
           cinematicPlayback={cinematicPlayback}
           waveSpeed={waveSpeed}
           stations={stations}
+          operationalStationCount={operationalStations.length}
+          secondaryStationCount={secondaryStations.length}
+          secondaryGeodataReady={secondaryStationsReady}
           status={status}
           timeWindow={timeWindow}
           isHistorical={historicalEvents !== null}

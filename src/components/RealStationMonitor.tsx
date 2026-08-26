@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Activity, LoaderCircle, Radio, RefreshCw, WifiOff } from 'lucide-react';
+import { Activity, CircleHelp, LoaderCircle, Radio, RefreshCw, WifiOff } from 'lucide-react';
 import type { SeismicStation } from '../types';
 import { discoverStationMonitorChannels, type FdsnChannel } from '../services/fdsnWaveforms';
 import { mergeWaveformBlocks, openSeedlinkStream, queryFdsnWaveformBlocks, type SeedlinkState, type WaveformBlock } from '../services/seedlinkStream';
@@ -77,27 +77,35 @@ function drawMonitor(canvas: HTMLCanvasElement, blocks: WaveformBlock[], now: nu
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   const cssWidth = width / pixelRatio;
   const cssHeight = height / pixelRatio;
-  const left = 48; const right = 96; const top = 30; const bottom = 34;
+  const style = getComputedStyle(canvas);
+  const color = (name: string, fallback: string) => style.getPropertyValue(name).trim() || fallback;
+  const palette = {
+    background: color('--monitor-bg', '#071318'),
+    plot: color('--monitor-plot', '#0d252b'),
+    grid: color('--monitor-grid', 'rgba(151,204,199,.3)'),
+    text: color('--monitor-text', '#e4efee'),
+    muted: color('--monitor-muted', '#9bb0ae'),
+    signal: color('--monitor-signal', '#53d6c7'),
+    band: color('--monitor-band', '#ffb84d'),
+    border: color('--monitor-border', 'rgba(151,204,199,.5)'),
+  };
+  const left = 48; const right = 96; const top = 18; const bottom = 32;
   const plotWidth = cssWidth - left - right;
   const plotHeight = cssHeight - top - bottom;
   const startMs = now - windowSeconds * 1000;
 
-  context.fillStyle = '#373737';
+  context.fillStyle = palette.background;
   context.fillRect(0, 0, cssWidth, cssHeight);
-  context.fillStyle = '#ffe600';
-  context.font = '600 12px IBM Plex Mono, monospace';
-  context.textAlign = 'center';
-  context.fillText('UTC · EN VIVO', left + plotWidth / 2, 20);
 
   context.save();
   context.beginPath();
   context.rect(left, top, plotWidth, plotHeight);
   context.clip();
-  context.fillStyle = '#414141';
+  context.fillStyle = palette.plot;
   context.fillRect(left, top, plotWidth, plotHeight);
   context.setLineDash([4, 4]);
   context.lineWidth = 1;
-  context.strokeStyle = '#858585';
+  context.strokeStyle = palette.grid;
   for (let step = 0; step <= 10; step += 1) {
     const y = top + step / 10 * plotHeight;
     context.beginPath(); context.moveTo(left, y); context.lineTo(left + plotWidth, y); context.stroke();
@@ -131,7 +139,7 @@ function drawMonitor(canvas: HTMLCanvasElement, blocks: WaveformBlock[], now: nu
   const robustPeak = amplitudeSample[Math.floor(amplitudeSample.length * .985)] || 1;
   const centerY = top + plotHeight / 2;
   const amplitudeScale = plotHeight * .46 / robustPeak;
-  context.strokeStyle = '#ffe600';
+  context.strokeStyle = palette.signal;
   context.lineWidth = .85;
   context.beginPath();
   let drew = false;
@@ -145,10 +153,10 @@ function drawMonitor(canvas: HTMLCanvasElement, blocks: WaveformBlock[], now: nu
   if (drew) context.stroke();
   context.restore();
 
-  context.strokeStyle = '#8c8c8c';
+  context.strokeStyle = palette.border;
   context.lineWidth = 1;
   context.strokeRect(left, top, plotWidth, plotHeight);
-  context.fillStyle = '#d7d7d7';
+  context.fillStyle = palette.text;
   context.font = '600 10px IBM Plex Mono, monospace';
   context.textAlign = 'right';
   for (let step = -100; step <= 100; step += 20) {
@@ -160,15 +168,14 @@ function drawMonitor(canvas: HTMLCanvasElement, blocks: WaveformBlock[], now: nu
     const time = new Date(startMs + step / 4 * (now - startMs));
     context.fillText(time.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), left + step / 4 * plotWidth, cssHeight - 10);
   }
-  context.fillStyle = '#ff3a31';
+  context.fillStyle = palette.band;
   context.textAlign = 'left';
   context.fillText(`${minFrequency.toLocaleString('es-ES')} – ${maxFrequency.toLocaleString('es-ES')} Hz`, left + 5, top + plotHeight - 7);
 
   const frequencyLeft = left + plotWidth + 42;
-  context.fillStyle = '#d0d0d0';
+  context.fillStyle = palette.muted;
   context.font = '600 11px IBM Plex Mono, monospace';
-  context.fillText('FRECUENCIA', left + plotWidth + 12, 20);
-  context.strokeStyle = '#a8a8a8';
+  context.strokeStyle = palette.border;
   const frequencyTop = top + 10;
   const frequencyHeight = plotHeight - 20;
   context.beginPath(); context.moveTo(frequencyLeft, frequencyTop); context.lineTo(frequencyLeft, frequencyTop + frequencyHeight); context.stroke();
@@ -179,13 +186,13 @@ function drawMonitor(canvas: HTMLCanvasElement, blocks: WaveformBlock[], now: nu
   }
   const bandTop = frequencyY(maxFrequency, frequencyTop, frequencyHeight);
   const bandBottom = frequencyY(minFrequency, frequencyTop, frequencyHeight);
-  context.strokeStyle = '#ffffff';
+  context.strokeStyle = palette.text;
   context.lineWidth = 3;
   context.beginPath(); context.moveTo(frequencyLeft, bandTop); context.lineTo(frequencyLeft, bandBottom); context.stroke();
-  context.fillStyle = '#ffffff';
+  context.fillStyle = palette.text;
   context.fillRect(frequencyLeft - 4, bandTop - 3, 8, 6);
   context.fillRect(frequencyLeft - 4, bandBottom - 3, 8, 6);
-  context.fillStyle = '#fff200';
+  context.fillStyle = palette.signal;
   context.textAlign = 'right';
   context.font = '600 10px IBM Plex Mono, monospace';
   context.fillText(`${maxFrequency.toFixed(1)} Hz`, frequencyLeft - 9, bandTop + 4);
@@ -213,8 +220,8 @@ function WaveformCanvas({ blocks, windowSeconds, minFrequency, maxFrequency, onF
   const frequencyFromPointer = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = event.currentTarget;
     const bounds = canvas.getBoundingClientRect();
-    const top = 40;
-    const height = bounds.height - 84;
+    const top = 28;
+    const height = bounds.height - 70;
     return Math.max(.1, Math.min(10, frequencyAtY(event.clientY - bounds.top, top, height)));
   };
   const startDrag = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -326,7 +333,9 @@ export function RealStationMonitor({ station, minFrequency, maxFrequency, timeWi
   const latestBlock = blocks.at(-1);
   const lastSampleTime = latestBlock ? latestBlock.startMs + latestBlock.samples.length / Math.max(1, latestBlock.sampleRate) * 1000 : 0;
   const latency = lastSampleTime ? Math.max(0, Math.round((Date.now() - lastSampleTime) / 1000)) : null;
-  const status = lastPacketAt ? 'SEEDLINK EN DIRECTO' : blocks.length ? 'DATOS FDSN RECIENTES' : streamState === 'connecting' ? 'CONECTANDO DIRECTO' : archiveState === 'loading' ? 'CONSULTANDO FDSN' : 'SIN MUESTRAS';
+  const provider = selectedChannel?.provider ?? station.source;
+  const status = lastPacketAt ? `${provider} · EN DIRECTO` : blocks.length ? `${provider} · ARCHIVO RECIENTE` : streamState === 'connecting' ? 'CONECTANDO' : archiveState === 'loading' ? 'CONSULTANDO ARCHIVO' : 'SIN MUESTRAS';
+  const sampleCount = blocks.reduce((total, block) => total + block.samples.length, 0);
 
   if (inventoryState === 'loading') return <div className="real-waveform-state"><LoaderCircle className="spin" size={18} /><strong>Localizando canales instrumentales y SeedLink…</strong><span>{station.source} · {station.id}</span></div>;
   if (inventoryState === 'empty' || inventoryState === 'error') return <div className="real-waveform-state unavailable"><Activity size={18} /><strong>No hay un canal instrumental accesible</strong><span>Los inventarios de EarthScope, ORFEUS, GEOFON, NCEDC y BMKG no publican ahora un canal vertical abierto para esta estación.</span><button onClick={() => setInventoryRevision((value) => value + 1)}><RefreshCw size={13} /> Reintentar</button></div>;
@@ -336,25 +345,19 @@ export function RealStationMonitor({ station, minFrequency, maxFrequency, timeWi
       <div className="live-channel-tabs" role="tablist" aria-label="Canales instrumentales">
         {channels.map((channel) => <button key={`${channel.location}.${channel.channel}`} className={selectedChannel === channel ? 'active' : ''} onClick={() => setSelectedChannel(channel)}>{channel.channel}</button>)}
       </div>
+      <div className="live-monitor-summary">
+        <strong>{selectedChannel ? `${selectedChannel.network}.${selectedChannel.station}.${selectedChannel.location || '--'}.${selectedChannel.channel}` : station.id}</strong>
+        <span>{selectedChannel?.sampleRate || latestBlock?.sampleRate || '—'} Hz · {latency === null ? 'latencia —' : `latencia ${latency} s`} · {sampleCount.toLocaleString('es-ES')} muestras</span>
+      </div>
       <div className="live-window-options" aria-label="Ventana temporal">
         {[120, 300, 600, 1200, 1800].map((seconds) => <button key={seconds} className={timeWindowSeconds === seconds ? 'active' : ''} onClick={() => onTimeWindowChange(seconds)}>{seconds / 60}m</button>)}
       </div>
       <div className={`live-stream-state ${lastPacketAt ? 'online' : ''}`}>{lastPacketAt ? <Radio size={13} /> : streamState === 'connecting' || archiveState === 'loading' ? <LoaderCircle className="spin" size={13} /> : <WifiOff size={13} />}<strong>{status}</strong></div>
+      <button className="live-monitor-help" title="Arrastra los dos extremos de la escala de frecuencia. Usa la rueda del ratón sobre la gráfica para cambiar la ventana temporal." aria-label="Ayuda de interacción del sismograma"><CircleHelp size={13} /></button>
       <button className="live-monitor-refresh" onClick={() => setInventoryRevision((value) => value + 1)} title="Reconectar y recargar inventario"><RefreshCw size={13} /></button>
     </header>
-    <div className="live-monitor-identity">
-      <strong>{selectedChannel ? `${selectedChannel.network}.${selectedChannel.station}.${selectedChannel.location || '--'}.${selectedChannel.channel}` : station.id}</strong>
-      <span>{selectedChannel?.provider ?? station.source}</span>
-      <span>{selectedChannel?.sampleRate || latestBlock?.sampleRate || '—'} muestras/s</span>
-      <span>{latency === null ? 'Latencia pendiente' : `Latencia ${latency} s`}</span>
-      <span>{blocks.reduce((total, block) => total + block.samples.length, 0).toLocaleString('es-ES')} muestras reales</span>
-    </div>
     {blocks.length ? <WaveformCanvas blocks={blocks} windowSeconds={timeWindowSeconds} minFrequency={minFrequency} maxFrequency={maxFrequency} onFrequencyChange={onFrequencyChange} onTimeWindowChange={onTimeWindowChange} /> : <div className="live-monitor-empty">
       {streamState === 'connecting' || archiveState === 'loading' ? <><LoaderCircle className="spin" size={19} /><strong>Buscando la primera muestra instrumental</strong><span>Se prueba el directo disponible y, como máximo a los 12 segundos, se continúa únicamente con el archivo FDSN del mismo proveedor.</span></> : <><Activity size={19} /><strong>Sin muestras para esta ventana</strong><span>El canal existe, pero su centro de datos no ha entregado muestras recientes. Puedes ampliar la ventana o reconectar.</span></>}
     </div>}
-    <footer className="live-monitor-provenance">
-      <span><i className={lastPacketAt ? 'online' : ''} /> {lastPacketAt ? `Directo ${selectedChannel?.provider ?? ''}` : `Archivo ${selectedChannel?.provider ?? ''} FDSN`}</span>
-      <span>Arrastra la escala derecha: {minFrequency.toFixed(1)}–{maxFrequency.toFixed(1)} Hz · rueda: {Math.round(timeWindowSeconds / 60)} min</span>
-    </footer>
   </div>;
 }

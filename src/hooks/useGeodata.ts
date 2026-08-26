@@ -3,6 +3,8 @@ import { volcanoes as fallbackVolcanoes } from '../data/volcanoes';
 import { upsertStations } from '../services/database';
 import type { SeismicStation, Volcano } from '../types';
 
+const secondaryStationFiles = Array.from({ length: 16 }, (_, index) => `stations-secondary-${String(index).padStart(2, '0')}.json.gz`);
+
 async function loadCompressedJson<T>(filename: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(`${import.meta.env.BASE_URL}data/${filename}`, { signal });
   if (!response.ok) throw new Error(`No se pudo cargar ${filename}`);
@@ -29,16 +31,23 @@ async function persistStationsInBatches(stations: SeismicStation[], version: str
   localStorage.setItem('episismic:station-catalog-version', version);
 }
 
-export function useGeodata(requestStations = false) {
+export function useGeodata(requestStations = false, requestSecondaryStations = false) {
   const [stations, setStations] = useState<SeismicStation[]>([]);
+  const [secondaryStations, setSecondaryStations] = useState<SeismicStation[]>([]);
   const [volcanoes, setVolcanoes] = useState<Volcano[]>(fallbackVolcanoes);
   const [stationsRequested, setStationsRequested] = useState(requestStations);
   const [stationsReady, setStationsReady] = useState(false);
+  const [secondaryStationsRequested, setSecondaryStationsRequested] = useState(requestSecondaryStations);
+  const [secondaryStationsReady, setSecondaryStationsReady] = useState(false);
   const [volcanoesReady, setVolcanoesReady] = useState(false);
 
   useEffect(() => {
     if (requestStations) setStationsRequested(true);
   }, [requestStations]);
+
+  useEffect(() => {
+    if (requestSecondaryStations) setSecondaryStationsRequested(true);
+  }, [requestSecondaryStations]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -64,5 +73,23 @@ export function useGeodata(requestStations = false) {
     return () => controller.abort();
   }, [stationsRequested]);
 
-  return { stations, volcanoes, ready: volcanoesReady && (!stationsRequested || stationsReady), stationsReady, stationsRequested };
+  useEffect(() => {
+    if (!secondaryStationsRequested) return;
+    const controller = new AbortController();
+    void Promise.all(secondaryStationFiles.map((filename) => loadCompressedJson<SeismicStation[]>(filename, controller.signal))).then((stationCatalogs) => {
+      setSecondaryStations(stationCatalogs.flat());
+    }).catch(() => undefined).finally(() => setSecondaryStationsReady(true));
+    return () => controller.abort();
+  }, [secondaryStationsRequested]);
+
+  return {
+    stations,
+    secondaryStations,
+    volcanoes,
+    ready: volcanoesReady && (!stationsRequested || stationsReady) && (!secondaryStationsRequested || secondaryStationsReady),
+    stationsReady,
+    stationsRequested,
+    secondaryStationsReady,
+    secondaryStationsRequested,
+  };
 }

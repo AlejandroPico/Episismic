@@ -3,6 +3,7 @@ import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 const outputDir = path.resolve('public/data');
+const secondaryStationShardCount = 16;
 
 const stationProviders = [
   {
@@ -43,7 +44,7 @@ function countryFromSite(siteName) {
   return parts.length > 1 ? parts.at(-1) : '—';
 }
 
-function parseStations(text, provider) {
+function parseStations(text, provider, currentOnly = true) {
   const now = Date.now();
   return text.split(/\r?\n/)
     .filter((line) => line && !line.startsWith('#'))
@@ -67,8 +68,14 @@ function parseStations(text, provider) {
     .filter((station) => {
       const start = station.startTime ? Date.parse(station.startTime) : Number.NEGATIVE_INFINITY;
       const end = station.endTime ? Date.parse(station.endTime) : Number.POSITIVE_INFINITY;
-      return Number.isFinite(station.lat) && Number.isFinite(station.lng) && start <= now && end >= now;
+      return Number.isFinite(station.lat) && Number.isFinite(station.lng)
+        && (!currentOnly || (start <= now && end >= now));
     });
+}
+
+function preferStation(catalogue, station) {
+  const current = catalogue.get(station.id);
+  if (!current || current.source !== 'EarthScope') catalogue.set(station.id, station);
 }
 
 function parseEarthScopeStationIds(text) {
@@ -112,10 +119,14 @@ async function fetchOrfeusLiveStations() {
 
 async function syncStations() {
   const [batches, liveSources] = await Promise.all([
-    Promise.allSettled(stationProviders.map(async (provider) => ({
-      provider,
-      stations: parseStations(await fetchText(provider.url), provider),
-    }))),
+    Promise.allSettled(stationProviders.map(async (provider) => {
+      const text = await fetchText(provider.url);
+      return {
+        provider,
+        currentStations: parseStations(text, provider),
+        allStations: parseStations(text, provider, false),
+      };
+    })),
     Promise.allSettled([fetchEarthScopeLiveStations(), fetchOrfeusLiveStations()]),
   ]);
   const liveStationIds = new Set();
@@ -123,23 +134,33 @@ async function syncStations() {
     if (source.status === 'fulfilled') source.value.forEach((id) => liveStationIds.add(id));
     else console.warn(`Inventario SeedLink omitido: ${source.reason instanceof Error ? source.reason.message : source.reason}`);
   }
-  const deduplicated = new Map();
+  const operational = new Map();
+  const expanded = new Map();
   for (const batch of batches) {
     if (batch.status === 'rejected') {
       console.warn(`Proveedor FDSN omitido: ${batch.reason instanceof Error ? batch.reason.message : batch.reason}`);
       continue;
     }
-    console.log(`${batch.value.provider.source}: ${batch.value.stations.length} estaciones catalogadas.`);
-    for (const station of batch.value.stations) {
+    console.log(`${batch.value.provider.source}: ${batch.value.currentStations.length} vigentes de ${batch.value.allStations.length} estaciones catalogadas.`);
+    for (const station of batch.value.allStations) preferStation(expanded, station);
+    for (const station of batch.value.currentStations) {
       if (liveStationIds.size && !liveStationIds.has(station.id)) continue;
-      const current = deduplicated.get(station.id);
-      if (!current || current.source !== 'EarthScope') deduplicated.set(station.id, { ...station, status: 'online' });
+      preferStation(operational, { ...station, status: 'online' });
     }
   }
-  const stations = [...deduplicated.values()].sort((a, b) => a.id.localeCompare(b.id));
+  const stations = [...operational.values()].sort((a, b) => a.id.localeCompare(b.id));
+  const secondaryStations = [...expanded.values()]
+    .filter((station) => !operational.has(station.id))
+    .sort((a, b) => a.id.localeCompare(b.id));
   await writeFile(path.join(outputDir, 'stations.json.gz'), gzipSync(`${JSON.stringify(stations)}\n`, { level: 9 }));
-  console.log(`${liveStationIds.size} estaciones anunciadas por SeedLink; ${stations.length} con metadatos FDSN publicables.`);
-  return stations.length;
+  const secondaryShardSize = Math.ceil(secondaryStations.length / secondaryStationShardCount);
+  await Promise.all(Array.from({ length: secondaryStationShardCount }, (_, index) => {
+    const shard = secondaryStations.slice(index * secondaryShardSize, (index + 1) * secondaryShardSize);
+    const filename = `stations-secondary-${String(index).padStart(2, '0')}.json.gz`;
+    return writeFile(path.join(outputDir, filename), gzipSync(`${JSON.stringify(shard)}\n`, { level: 9 }));
+  }));
+  console.log(`${liveStationIds.size} estaciones anunciadas por SeedLink; ${stations.length} operativas y ${secondaryStations.length} secundarias publicables.`);
+  return { operational: stations.length, secondary: secondaryStations.length };
 }
 
 async function syncVolcanoes() {
@@ -175,4 +196,4 @@ async function syncPlates() {
 
 await mkdir(outputDir, { recursive: true });
 const [stationCount, volcanoCount] = await Promise.all([syncStations(), syncVolcanoes(), syncPlates()]);
-console.log(`Geodatos sincronizados: ${stationCount} estaciones, ${volcanoCount} volcanes y PB2002.`);
+console.log(`Geodatos sincronizados: ${stationCount.operational} estaciones operativas, ${stationCount.secondary} secundarias, ${volcanoCount} volcanes y PB2002.`);
