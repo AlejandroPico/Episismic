@@ -27,7 +27,7 @@ La actualización de un evento no reemplaza silenciosamente su historia. El resu
 
 ## Telemetría instrumental en tiempo real
 
-La edición 1.2.1 mantiene la ruta instrumental real completamente ejecutable desde el navegador:
+La edición 1.2.2 mantiene la ruta instrumental real completamente ejecutable desde el navegador:
 
 1. FDSN Station consulta en paralelo EarthScope, ORFEUS, GEOFON, NCEDC y BMKG, localiza el canal activo y conserva el centro que realmente lo publicó.
 2. Para canales EarthScope, el cliente abre `wss://rtserve.earthscope.org/seedlink` y se suscribe al identificador NSLC exacto.

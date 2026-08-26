@@ -2,11 +2,19 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.2.1` — edición estable y publicable
+**Versión actual:** `1.2.2` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.2.2
+
+- La ficha de las estaciones sísmicas reserva en móvil el espacio ocupado por la navegación superior.
+- La cabecera de la estación y su botón de cierre permanecen siempre accesibles.
+- El panel **Acerca del proyecto** mantiene fijos y visibles los enlaces al Portfolio y al código fuente.
+- Las descargas de escritorio y su aviso asociado se ocultan en pantallas móviles, donde no corresponden al formato de instalación.
+- La corrección responsive se mantiene aislada de la composición de escritorio.
 
 ## Novedades de 1.2.1
 
@@ -207,4 +215,4 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 
 ## Aviso
 
-Episismic 1.2.1 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.2.2 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
