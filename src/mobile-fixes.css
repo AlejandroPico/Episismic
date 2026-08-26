@@ -1,0 +1,62 @@
+/* Correcciones móviles cargadas después de la hoja principal para mantener
+   accesibles los controles críticos sin alterar la composición de escritorio. */
+@media (max-width: 900px) {
+  .station-inspector {
+    inset: 55px 0 0 !important;
+    height: calc(100dvh - 55px);
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .station-inspector > header {
+    min-height: 64px;
+  }
+
+  .station-inspector > header .panel-actions {
+    position: relative;
+    z-index: 5;
+    flex: 0 0 auto;
+  }
+
+  .about-control-panel .control-scroll {
+    min-height: 0;
+    flex: 1 1 auto;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .about-panel-content {
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .about-scrollable-content {
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 12px 12px 8px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+
+  .about-scrollable-content .desktop-download-card,
+  .about-scrollable-content > .safety-note {
+    display: none;
+  }
+
+  .about-panel-content .about-links {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 auto;
+    gap: 6px;
+    margin: 0;
+    padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line-strong);
+    background: var(--panel-solid);
+    box-shadow: 0 -8px 20px rgba(0, 0, 0, .16);
+  }
+}
