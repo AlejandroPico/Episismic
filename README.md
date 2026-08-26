@@ -2,11 +2,22 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.1.0` — edición estable y publicable
+**Versión actual:** `1.2.0` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.2.0
+
+- Las estaciones están ocultas por defecto y su catálogo no se descarga, descomprime, persiste ni envía a MapLibre durante el arranque.
+- El catálogo se carga bajo demanda al activar la capa, abrir el buscador de estaciones o consultar una ficha que lo necesita.
+- El inventario se genera a partir de los flujos anunciados actualmente por EarthScope y ORFEUS: 4.276 estaciones operativas con metadatos FDSN en la sincronización de esta versión, frente a más de 80.000 épocas históricas mezcladas anteriormente.
+- El descubrimiento de canales consulta EarthScope, ORFEUS, GEOFON, NCEDC y BMKG en paralelo, conserva el proveedor exacto de cada resultado y aplica un tiempo máximo por centro.
+- Directo multirred mediante SeedLink WebSocket de EarthScope y el WebSocket público de ORFEUS; los canales sin flujo web pasan automáticamente a FDSN después de 12 segundos.
+- Telemetría real rediseñada: componentes, estado, proveedor, latencia, muestras y ventana temporal quedan agrupados en una sola cabecera compacta.
+- La escala logarítmica derecha funciona como selector de banda: sus dos extremos ajustan directamente las frecuencias mínima y máxima.
+- La rueda del ratón modifica la ventana temporal y los accesos 2, 5, 10, 20 y 30 minutos sustituyen los controles redundantes.
 
 ## Novedades de 1.1.0
 
@@ -63,7 +74,7 @@ El antiguo objetivo 9 de niveles de detalle y agrupación se mantiene retirado. 
 - Catálogo deduplicado de USGS/ComCat, EMSC y GEOFON, actualizado cada 30 segundos.
 - Historial de una hora, 24 horas, siete días y 30 días.
 - Consulta histórica de hasta 5.000 eventos y persistencia SQLite en el navegador.
-- Más de 80.000 estaciones procedentes de EarthScope, GEOFON, NCEDC y BMKG.
+- Más de 4.000 estaciones anunciadas actualmente por EarthScope y ORFEUS, con metadatos resueltos mediante EarthScope, GEOFON, NCEDC y BMKG.
 - Catálogo Smithsonian GVP de volcanes holocenos y límites tectónicos PB2002.
 - Símbolos individuales persistentes: no se sustituyen por clústeres al alejar o acercar la cámara.
 
@@ -87,8 +98,8 @@ Cuando un terremoto queda seleccionado, los frentes de onda se reproducen, se di
 
 La ficha de estación incluye:
 
-- monitor SeedLink WebSocket en tiempo real con respaldo FDSN miniSEED y selección de componentes instrumentales;
-- filtro pasa-banda, escala de frecuencia, latencia y ventana temporal configurables;
+- monitor multirred mediante los WebSocket de EarthScope y ORFEUS, con respaldo FDSN miniSEED y selección de componentes instrumentales;
+- filtro pasa-banda integrado en la escala lateral, latencia y ventana temporal configurables desde la cabecera o el ratón;
 - número de estaciones de la red, densidad local y estación más próxima;
 - cobertura azimutal en ocho sectores;
 - percentil de elevación, hemisferios, zona geográfica y periodo operativo;
@@ -176,7 +187,7 @@ La serie `1.x` constituye la edición estable y publicable. A partir de 1.0, las
 ## Fuentes
 
 - Terremotos: [USGS](https://earthquake.usgs.gov/), [EMSC](https://www.seismicportal.eu/) y [GEOFON](https://geofon.gfz-potsdam.de/).
-- Estaciones: [EarthScope](https://service.earthscope.org/fdsnws/station/1/), [EarthScope SeedLink](https://rtserve.earthscope.org/), GEOFON, NCEDC y BMKG.
+- Estaciones: [EarthScope](https://service.earthscope.org/fdsnws/station/1/), [EarthScope SeedLink](https://rtserve.earthscope.org/), [ORFEUS](https://www.orfeus-eu.org/data/odc/realtime/), GEOFON, NCEDC y BMKG.
 - Volcanes: [Smithsonian Global Volcanism Program](https://volcano.si.edu/).
 - Tectónica: [PB2002](https://github.com/fraxen/tectonicplates), basado en Peter Bird.
 - Cartografía: MapLibre GL JS, Natural Earth, Esri, OpenTopoMap, GEBCO/NOAA y OpenStreetMap según la capa activa.
@@ -185,4 +196,4 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 
 ## Aviso
 
-Episismic 1.1 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.2 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.

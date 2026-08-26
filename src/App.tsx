@@ -18,7 +18,7 @@ import { formatMagnitude, formatRelativeTime, haversineKm, magnitudeColor } from
 
 const DEFAULT_LAYERS: MapLayerState = {
   earthquakes: true,
-  stations: true,
+  stations: false,
   plates: true,
   volcanoes: true,
   labels: true,
@@ -45,7 +45,8 @@ function loadPreference<T>(key: string, fallback: T): T {
 export default function App() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('day');
   const { events: liveEvents, status, activities, refresh } = useEarthquakes(timeWindow);
-  const { stations, volcanoes, ready: geodataReady } = useGeodata();
+  const [stationCatalogueRequested, setStationCatalogueRequested] = useState(false);
+  const { stations, volcanoes, stationsReady } = useGeodata(stationCatalogueRequested);
   const [historicalEvents, setHistoricalEvents] = useState<Earthquake[] | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Earthquake | null>(null);
   const [selectedStation, setSelectedStation] = useState<SeismicStation | null>(null);
@@ -55,7 +56,7 @@ export default function App() {
   const sequenceTimersRef = useRef<number[]>([]);
   const [activePanel, setActivePanel] = useState<PanelId>(null);
   const [historyOpen, setHistoryOpen] = useState(() => window.innerWidth > 820);
-  const [layers, setLayers] = useState<MapLayerState>(() => ({ ...DEFAULT_LAYERS, ...loadPreference('layers-v2', DEFAULT_LAYERS) }));
+  const [layers, setLayers] = useState<MapLayerState>(() => ({ ...DEFAULT_LAYERS, ...loadPreference('layers-v3', DEFAULT_LAYERS) }));
   const [mapStyle, setMapStyle] = useState<MapStyle>(() => loadPreference('map-style-v2', 'political'));
   const [theme, setTheme] = useState<ThemeMode>(() => loadPreference('theme', 'automatic'));
   const [autoFocus, setAutoFocus] = useState(() => loadPreference('auto-focus', true));
@@ -179,7 +180,11 @@ export default function App() {
     return () => window.clearInterval(interval);
   }, [theme]);
 
-  useEffect(() => { localStorage.setItem('episismic:layers-v2', JSON.stringify(layers)); }, [layers]);
+  useEffect(() => {
+    if (layers.stations || activePanel === 'stations' || selectedEvent || selectedStation) setStationCatalogueRequested(true);
+  }, [activePanel, layers.stations, selectedEvent, selectedStation]);
+
+  useEffect(() => { localStorage.setItem('episismic:layers-v3', JSON.stringify(layers)); }, [layers]);
   useEffect(() => { localStorage.setItem('episismic:map-style-v2', JSON.stringify(mapStyle)); }, [mapStyle]);
   useEffect(() => { localStorage.setItem('episismic:auto-focus', JSON.stringify(autoFocus)); }, [autoFocus]);
   useEffect(() => { localStorage.setItem('episismic:auto-focus-magnitude', JSON.stringify(autoFocusMagnitude)); }, [autoFocusMagnitude]);
@@ -276,7 +281,7 @@ export default function App() {
           historicalEventCount={historicalEvents?.length ?? null}
           visibleEventCount={visibleEvents.length}
           strongestEvent={strongest}
-          geodataReady={geodataReady}
+          geodataReady={stationsReady}
           latestRelease={latestRelease}
           onClose={() => setActivePanel(null)}
           onLayers={setLayers}

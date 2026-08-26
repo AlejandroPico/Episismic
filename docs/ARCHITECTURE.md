@@ -27,16 +27,17 @@ La actualización de un evento no reemplaza silenciosamente su historia. El resu
 
 ## Telemetría instrumental en tiempo real
 
-La edición 1.1.0 incorpora una ruta instrumental real completamente ejecutable desde el navegador:
+La edición 1.2.0 amplía la ruta instrumental real completamente ejecutable desde el navegador:
 
-1. FDSN Station localiza el canal activo y prioriza HH, BH, EH, HN, LH y SH.
-2. El cliente abre `wss://rtserve.earthscope.org/seedlink` y se suscribe al identificador NSLC exacto.
-3. `seisplotjs` negocia SeedLink, decodifica cada paquete MiniSEED y entrega sus muestras y marcas UTC.
-4. Episismic conserva los bloques en una ventana temporal, elimina duplicados y descarta datos ya fuera de pantalla.
-5. El canvas aplica un pasa-banda Butterworth, agrupa mínimos y máximos por píxel y dibuja la señal sin convertirla en una imagen estática.
-6. Si no llegan paquetes por WebSocket, FDSN Dataselect recupera el mismo canal y la misma ventana como respaldo instrumental real.
+1. FDSN Station consulta en paralelo EarthScope, ORFEUS, GEOFON, NCEDC y BMKG, localiza el canal activo y conserva el centro que realmente lo publicó.
+2. Para canales EarthScope, el cliente abre `wss://rtserve.earthscope.org/seedlink` y se suscribe al identificador NSLC exacto.
+3. Para estaciones servidas por ORFEUS, utiliza `wss://www.orfeus-eu.org/websocket/`, se suscribe a la estación y filtra el canal exacto recibido.
+4. `seisplotjs` negocia SeedLink y decodifica MiniSEED; el adaptador ORFEUS normaliza sus muestras JSON al mismo bloque instrumental.
+5. Episismic conserva los bloques en una ventana temporal, elimina duplicados y descarta datos ya fuera de pantalla.
+6. El canvas aplica un pasa-banda Butterworth, agrupa mínimos y máximos por píxel y dibuja la señal sin convertirla en una imagen estática.
+7. Si un directo no entrega su primera muestra en 12 segundos, se cierra y FDSN Dataselect recupera el mismo canal desde el mismo centro.
 
-El navegador no puede abrir los SeedLink TCP tradicionales en el puerto 18000. Por ello el directo inmediato cubre los canales federados por el WebSocket público de EarthScope; GEOFON, NCEDC, BMKG u otras redes continúan mediante FDSN cuando no están presentes allí. Extender el directo a todos sus servidores TCP requerirá un puente SeedLink→WebSocket propio, pero la interfaz nunca suplanta un fallo con muestras inventadas.
+El navegador no puede abrir los SeedLink TCP tradicionales en el puerto 18000. El directo inmediato cubre los canales federados por los WebSocket públicos de EarthScope y ORFEUS; GEOFON, NCEDC, BMKG u otras redes continúan mediante FDSN cuando no están presentes allí. Extender el directo a todos sus servidores TCP requerirá un puente SeedLink→WebSocket propio.
 
 La web seguirá funcionando con los catálogos sísmicos aunque la telemetría instrumental no esté disponible.
 
@@ -45,6 +46,8 @@ La web seguirá funcionando con los catálogos sísmicos aunque la telemetría i
 - Cartografía por teselas y globo vectorial: no se amplía una textura global fija.
 - Natural Earth de países y ciudades se distribuye con la aplicación para que el modo político no dependa de un host externo.
 - GeoJSON procesado en los Web Workers de MapLibre.
+- La capa de estaciones comienza desactivada. El catálogo comprimido solo se solicita bajo demanda y nunca se construye su GeoJSON mientras la capa está oculta.
+- La sincronización filtra las épocas FDSN históricas mediante los inventarios de flujos que EarthScope y ORFEUS anuncian en ese momento.
 - Capas WebGL separadas para terremotos, estaciones y volcanes, conservando cada símbolo individual.
 - Actualización multifuente desacoplada a 30 segundos.
 - Persistencia SQLite diferida para agrupar escrituras.
@@ -52,7 +55,7 @@ La web seguirá funcionando con los catálogos sísmicos aunque la telemetría i
 - Tamaño y contraste de los símbolos ajustados sin ocultar eventos por niveles de detalle.
 - Símbolos WebGL y halos separados para conservar contraste sin extrusiones ni elementos DOM por estación.
 
-Próximos pasos técnicos: Web Worker dedicado para SQLite y puente SeedLink TCP→WebSocket multirred para ampliar el directo más allá de EarthScope.
+Próximos pasos técnicos: Web Worker dedicado para SQLite y puente SeedLink TCP→WebSocket para los centros que solo publican el puerto 18000.
 
 ## Multirriesgo
 

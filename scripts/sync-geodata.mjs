@@ -44,6 +44,7 @@ function countryFromSite(siteName) {
 }
 
 function parseStations(text, provider) {
+  const now = Date.now();
   return text.split(/\r?\n/)
     .filter((line) => line && !line.startsWith('#'))
     .map((line) => line.split('|'))
@@ -63,14 +64,65 @@ function parseStations(text, provider) {
       startTime: startTime || null,
       endTime: endTime || null,
     }))
-    .filter((station) => Number.isFinite(station.lat) && Number.isFinite(station.lng));
+    .filter((station) => {
+      const start = station.startTime ? Date.parse(station.startTime) : Number.NEGATIVE_INFINITY;
+      const end = station.endTime ? Date.parse(station.endTime) : Number.POSITIVE_INFINITY;
+      return Number.isFinite(station.lat) && Number.isFinite(station.lng) && start <= now && end >= now;
+    });
+}
+
+function parseEarthScopeStationIds(text) {
+  const ids = new Set();
+  for (const line of text.split(/\r?\n/)) {
+    const sourceId = line.split(/\s+/, 1)[0];
+    if (!sourceId?.startsWith('FDSN:')) continue;
+    const parts = sourceId.slice(5).split('/', 1)[0].split('_');
+    if (parts.length >= 2 && parts[0] && parts[1]) ids.add(`${parts[0]}.${parts[1]}`);
+  }
+  return ids;
+}
+
+async function fetchEarthScopeLiveStations() {
+  return parseEarthScopeStationIds(await fetchText('https://rtserve.earthscope.org/streams'));
+}
+
+async function fetchOrfeusLiveStations() {
+  return new Promise((resolve, reject) => {
+    const socket = new WebSocket('wss://www.orfeus-eu.org/websocket/');
+    const timeout = setTimeout(() => { socket.close(); reject(new Error('ORFEUS WebSocket agotó el tiempo de espera')); }, 12_000);
+    socket.addEventListener('message', (event) => {
+      try {
+        const data = JSON.parse(String(event.data));
+        if (!Array.isArray(data.stations)) return;
+        clearTimeout(timeout);
+        socket.close();
+        resolve(new Set(data.stations.filter((id) => typeof id === 'string')));
+      } catch (error) {
+        clearTimeout(timeout);
+        socket.close();
+        reject(error);
+      }
+    });
+    socket.addEventListener('error', () => {
+      clearTimeout(timeout);
+      reject(new Error('ORFEUS WebSocket no respondió'));
+    });
+  });
 }
 
 async function syncStations() {
-  const batches = await Promise.allSettled(stationProviders.map(async (provider) => ({
-    provider,
-    stations: parseStations(await fetchText(provider.url), provider),
-  })));
+  const [batches, liveSources] = await Promise.all([
+    Promise.allSettled(stationProviders.map(async (provider) => ({
+      provider,
+      stations: parseStations(await fetchText(provider.url), provider),
+    }))),
+    Promise.allSettled([fetchEarthScopeLiveStations(), fetchOrfeusLiveStations()]),
+  ]);
+  const liveStationIds = new Set();
+  for (const source of liveSources) {
+    if (source.status === 'fulfilled') source.value.forEach((id) => liveStationIds.add(id));
+    else console.warn(`Inventario SeedLink omitido: ${source.reason instanceof Error ? source.reason.message : source.reason}`);
+  }
   const deduplicated = new Map();
   for (const batch of batches) {
     if (batch.status === 'rejected') {
@@ -79,12 +131,14 @@ async function syncStations() {
     }
     console.log(`${batch.value.provider.source}: ${batch.value.stations.length} estaciones catalogadas.`);
     for (const station of batch.value.stations) {
-    const current = deduplicated.get(station.id);
-    if (!current || current.source !== 'EarthScope') deduplicated.set(station.id, station);
+      if (liveStationIds.size && !liveStationIds.has(station.id)) continue;
+      const current = deduplicated.get(station.id);
+      if (!current || current.source !== 'EarthScope') deduplicated.set(station.id, { ...station, status: 'online' });
     }
   }
   const stations = [...deduplicated.values()].sort((a, b) => a.id.localeCompare(b.id));
   await writeFile(path.join(outputDir, 'stations.json.gz'), gzipSync(`${JSON.stringify(stations)}\n`, { level: 9 }));
+  console.log(`${liveStationIds.size} estaciones anunciadas por SeedLink; ${stations.length} con metadatos FDSN publicables.`);
   return stations.length;
 }
 

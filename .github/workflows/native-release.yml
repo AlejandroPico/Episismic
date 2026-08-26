@@ -58,7 +58,7 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: "Episismic v__VERSION__"
-          releaseBody: "Versión previa 0.9 para Windows, macOS y Linux. Los binarios no están todavía firmados por una autoridad comercial."
+          releaseBody: "Episismic 1.2.0 estable para Windows, macOS y Linux. Incluye el monitor instrumental multirred y la carga optimizada de estaciones. Los binarios no están firmados por una autoridad comercial."
           releaseDraft: false
-          prerelease: true
+          prerelease: false
           args: ${{ matrix.args }}

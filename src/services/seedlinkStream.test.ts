@@ -3,11 +3,12 @@ import type { WaveformBlock } from './seedlinkStream';
 
 let seedlink3Commands: typeof import('./seedlinkStream').seedlink3Commands;
 let mergeWaveformBlocks: typeof import('./seedlinkStream').mergeWaveformBlocks;
+let orfeusPacketToBlock: typeof import('./seedlinkStream').orfeusPacketToBlock;
 
 beforeAll(async () => {
   vi.stubGlobal('HTMLElement', class HTMLElementStub {});
   vi.stubGlobal('customElements', { define: () => undefined, get: () => undefined });
-  ({ seedlink3Commands, mergeWaveformBlocks } = await import('./seedlinkStream'));
+  ({ seedlink3Commands, mergeWaveformBlocks, orfeusPacketToBlock } = await import('./seedlinkStream'));
 });
 
 describe('SeedLink en tiempo real', () => {
@@ -20,5 +21,11 @@ describe('SeedLink en tiempo real', () => {
     const block = (id: string, startMs: number): WaveformBlock => ({ id, startMs, network: 'XX', station: 'AAA', location: '', channel: 'HHZ', sampleRate: 1, samples: new Float64Array([1, 2]), transport: 'seedlink' });
     expect(mergeWaveformBlocks([block('old', 0), block('same', 20_000)], [block('same', 20_000), block('new', 21_000)], 10_000).map((item) => item.id))
       .toEqual(['same', 'new']);
+  });
+
+  it('normaliza una muestra instrumental del WebSocket de ORFEUS', () => {
+    const block = orfeusPacketToBlock({ id: 'GE.MORC..BHZ', start: 1_000, end: 1_100, sampleRate: 20, data: [4, 5, 6] });
+    expect(block?.channel).toBe('BHZ');
+    expect(block?.samples).toEqual(Float64Array.from([4, 5, 6]));
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, Database, Download, ExternalLink, LocateFixed, Minus, Plus, RadioTower, RotateCcw, X } from 'lucide-react';
+import { Activity, Database, Download, ExternalLink, LocateFixed, RadioTower, X } from 'lucide-react';
 import type { Earthquake, SeismicStation } from '../types';
 import { elevationContext, fdsnStationLinks, geographicContext, nearestStation, networkMembership, operationalSpan, stationAzimuthCoverage, stationDensity, stationGeoJson } from '../services/stationAnalysis';
 import { stationAssociationsCsv, stationEventSummary } from '../services/stationEventAnalysis';
@@ -60,14 +60,14 @@ export function StationInspector({ station, stations, events, onClose, onFocus, 
     <nav className="event-inspector-tabs station-inspector-tabs" role="tablist" aria-label="Secciones de la estación">{tabs.map((tab) => <button key={tab.id} role="tab" aria-selected={activeTab === tab.id} className={activeTab === tab.id ? 'active' : ''} onClick={() => setActiveTab(tab.id)}>{tab.label}</button>)}</nav>
     <div className="station-inspector-scroll">
       {activeTab === 'monitor' && <section className="station-tab-panel station-monitor-tab" role="tabpanel">
-        <RealStationMonitor station={station} minFrequency={minFrequency} maxFrequency={maxFrequency} timeWindowSeconds={timeWindowSeconds} />
-        <div className="waveform-controls station-waveform-controls">
-          <div className="waveform-zoom-control"><span>VENTANA REAL</span><button onClick={() => setTimeWindowSeconds((value) => Math.min(1800, value + 120))} title="Ampliar ventana"><Minus size={14} /></button><strong>{Math.round(timeWindowSeconds / 60)} min</strong><button onClick={() => setTimeWindowSeconds((value) => Math.max(120, value - 120))} title="Reducir ventana"><Plus size={14} /></button></div>
-          <label><span>Frecuencia inferior <strong>{minFrequency.toFixed(1)} Hz</strong></span><input type="range" min="0.1" max="9.5" step="0.1" value={minFrequency} onChange={(event) => setMinFrequency(Math.min(Number(event.target.value), maxFrequency - .1))} /></label>
-          <label><span>Frecuencia superior <strong>{maxFrequency.toFixed(1)} Hz</strong></span><input type="range" min="0.2" max="10" step="0.1" value={maxFrequency} onChange={(event) => setMaxFrequency(Math.max(Number(event.target.value), minFrequency + .1))} /></label>
-          <button className="waveform-reset" onClick={() => { setMinFrequency(.5); setMaxFrequency(5); setTimeWindowSeconds(600); }} title="Restablecer monitor"><RotateCcw size={15} /></button>
-        </div>
-        <p className="station-synthetic-note real"><Activity size={13} /> Episismic no genera trazas sintéticas. El monitor recibe paquetes MiniSEED por SeedLink WebSocket cuando la red está federada en EarthScope y completa las interrupciones con muestras FDSN reales del proveedor.</p>
+        <RealStationMonitor
+          station={station}
+          minFrequency={minFrequency}
+          maxFrequency={maxFrequency}
+          timeWindowSeconds={timeWindowSeconds}
+          onFrequencyChange={(minimum, maximum) => { setMinFrequency(minimum); setMaxFrequency(maximum); }}
+          onTimeWindowChange={setTimeWindowSeconds}
+        />
       </section>}
 
       {activeTab === 'network' && <section className="station-tab-panel station-network-tab" role="tabpanel">

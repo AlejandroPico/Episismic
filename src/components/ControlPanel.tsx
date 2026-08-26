@@ -232,9 +232,9 @@ function AboutPanel({ latestRelease }: Pick<ControlPanelProps, 'latestRelease'>)
   const updateAvailable = Boolean(latestRelease && isNewerVersion(latestRelease.version));
   return <section className="control-section prose-panel about-panel-content">
     <div className="about-identity"><img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" /><div><p className="eyebrow">OBSERVATORIO GEOFÍSICO MUNDIAL</p><h3>EPISISMIC</h3><span>Versión {APP_VERSION} · Edición estable · Desarrollado por Alejandro Pico</span></div></div>
-    <p>Episismic 1.0 es la edición estable y publicable del observatorio tridimensional abierto: integra catálogos sísmicos públicos, estaciones FDSN, volcanes, límites tectónicos, archivo histórico, análisis científico y material educativo en una sola interfaz.</p>
+    <p>Episismic 1.2 es la edición estable y publicable del observatorio tridimensional abierto: integra catálogos sísmicos públicos, estaciones operativas FDSN/SeedLink, volcanes, límites tectónicos, archivo histórico, análisis científico y material educativo en una sola interfaz.</p>
     <p>La arquitectura 1.x queda consolidada para ampliar el proyecto con volcanismo, huracanes, grandes tormentas, incendios y otros riesgos naturales sin mezclar sus modelos de datos.</p>
-    <div className="about-principles"><span><strong>3</strong>catálogos sísmicos</span><span><strong>80.000+</strong>estaciones públicas</span><span><strong>SQLite</strong>archivo local</span></div>
+    <div className="about-principles"><span><strong>3</strong>catálogos sísmicos</span><span><strong>4.000+</strong>estaciones en directo</span><span><strong>SQLite</strong>archivo local</span></div>
     <div className="desktop-download-card">
       <MonitorDown size={28} />
       <div>

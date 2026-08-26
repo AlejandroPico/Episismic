@@ -528,8 +528,8 @@ export function GlobeView({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    (map.getSource('stations') as GeoJSONSource).setData(stationGeoJson(stations) as never);
-  }, [stations, ready]);
+    (map.getSource('stations') as GeoJSONSource).setData(stationGeoJson(layers.stations ? stations : []) as never);
+  }, [layers.stations, stations, ready]);
 
   useEffect(() => {
     const map = mapRef.current;

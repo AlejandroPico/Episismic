@@ -20,4 +20,13 @@ describe('acceso instrumental FDSN', () => {
     const verticalOnly = inventory.split('\n').slice(0, 2).join('\n');
     expect(selectMonitorChannels(parseFdsnChannels(verticalOnly), new Date('2026-01-01').getTime()).map((item) => item.channel)).toEqual(['BHZ']);
   });
+
+  it('prioriza el canal con directo web y conserva el proveedor que lo publicó', () => {
+    const archived = parseFdsnChannels(inventory).map((channel) => ({ ...channel, provider: 'GEOFON', serviceRoot: 'https://geofon.gfz.de' }));
+    const live = parseFdsnChannels(inventory.split('\n').slice(0, 2).join('\n')).map((channel) => ({ ...channel, provider: 'ORFEUS', serviceRoot: 'https://orfeus-eu.org', liveTransport: 'orfeus' as const }));
+    const selected = selectMonitorChannels([...archived, ...live], new Date('2026-01-01').getTime());
+    expect(selected).toHaveLength(1);
+    expect(selected[0].provider).toBe('ORFEUS');
+    expect(selected[0].serviceRoot).toBe('https://orfeus-eu.org');
+  });
 });
