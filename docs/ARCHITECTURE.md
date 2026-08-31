@@ -6,7 +6,7 @@ Episismic se divide en cuatro sistemas para evitar que el volumen de estaciones,
 
 1. **Adquisición:** adaptadores FDSN y GeoJSON convierten fuentes externas al dominio común; el navegador consulta inventarios y ventanas instrumentales sin generar señales.
 2. **Persistencia:** SQLite conserva el catálogo, todas las revisiones y metadatos; el navegador lo ejecuta en WebAssembly.
-3. **Dominio:** terremotos, estaciones, alertas y futuros riesgos no dependen de React ni de MapLibre.
+3. **Dominio:** terremotos, volcanes, estaciones y alertas no dependen de React ni de MapLibre.
 4. **Presentación:** React administra paneles y filtros; MapLibre renderiza teselas y GeoJSON en WebGL.
 
 ## Flujo actual
@@ -27,7 +27,7 @@ La actualización de un evento no reemplaza silenciosamente su historia. El resu
 
 ## Telemetría instrumental en tiempo real
 
-La edición 1.2.2 mantiene la ruta instrumental real completamente ejecutable desde el navegador:
+La edición 1.2.3 mantiene la ruta instrumental real completamente ejecutable desde el navegador:
 
 1. FDSN Station consulta en paralelo EarthScope, ORFEUS, GEOFON, NCEDC y BMKG, localiza el canal activo y conserva el centro que realmente lo publicó.
 2. Para canales EarthScope, el cliente abre `wss://rtserve.earthscope.org/seedlink` y se suscribe al identificador NSLC exacto.
@@ -58,6 +58,6 @@ La web seguirá funcionando con los catálogos sísmicos aunque la telemetría i
 
 Próximos pasos técnicos: Web Worker dedicado para SQLite y puente SeedLink TCP→WebSocket para los centros que solo publican el puerto 18000.
 
-## Multirriesgo
+## Dominio geofísico
 
-`phenomena.kind` admite `earthquake`, `volcano`, `storm` y `fire`. Cada módulo especializado amplía el fenómeno sin modificar el contrato común de posición, tiempo, estado, significancia y fuente. Las capas del globo consumen selectores por tipo y no consultas SQL directas.
+Episismic concentra su dominio funcional en terremotos y volcanismo. `phenomena` conserva el contrato común de posición, tiempo, estado, significancia y fuente para esas dos familias, mientras las capas del globo consumen selectores por tipo y no consultas SQL directas.

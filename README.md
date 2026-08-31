@@ -2,11 +2,20 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.2.2` — edición estable y publicable
+**Versión actual:** `1.2.3` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.2.3
+
+- Las fichas de volcanes adoptan automáticamente la paleta Mañana, Tarde o Noche y presentan sus datos en una tarjeta más estrecha y compacta.
+- Los símbolos volcánicos cambian su contraste y borde con el tema activo.
+- Telemetría real muestra siempre la ventana temporal exacta, mantiene accesos directos de 2, 5, 10, 20 y 30 minutos y refleja inmediatamente los cambios realizados con la rueda.
+- El estado de SeedLink/FDSN aparece antes del selector temporal y se elimina el botón de ayuda sin acción propia.
+- Político plano añade un halo de borde muy sutil para separar el contorno del planeta del fondo sin cubrir la cartografía.
+- Acerca del proyecto elimina la referencia a huracanes, tormentas e incendios y mantiene el alcance en sismicidad y volcanismo.
 
 ## Novedades de 1.2.2
 
@@ -159,7 +168,7 @@ src-tauri/          Aplicación nativa y empaquetado
 .github/workflows/  Pruebas, compilación, Pages y escritorio
 ```
 
-El dominio utiliza `phenomena` como entidad común. `earthquake_events` especializa el terremoto actual; volcanes, tormentas, huracanes e incendios pueden incorporarse posteriormente sin acoplar el renderizador a un único riesgo.
+El dominio utiliza `phenomena` como entidad común para terremotos y volcanismo. `earthquake_events` especializa el catálogo sísmico sin acoplar el renderizador ni la persistencia a la interfaz.
 
 Consulta [Arquitectura](docs/ARCHITECTURE.md) y [Modelo de datos](docs/DATABASE.md).
 
@@ -215,4 +224,4 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 
 ## Aviso
 
-Episismic 1.2.2 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.2.3 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.

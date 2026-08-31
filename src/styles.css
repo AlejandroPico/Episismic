@@ -883,18 +883,21 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .tectonic-legend .plate-solid, .tectonic-legend .plate-diffuse { width: 20px; height: 0; border-top: 2px solid #e12834; }
 .tectonic-legend .plate-diffuse { border-top-style: dashed; border-top-color: #a91428; }
 
-.volcano-popup { min-width: 275px; gap: 10px; color: #eaf4f2; background: linear-gradient(145deg,rgba(36,12,14,.97),rgba(7,20,23,.98)); }
-.volcano-popup-heading { display: grid; grid-template-columns: 31px minmax(0,1fr); align-items: center; gap: 9px; }
-.volcano-popup-heading > i { width: 30px; height: 30px; display: grid; place-items: center; color: #ff724e; border: 1px solid rgba(255,114,78,.45); background: rgba(255,114,78,.12); font-style: normal; }
-.volcano-popup-heading > div { min-width: 0; display: grid; gap: 4px; }
-.volcano-popup-heading b { color: #ff8a65; font-size: 13px; }
-.volcano-popup-heading span { color: #b7c6c4; font-size: 8px; }
-.volcano-popup-facts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); border: 1px solid rgba(255,255,255,.13); }
-.volcano-popup-facts span { min-height: 48px; display: grid; align-content: center; gap: 5px; padding: 6px; border-right: 1px solid rgba(255,255,255,.1); }
-.volcano-popup-facts span:last-child { border-right: 0; }
-.volcano-popup-facts small { color: #829492; font: 500 6px/1 IBM Plex Mono, monospace; }
-.volcano-popup-facts strong { color: #f2f5f4; font-size: 8px; font-weight: 600; }
-.volcano-popup .volcano-popup-source { color: #879b98; font-size: 7px; }
+.volcano-card-popup .maplibregl-popup-content { border-color: color-mix(in srgb,var(--danger) 45%,var(--line-strong)); color: var(--text); background: var(--panel-solid); box-shadow: var(--shadow); }
+.volcano-card-popup .maplibregl-popup-close-button { color: var(--text-soft); }
+.volcano-card-popup .maplibregl-popup-close-button:hover { color: var(--danger); background: color-mix(in srgb,var(--danger) 9%,transparent); }
+.volcano-popup { width: 238px; min-width: 0; gap: 8px; padding: 10px 28px 9px 10px; color: var(--text); background: transparent; }
+.volcano-popup-heading { display: grid; grid-template-columns: 29px minmax(0,1fr); align-items: center; gap: 8px; }
+.volcano-popup-heading > i { width: 28px; height: 28px; display: grid; place-items: center; color: var(--danger); border: 1px solid color-mix(in srgb,var(--danger) 48%,var(--line)); background: color-mix(in srgb,var(--danger) 10%,transparent); font-style: normal; }
+.volcano-popup-heading > div { min-width: 0; display: grid; gap: 3px; }
+.volcano-popup-heading b { overflow: hidden; color: var(--danger); font-size: 11px; line-height: 1.2; text-overflow: ellipsis; }
+.volcano-popup-heading span { overflow: hidden; color: var(--text-soft); font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
+.volcano-popup-facts { display: grid; border: 1px solid var(--line); }
+.volcano-popup-facts span { min-height: 29px; display: grid; grid-template-columns: 76px minmax(0,1fr); align-items: center; gap: 7px; padding: 5px 7px; border-bottom: 1px solid var(--line); }
+.volcano-popup-facts span:last-child { border-bottom: 0; }
+.volcano-popup-facts small { color: var(--text-soft); font: 500 6px/1 IBM Plex Mono,monospace; letter-spacing: .04em; }
+.volcano-popup-facts strong { overflow: hidden; color: var(--text); font-size: 8px; font-weight: 600; line-height: 1.25; text-overflow: ellipsis; }
+.volcano-popup .volcano-popup-source { color: var(--text-soft); font-size: 6px; line-height: 1.35; }
 
 .station-inspector { max-height: calc(100% - 72px); display: flex; flex-direction: column; overflow: hidden; }
 .station-inspector-scroll { min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
@@ -968,10 +971,7 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 @media (max-width: 560px) {
   .event-notice { left: 8px; right: 8px; width: auto; min-height: 96px; transform: none; }
   .notice-facts small:nth-child(n+3) { display: none; }
-  .volcano-popup { min-width: min(275px,calc(100vw - 52px)); }
-  .volcano-popup-facts { grid-template-columns: 1fr; }
-  .volcano-popup-facts span { min-height: 34px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.1); }
-  .volcano-popup-facts span:last-child { border-bottom: 0; }
+  .volcano-popup { width: min(238px,calc(100vw - 52px)); }
 }
 
 /* Revisión 0.9.1: resumen integrado, atribución mínima y recuperación WebGL móvil. */
@@ -1365,7 +1365,7 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .real-waveform-provenance > span:first-child { color: var(--accent); font: 600 7px/1 IBM Plex Mono,monospace; }
 .real-waveform-provenance i { width: 6px; height: 6px; display: inline-block; margin-right: 5px; border-radius: 50%; background: #52dfa1; box-shadow: 0 0 8px rgba(82,223,161,.7); }
 .live-station-monitor { min-width: 0; overflow: hidden; border: 1px solid var(--monitor-border); background: var(--monitor-bg); }
-.live-monitor-toolbar { min-height: 44px; display: grid; grid-template-columns: auto minmax(180px,1fr) auto auto 30px 32px; align-items: stretch; border-bottom: 1px solid var(--monitor-border); color: var(--monitor-text); background: var(--monitor-bg); }
+.live-monitor-toolbar { min-height: 48px; display: grid; grid-template-columns: auto minmax(170px,1fr) auto auto 32px; align-items: stretch; border-bottom: 1px solid var(--monitor-border); color: var(--monitor-text); background: var(--monitor-bg); }
 .live-channel-tabs { min-width: 0; display: flex; align-self: stretch; }
 .live-channel-tabs button { min-width: 54px; padding: 0 11px; border: 0; border-right: 1px solid var(--monitor-border); color: var(--monitor-muted); background: transparent; font: 600 9px/1 IBM Plex Mono,monospace; cursor: pointer; }
 .live-channel-tabs button:hover, .live-channel-tabs button.active { color: var(--monitor-signal); background: color-mix(in srgb,var(--monitor-signal) 10%,transparent); box-shadow: inset 0 -2px var(--monitor-signal); }
@@ -1373,13 +1373,16 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .live-monitor-summary strong, .live-monitor-summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: IBM Plex Mono,monospace; }
 .live-monitor-summary strong { color: var(--monitor-text); font-size: 8px; }
 .live-monitor-summary span { color: var(--monitor-muted); font-size: 7px; }
-.live-window-options { display: flex; border-right: 1px solid var(--monitor-border); }
-.live-window-options button { min-width: 34px; padding: 0 6px; border: 0; border-left: 1px solid var(--monitor-border); color: var(--monitor-muted); background: transparent; font: 600 7px/1 IBM Plex Mono,monospace; cursor: pointer; }
-.live-window-options button:hover, .live-window-options button.active { color: var(--monitor-signal); background: color-mix(in srgb,var(--monitor-signal) 10%,transparent); }
-.live-stream-state { display: flex; align-items: center; gap: 6px; padding: 0 9px; color: var(--monitor-muted); font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .05em; white-space: nowrap; }
+.live-window-control { min-width: 238px; display: grid; grid-template-columns: auto 1fr; border-left: 1px solid var(--monitor-border); border-right: 1px solid var(--monitor-border); }
+.live-window-current { min-width: 58px; display: grid; place-items: center; align-content: center; gap: 3px; padding: 0 8px; color: var(--monitor-text); background: color-mix(in srgb,var(--monitor-signal) 8%,transparent); font: 600 9px/1 IBM Plex Mono,monospace; white-space: nowrap; }
+.live-window-current small { color: var(--monitor-muted); font-size: 6px; letter-spacing: .08em; }
+.live-window-options { min-width: 0; display: flex; }
+.live-window-options button { min-width: 34px; flex: 1; padding: 0 6px; border: 0; border-left: 1px solid var(--monitor-border); color: var(--monitor-muted); background: transparent; font: 600 9px/1 IBM Plex Mono,monospace; cursor: pointer; }
+.live-window-options button:hover, .live-window-options button.active { color: var(--monitor-signal); background: color-mix(in srgb,var(--monitor-signal) 13%,transparent); box-shadow: inset 0 -2px var(--monitor-signal); }
+.live-stream-state { display: flex; align-items: center; gap: 6px; padding: 0 10px; color: var(--monitor-muted); border-left: 1px solid var(--monitor-border); font: 600 8px/1 IBM Plex Mono,monospace; letter-spacing: .04em; white-space: nowrap; }
 .live-stream-state.online { color: var(--monitor-signal); }
-.live-monitor-help, .live-monitor-refresh { width: 100%; min-width: 0; display: grid; place-items: center; padding: 0; border: 0; border-left: 1px solid var(--monitor-border); color: var(--monitor-muted); background: transparent; cursor: pointer; }
-.live-monitor-help:hover, .live-monitor-refresh:hover { color: var(--monitor-signal); background: color-mix(in srgb,var(--monitor-signal) 10%,transparent); }
+.live-monitor-refresh { width: 100%; min-width: 0; display: grid; place-items: center; padding: 0; border: 0; color: var(--monitor-muted); background: transparent; cursor: pointer; }
+.live-monitor-refresh:hover { color: var(--monitor-signal); background: color-mix(in srgb,var(--monitor-signal) 10%,transparent); }
 .live-seismogram-canvas { width: 100%; height: 354px; display: block; background: var(--monitor-bg); }
 .live-seismogram-canvas.interactive { cursor: crosshair; touch-action: none; }
 .live-monitor-empty { min-height: 354px; display: grid; place-items: center; align-content: center; gap: 8px; color: var(--monitor-muted); text-align: center; }
@@ -1478,14 +1481,14 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   .real-station-components img, .real-channel-unavailable { height: 180px; }
   .real-waveform-provenance { grid-template-columns: 1fr auto; }
   .real-waveform-provenance > span:nth-child(2) { grid-column: 1/-1; grid-row: 2; }
-  .live-monitor-toolbar { grid-template-columns: minmax(0,1fr) 30px 32px; }
+  .live-monitor-toolbar { grid-template-columns: minmax(0,1fr) 32px; }
   .live-channel-tabs { grid-column: 1; grid-row: 1; }
-  .live-monitor-help { grid-column: 2; grid-row: 1; }
-  .live-monitor-refresh { grid-column: 3; grid-row: 1; }
+  .live-monitor-refresh { grid-column: 2; grid-row: 1; border-left: 1px solid var(--monitor-border); }
   .live-monitor-summary { grid-column: 1/-1; grid-row: 2; min-height: 34px; border-top: 1px solid var(--monitor-border); border-right: 0; }
-  .live-window-options { grid-column: 1; grid-row: 3; justify-content: stretch; min-height: 34px; border-top: 1px solid var(--monitor-border); border-right: 0; }
-  .live-window-options button { flex: 1; }
-  .live-stream-state { grid-column: 2/4; grid-row: 3; min-height: 34px; border-top: 1px solid var(--monitor-border); border-left: 1px solid var(--monitor-border); }
+  .live-stream-state { grid-column: 1/-1; grid-row: 3; min-height: 30px; border-top: 1px solid var(--monitor-border); border-left: 0; }
+  .live-window-control { grid-column: 1/-1; grid-row: 4; min-width: 0; min-height: 38px; border-top: 1px solid var(--monitor-border); border-right: 0; border-left: 0; }
+  .live-window-options { justify-content: stretch; }
+  .live-window-options button { min-width: 0; flex: 1; }
   .live-seismogram-canvas, .live-monitor-empty, .live-monitor-empty img { height: 290px; min-height: 290px; }
   .station-network-grid, .station-metadata-grid, .station-data-actions { grid-template-columns: 1fr; }
   .station-network-grid article, .station-metadata-grid > span, .station-data-actions > a, .station-data-actions > button { border-right: 0; border-bottom: 1px solid var(--line); }

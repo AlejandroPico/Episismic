@@ -44,6 +44,10 @@ const GLOBE_THEME = {
     politicalBorder: '#678783',
     label: '#253534',
     labelHalo: 'rgba(244,248,241,.92)',
+    volcanoFill: '#b94732',
+    volcanoStroke: '#f5ddd4',
+    volcanoLabel: '#8f3024',
+    volcanoLabelHalo: 'rgba(244,248,241,.94)',
   },
   afternoon: {
     space: '#463942',
@@ -51,6 +55,10 @@ const GLOBE_THEME = {
     politicalBorder: '#c0a98f',
     label: '#f2e9dc',
     labelHalo: 'rgba(34,25,27,.92)',
+    volcanoFill: '#ed704d',
+    volcanoStroke: '#ffe0ca',
+    volcanoLabel: '#ff936f',
+    volcanoLabelHalo: 'rgba(34,25,27,.94)',
   },
   night: {
     space: '#050a0f',
@@ -58,6 +66,10 @@ const GLOBE_THEME = {
     politicalBorder: '#8ca4b6',
     label: '#f4f7f5',
     labelHalo: 'rgba(2,9,12,.95)',
+    volcanoFill: '#df5a3f',
+    volcanoStroke: '#ffddcb',
+    volcanoLabel: '#ff7b5c',
+    volcanoLabelHalo: 'rgba(2,9,12,.96)',
   },
 } satisfies Record<ResolvedTheme, Record<string, string>>;
 
@@ -70,6 +82,7 @@ function createStyle(backgroundColor = GLOBE_THEME.night.space): StyleSpecificat
   return {
     version: 8,
     glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sky: { 'atmosphere-blend': 0 },
     sources: {},
     layers: [{ id: 'space', type: 'background', paint: { 'background-color': backgroundColor } }],
   };
@@ -398,7 +411,7 @@ export function GlobeView({
           source.className = 'volcano-popup-source';
           source.textContent = 'Smithsonian Global Volcanism Program · volcán holoceno catalogado';
           content.append(heading, facts, source);
-          new maplibregl.Popup({ closeButton: true, offset: 8 })
+          new maplibregl.Popup({ closeButton: true, offset: 8, maxWidth: '250px', className: 'volcano-card-popup' })
             .setLngLat(coordinates)
             .setDOMContent(content)
             .addTo(map);
@@ -549,6 +562,13 @@ export function GlobeView({
     map.setPaintProperty('political-fill', 'fill-color', palette.politicalFill);
     map.setPaintProperty('political-border', 'line-color', palette.politicalBorder);
     const flat = mapStyle === 'political';
+    map.setSky({ 'atmosphere-blend': flat ? .18 : 0 });
+    map.setPaintProperty('volcano-clusters', 'circle-color', palette.volcanoFill);
+    map.setPaintProperty('volcano-clusters', 'circle-stroke-color', palette.volcanoStroke);
+    map.setPaintProperty('volcano-points', 'circle-color', palette.volcanoFill);
+    map.setPaintProperty('volcano-points', 'circle-stroke-color', palette.volcanoStroke);
+    map.setPaintProperty('volcano-labels', 'text-color', palette.volcanoLabel);
+    map.setPaintProperty('volcano-labels', 'text-halo-color', palette.volcanoLabelHalo);
     map.setPaintProperty('country-labels', 'text-color', flat ? palette.label : '#f4f7f5');
     map.setPaintProperty('country-labels', 'text-halo-color', flat ? palette.labelHalo : 'rgba(2,9,12,.95)');
     map.setPaintProperty('place-labels', 'text-color', flat ? palette.label : '#eaf6f5');

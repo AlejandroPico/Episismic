@@ -58,7 +58,7 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: "Episismic v__VERSION__"
-          releaseBody: "Episismic 1.2.2 estable para Windows, macOS y Linux. Corrige la accesibilidad de las fichas de estación y del panel Acerca de en pantallas móviles. Los binarios no están firmados por una autoridad comercial."
+          releaseBody: "Episismic 1.2.3 estable para Windows, macOS y Linux. Mejora las fichas volcánicas, el selector temporal de telemetría y la delimitación visual del globo político. Los binarios no están firmados por una autoridad comercial."
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

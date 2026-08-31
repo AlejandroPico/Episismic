@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Activity, CircleHelp, LoaderCircle, Radio, RefreshCw, WifiOff } from 'lucide-react';
+import { Activity, LoaderCircle, Radio, RefreshCw, WifiOff } from 'lucide-react';
 import type { SeismicStation } from '../types';
 import { discoverStationMonitorChannels, type FdsnChannel } from '../services/fdsnWaveforms';
 import { mergeWaveformBlocks, openSeedlinkStream, queryFdsnWaveformBlocks, type SeedlinkState, type WaveformBlock } from '../services/seedlinkStream';
@@ -19,6 +19,13 @@ interface Biquad {
   b2: number;
   a1: number;
   a2: number;
+}
+
+const TIME_WINDOW_PRESETS = [120, 300, 600, 1200, 1800] as const;
+
+function formatTimeWindow(seconds: number) {
+  const minutes = seconds / 60;
+  return Number.isInteger(minutes) ? `${minutes} min` : `${minutes.toFixed(1).replace('.', ',')} min`;
 }
 
 function coefficients(type: 'lowpass' | 'highpass', cutoff: number, sampleRate: number): Biquad {
@@ -349,11 +356,13 @@ export function RealStationMonitor({ station, minFrequency, maxFrequency, timeWi
         <strong>{selectedChannel ? `${selectedChannel.network}.${selectedChannel.station}.${selectedChannel.location || '--'}.${selectedChannel.channel}` : station.id}</strong>
         <span>{selectedChannel?.sampleRate || latestBlock?.sampleRate || '—'} Hz · {latency === null ? 'latencia —' : `latencia ${latency} s`} · {sampleCount.toLocaleString('es-ES')} muestras</span>
       </div>
-      <div className="live-window-options" aria-label="Ventana temporal">
-        {[120, 300, 600, 1200, 1800].map((seconds) => <button key={seconds} className={timeWindowSeconds === seconds ? 'active' : ''} onClick={() => onTimeWindowChange(seconds)}>{seconds / 60}m</button>)}
-      </div>
       <div className={`live-stream-state ${lastPacketAt ? 'online' : ''}`}>{lastPacketAt ? <Radio size={13} /> : streamState === 'connecting' || archiveState === 'loading' ? <LoaderCircle className="spin" size={13} /> : <WifiOff size={13} />}<strong>{status}</strong></div>
-      <button className="live-monitor-help" title="Arrastra los dos extremos de la escala de frecuencia. Usa la rueda del ratón sobre la gráfica para cambiar la ventana temporal." aria-label="Ayuda de interacción del sismograma"><CircleHelp size={13} /></button>
+      <div className="live-window-control" aria-label="Ventana temporal del sismograma">
+        <output className="live-window-current" aria-live="polite"><small>VENTANA</small>{formatTimeWindow(timeWindowSeconds)}</output>
+        <div className="live-window-options" role="group" aria-label="Ventanas temporales predefinidas">
+          {TIME_WINDOW_PRESETS.map((seconds) => <button key={seconds} aria-pressed={timeWindowSeconds === seconds} className={timeWindowSeconds === seconds ? 'active' : ''} onClick={() => onTimeWindowChange(seconds)}>{seconds / 60}m</button>)}
+        </div>
+      </div>
       <button className="live-monitor-refresh" onClick={() => setInventoryRevision((value) => value + 1)} title="Reconectar y recargar inventario"><RefreshCw size={13} /></button>
     </header>
     {blocks.length ? <WaveformCanvas blocks={blocks} windowSeconds={timeWindowSeconds} minFrequency={minFrequency} maxFrequency={maxFrequency} onFrequencyChange={onFrequencyChange} onTimeWindowChange={onTimeWindowChange} /> : <div className="live-monitor-empty">
