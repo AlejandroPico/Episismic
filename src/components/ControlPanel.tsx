@@ -66,10 +66,10 @@ const mapStyles: { id: MapStyle; name: string; description: string }[] = [
 const layerDefinitions: { id: keyof MapLayerState; label: string; detail: string }[] = [
   { id: 'earthquakes', label: 'Terremotos', detail: 'Epicentros por profundidad' },
   { id: 'stations', label: 'Estaciones sísmicas', detail: 'Redes FDSN públicas' },
-  { id: 'plates', label: 'Límites tectónicos', detail: 'Trazas de placas y dorsales' },
-  { id: 'volcanoes', label: 'Volcanes', detail: 'Sistemas volcánicos activos' },
+  { id: 'plates', label: 'Límites tectónicos', detail: '52 placas PB2002 y 13 zonas difusas' },
+  { id: 'volcanoes', label: 'Volcanes', detail: 'Catálogo holoceno y actividad semanal' },
   { id: 'labels', label: 'Nombres geográficos', detail: 'Ciudades de referencia' },
-  { id: 'atmosphere', label: 'Atmósfera', detail: 'Halo de lectura del globo' },
+  { id: 'atmosphere', label: 'Contorno del globo', detail: 'Línea fina en Político plano' },
   { id: 'graticule', label: 'Retícula geográfica', detail: 'Latitud y longitud' },
   { id: 'legend', label: 'Leyenda sísmica', detail: 'Magnitud, profundidad y tectónica' },
   { id: 'shakeMap', label: 'Mapa de intensidad', detail: 'Estimación espacial del movimiento' },

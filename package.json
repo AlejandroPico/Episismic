@@ -1,7 +1,7 @@
 {
   "name": "episismic",
   "private": true,
-  "version": "1.2.3",
+  "version": "1.2.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,8 @@
     "desktop:build": "tauri build",
     "test": "vitest run",
     "lint": "eslint .",
-    "sync:geodata": "node scripts/sync-geodata.mjs"
+    "sync:geodata": "node scripts/sync-geodata.mjs",
+    "sync:volcanoes": "node scripts/sync-geodata.mjs --volcanoes-only"
   },
   "dependencies": {
     "lucide-react": "1.33.0",

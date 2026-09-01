@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
@@ -33,10 +33,54 @@ const plateSources = [
   ['plate-orogens.json', 'https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_orogens.json'],
 ];
 
-async function fetchText(url) {
-  const response = await fetch(url, { headers: { Accept: 'text/plain, application/json', 'User-Agent': 'Episismic geodata sync' } });
+async function fetchText(url, encoding = 'utf-8') {
+  const response = await fetch(url, { headers: { Accept: 'text/plain, application/json, application/rss+xml', 'User-Agent': 'Episismic geodata sync' } });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${url}`);
-  return response.text();
+  return new TextDecoder(encoding).decode(await response.arrayBuffer());
+}
+
+function decodeXmlText(value) {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([\da-f]+);/gi, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .trim();
+}
+
+function rssTag(item, tag) {
+  return decodeXmlText(item.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'))?.[1] || '');
+}
+
+function weeklyActivityCode(label) {
+  const normalized = label.toLowerCase();
+  if (normalized.includes('new') && normalized.includes('eruptive')) return 'new-eruption';
+  if (normalized.includes('continuing') && normalized.includes('eruptive')) return 'continuing-eruption';
+  if (normalized.includes('new') && normalized.includes('unrest')) return 'new-unrest';
+  if (normalized.includes('continuing') && normalized.includes('unrest')) return 'continuing-unrest';
+  return 'other';
+}
+
+function parseWeeklyVolcanicActivity(xml) {
+  const reports = new Map();
+  for (const match of xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)) {
+    const item = match[1];
+    const guid = rssTag(item, 'guid');
+    const volcanoId = guid.match(/#vn_(\d+)/)?.[1];
+    const title = rssTag(item, 'title');
+    const titleParts = title.match(/ - Report for (.+?) - (.+)$/i);
+    if (!volcanoId || !titleParts) continue;
+    const published = new Date(rssTag(item, 'pubDate'));
+    reports.set(volcanoId, {
+      weeklyActivity: weeklyActivityCode(titleParts[2]),
+      weeklyActivityLabel: titleParts[2],
+      weeklyReportPeriod: titleParts[1],
+      weeklyReportUpdatedAt: Number.isNaN(published.getTime()) ? undefined : published.toISOString(),
+      weeklyReportUrl: `https://volcano.si.edu/reports_weekly.cfm#vn_${volcanoId}`,
+    });
+  }
+  return reports;
 }
 
 function countryFromSite(siteName) {
@@ -165,7 +209,17 @@ async function syncStations() {
 
 async function syncVolcanoes() {
   const url = 'https://webservices.volcano.si.edu/geoserver/GVP-VOTW/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=GVP-VOTW%3ASmithsonian_VOTW_Holocene_Volcanoes&outputFormat=application%2Fjson&maxFeatures=2000';
-  const collection = JSON.parse(await fetchText(url));
+  const activityUrl = 'https://volcano.si.edu/news/WeeklyVolcanoRSS.xml';
+  const [collectionText, activityText] = await Promise.all([
+    process.env.EPISISMIC_VOLCANO_CATALOG_FILE
+      ? readFile(process.env.EPISISMIC_VOLCANO_CATALOG_FILE, 'utf8')
+      : fetchText(url),
+    process.env.EPISISMIC_VOLCANO_ACTIVITY_FILE
+      ? readFile(process.env.EPISISMIC_VOLCANO_ACTIVITY_FILE).then((buffer) => new TextDecoder('windows-1252').decode(buffer))
+      : fetchText(activityUrl, 'windows-1252'),
+  ]);
+  const collection = JSON.parse(collectionText);
+  const weeklyActivity = parseWeeklyVolcanicActivity(activityText);
   const volcanoes = collection.features.map((feature) => {
     const [lng, lat] = feature.geometry.coordinates;
     const properties = feature.properties;
@@ -181,10 +235,11 @@ async function syncVolcanoes() {
       volcanoType: properties.Primary_Volcano_Type || properties.Volcanic_Landform || '',
       lastEruptionYear: properties.Last_Eruption_Year ?? null,
       sourceUrl: `https://volcano.si.edu/volcano.cfm?vn=${properties.Volcano_Number}`,
+      ...weeklyActivity.get(String(properties.Volcano_Number)),
     };
   }).filter((volcano) => Number.isFinite(volcano.lat) && Number.isFinite(volcano.lng));
   await writeFile(path.join(outputDir, 'volcanoes.json.gz'), gzipSync(`${JSON.stringify(volcanoes)}\n`, { level: 9 }));
-  return volcanoes.length;
+  return { catalogued: volcanoes.length, weekly: weeklyActivity.size };
 }
 
 async function syncPlates() {
@@ -195,5 +250,10 @@ async function syncPlates() {
 }
 
 await mkdir(outputDir, { recursive: true });
-const [stationCount, volcanoCount] = await Promise.all([syncStations(), syncVolcanoes(), syncPlates()]);
-console.log(`Geodatos sincronizados: ${stationCount.operational} estaciones operativas, ${stationCount.secondary} secundarias, ${volcanoCount} volcanes y PB2002.`);
+if (process.argv.includes('--volcanoes-only')) {
+  const volcanoCount = await syncVolcanoes();
+  console.log(`Volcanes sincronizados: ${volcanoCount.catalogued} holocenos y ${volcanoCount.weekly} con actividad semanal Smithsonian/USGS.`);
+} else {
+  const [stationCount, volcanoCount] = await Promise.all([syncStations(), syncVolcanoes(), syncPlates()]);
+  console.log(`Geodatos sincronizados: ${stationCount.operational} estaciones operativas, ${stationCount.secondary} secundarias, ${volcanoCount.catalogued} volcanes (${volcanoCount.weekly} con actividad semanal) y PB2002.`);
+}

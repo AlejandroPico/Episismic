@@ -2,11 +2,20 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.2.3` — edición estable y publicable
+**Versión actual:** `1.2.4` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.2.4
+
+- Político plano sustituye el brillo atmosférico direccional por una línea geométrica fina y uniforme que recorre el horizonte completo del globo.
+- Los 1.214 volcanes holocenos del Smithsonian GVP conservan su punto minimalista; los incluidos en el informe semanal Smithsonian/USGS reciben uno o dos anillos concéntricos, sin pictogramas.
+- La ficha volcánica diferencia expresamente catálogo holoceno, actividad eruptiva continuada y nueva actividad, indica el periodo del informe y enlaza a la fuente oficial.
+- La sincronización actual identifica 26 volcanes con actividad eruptiva reportada durante la semana del 20 al 26 de agosto de 2026: 6 con actividad nueva y 20 continuada.
+- Un proceso semanal actualiza automáticamente esa clasificación desde el RSS oficial sin modificar el resto del catálogo ni reconstruir las aplicaciones nativas.
+- Verificada la capa tectónica PB2002: ya contiene las 52 placas del modelo —14 grandes y 38 menores— y las 13 zonas de deformación difusa; no faltaba una segunda colección de microplacas.
 
 ## Novedades de 1.2.3
 
@@ -224,4 +233,4 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 
 ## Aviso
 
-Episismic 1.2.3 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.2.4 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.

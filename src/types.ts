@@ -1,7 +1,7 @@
 export type TimeWindow = 'hour' | 'day' | 'week' | 'month';
 export type ThemeMode = 'automatic' | 'morning' | 'afternoon' | 'night';
 export type MapStyle = 'political' | 'satellite' | 'relief' | 'bathymetry';
-export type HazardKind = 'earthquake' | 'volcano' | 'storm' | 'fire';
+export type HazardKind = 'earthquake' | 'volcano';
 
 export interface Coordinates {
   lat: number;
@@ -67,6 +67,11 @@ export interface Volcano extends Coordinates {
   volcanoType?: string;
   lastEruptionYear?: number | null;
   sourceUrl?: string;
+  weeklyActivity?: 'new-eruption' | 'continuing-eruption' | 'new-unrest' | 'continuing-unrest' | 'other';
+  weeklyActivityLabel?: string;
+  weeklyReportPeriod?: string;
+  weeklyReportUpdatedAt?: string;
+  weeklyReportUrl?: string;
 }
 
 export interface MapLayerState {

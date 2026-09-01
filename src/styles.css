@@ -397,7 +397,6 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .event-inspector, .station-inspector { backdrop-filter: blur(14px); box-shadow: 0 10px 38px rgba(0, 0, 0, .25); }
 .maplibre-host { position: absolute; inset: 0; }
 .maplibre-host .maplibregl-canvas { outline: none; }
-.atmosphere-overlay { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 90px rgba(34, 122, 145, .18); }
 .maplibregl-ctrl-bottom-left { bottom: 43px; }
 .maplibregl-ctrl-attrib { color: #607171; background: rgba(246, 248, 242, .82) !important; font-size: 9px; }
 .maplibregl-popup-content { padding: 0; border: 1px solid var(--line-strong); border-radius: 0; color: var(--text); background: var(--panel-solid); box-shadow: 0 8px 25px rgba(0, 0, 0, .3); }
@@ -882,22 +881,44 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .globe-legend .tectonic-legend { display: flex; grid-auto-flow: column; grid-template-columns: 22px auto 22px auto; align-items: center; gap: 6px; color: var(--text-soft); }
 .tectonic-legend .plate-solid, .tectonic-legend .plate-diffuse { width: 20px; height: 0; border-top: 2px solid #e12834; }
 .tectonic-legend .plate-diffuse { border-top-style: dashed; border-top-color: #a91428; }
+.volcano-legend { display: grid; grid-template-columns: 12px auto 16px auto 20px auto; align-items: center; gap: 6px; color: var(--text-soft); font-size: 7px; }
+.volcano-legend i { position: relative; width: 12px; height: 12px; display: inline-block; }
+.volcano-legend i::before, .volcano-legend i::after { content: ''; position: absolute; inset: 50% auto auto 50%; border-radius: 50%; transform: translate(-50%,-50%); }
+.volcano-legend i::before { width: 5px; height: 5px; background: var(--danger); }
+.volcano-legend .volcano-reported::after, .volcano-legend .volcano-new::after { width: 11px; height: 11px; border: 1px solid var(--danger); }
+.volcano-legend .volcano-new { width: 18px; }
+.volcano-legend .volcano-new::after { width: 16px; height: 16px; border-color: color-mix(in srgb,var(--danger) 65%,transparent); }
 
 .volcano-card-popup .maplibregl-popup-content { border-color: color-mix(in srgb,var(--danger) 45%,var(--line-strong)); color: var(--text); background: var(--panel-solid); box-shadow: var(--shadow); }
 .volcano-card-popup .maplibregl-popup-close-button { color: var(--text-soft); }
 .volcano-card-popup .maplibregl-popup-close-button:hover { color: var(--danger); background: color-mix(in srgb,var(--danger) 9%,transparent); }
 .volcano-popup { width: 238px; min-width: 0; gap: 8px; padding: 10px 28px 9px 10px; color: var(--text); background: transparent; }
 .volcano-popup-heading { display: grid; grid-template-columns: 29px minmax(0,1fr); align-items: center; gap: 8px; }
-.volcano-popup-heading > i { width: 28px; height: 28px; display: grid; place-items: center; color: var(--danger); border: 1px solid color-mix(in srgb,var(--danger) 48%,var(--line)); background: color-mix(in srgb,var(--danger) 10%,transparent); font-style: normal; }
+.volcano-popup-heading > i { position: relative; width: 28px; height: 28px; display: block; font-style: normal; }
+.volcano-popup-heading > i::before, .volcano-popup-heading > i::after { content: ''; position: absolute; inset: 50% auto auto 50%; border-radius: 50%; transform: translate(-50%,-50%); }
+.volcano-popup-heading > i::before { width: 7px; height: 7px; background: var(--danger); box-shadow: 0 0 0 2px color-mix(in srgb,var(--danger) 18%,transparent); }
+.volcano-popup-heading > i.reported::after { width: 20px; height: 20px; border: 1px solid var(--danger); }
 .volcano-popup-heading > div { min-width: 0; display: grid; gap: 3px; }
 .volcano-popup-heading b { overflow: hidden; color: var(--danger); font-size: 11px; line-height: 1.2; text-overflow: ellipsis; }
 .volcano-popup-heading span { overflow: hidden; color: var(--text-soft); font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
+.volcano-popup-activity { min-height: 34px; display: grid; grid-template-columns: 24px minmax(0,1fr); align-items: center; gap: 7px; padding: 5px 7px; border: 1px solid var(--line); background: color-mix(in srgb,var(--text-soft) 4%,transparent); }
+.volcano-popup-activity > i { position: relative; width: 18px; height: 18px; display: block; border: 1px solid var(--line-strong); border-radius: 50%; }
+.volcano-popup-activity > i::after { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: var(--text-soft); }
+.volcano-popup-activity > span { min-width: 0; display: grid; gap: 3px; }
+.volcano-popup-activity strong, .volcano-popup-activity small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.volcano-popup-activity strong { color: var(--text-soft); font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .04em; }
+.volcano-popup-activity small { color: var(--text-soft); font-size: 6px; }
+.volcano-popup-activity.reported { border-color: color-mix(in srgb,var(--danger) 45%,var(--line)); background: color-mix(in srgb,var(--danger) 7%,transparent); }
+.volcano-popup-activity.reported > i { border-color: var(--danger); box-shadow: 0 0 0 3px color-mix(in srgb,var(--danger) 18%,transparent); }
+.volcano-popup-activity.reported > i::after { background: var(--danger); }
+.volcano-popup-activity.reported strong { color: var(--danger); }
 .volcano-popup-facts { display: grid; border: 1px solid var(--line); }
 .volcano-popup-facts span { min-height: 29px; display: grid; grid-template-columns: 76px minmax(0,1fr); align-items: center; gap: 7px; padding: 5px 7px; border-bottom: 1px solid var(--line); }
 .volcano-popup-facts span:last-child { border-bottom: 0; }
 .volcano-popup-facts small { color: var(--text-soft); font: 500 6px/1 IBM Plex Mono,monospace; letter-spacing: .04em; }
 .volcano-popup-facts strong { overflow: hidden; color: var(--text); font-size: 8px; font-weight: 600; line-height: 1.25; text-overflow: ellipsis; }
-.volcano-popup .volcano-popup-source { color: var(--text-soft); font-size: 6px; line-height: 1.35; }
+.volcano-popup .volcano-popup-source { color: var(--text-soft); font-size: 6px; line-height: 1.35; text-decoration: none; }
+.volcano-popup a.volcano-popup-source { color: var(--danger); }
 
 .station-inspector { max-height: calc(100% - 72px); display: flex; flex-direction: column; overflow: hidden; }
 .station-inspector-scroll { min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }

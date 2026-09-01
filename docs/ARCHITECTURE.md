@@ -27,7 +27,7 @@ La actualización de un evento no reemplaza silenciosamente su historia. El resu
 
 ## Telemetría instrumental en tiempo real
 
-La edición 1.2.3 mantiene la ruta instrumental real completamente ejecutable desde el navegador:
+La edición 1.2.4 mantiene la ruta instrumental real completamente ejecutable desde el navegador:
 
 1. FDSN Station consulta en paralelo EarthScope, ORFEUS, GEOFON, NCEDC y BMKG, localiza el canal activo y conserva el centro que realmente lo publicó.
 2. Para canales EarthScope, el cliente abre `wss://rtserve.earthscope.org/seedlink` y se suscribe al identificador NSLC exacto.
@@ -40,6 +40,14 @@ La edición 1.2.3 mantiene la ruta instrumental real completamente ejecutable de
 El navegador no puede abrir los SeedLink TCP tradicionales en el puerto 18000. El directo inmediato cubre los canales federados por los WebSocket públicos de EarthScope y ORFEUS; GEOFON, NCEDC, BMKG u otras redes continúan mediante FDSN cuando no están presentes allí. Extender el directo a todos sus servidores TCP requerirá un puente SeedLink→WebSocket propio.
 
 La web seguirá funcionando con los catálogos sísmicos aunque la telemetría instrumental no esté disponible.
+
+## Volcanismo y tectónica
+
+- El catálogo base procede del WFS oficial **Volcanoes of the World** del Smithsonian Global Volcanism Program y reúne 1.214 volcanes holocenos.
+- El RSS semanal Smithsonian/USGS se cruza por el identificador estable `Volcano_Number`. La interfaz solo destaca como actividad reciente aquello que aparece en ese informe; pertenecer al catálogo holoceno no se presenta como una erupción actual.
+- Los estados semanales distinguen actividad eruptiva nueva, actividad eruptiva continuada, inestabilidad y otros informes. La fecha y el periodo de cada informe permanecen unidos al volcán.
+- `.github/workflows/sync-volcanoes.yml` ejecuta la actualización cada viernes, después del cierre semanal del GVP, y publica únicamente el catálogo comprimido cuando cambia.
+- La tectónica utiliza el modelo PB2002 completo: 52 placas —14 grandes y 38 menores—, 150 límites topológicos y 13 orógenos o zonas de deformación difusa. Las líneas discontinuas son estas zonas no rígidas, no límites omitidos de microplacas.
 
 ## Rendimiento
 
