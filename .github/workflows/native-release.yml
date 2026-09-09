@@ -13,6 +13,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: native-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish-tauri:
     name: ${{ matrix.name }}
@@ -37,6 +41,7 @@ jobs:
             args: "--target aarch64-apple-darwin"
             target: "aarch64-apple-darwin"
     runs-on: ${{ matrix.platform }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -58,7 +63,8 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: "Episismic v__VERSION__"
-          releaseBody: "Episismic 1.2.4 estable para Windows, macOS y Linux. Añade actividad volcánica semanal Smithsonian/USGS y sustituye el halo direccional por un contorno uniforme del globo político. Los binarios no están firmados por una autoridad comercial."
+          releaseBody: "Episismic v__VERSION__ estable para Windows, macOS y Linux. Detalles de esta versión en el README del repositorio. Los binarios no están firmados por una autoridad comercial."
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+

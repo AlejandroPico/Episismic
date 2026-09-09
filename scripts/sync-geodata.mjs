@@ -1,6 +1,6 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { gzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 
 const outputDir = path.resolve('public/data');
 const secondaryStationShardCount = 16;
@@ -34,7 +34,7 @@ const plateSources = [
 ];
 
 async function fetchText(url, encoding = 'utf-8') {
-  const response = await fetch(url, { headers: { Accept: 'text/plain, application/json, application/rss+xml', 'User-Agent': 'Episismic geodata sync' } });
+  const response = await fetch(url, { signal: AbortSignal.timeout(30_000), headers: { Accept: 'text/plain, application/json, application/rss+xml', 'User-Agent': 'Episismic geodata sync' } });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}: ${url}`);
   return new TextDecoder(encoding).decode(await response.arrayBuffer());
 }
@@ -207,7 +207,47 @@ async function syncStations() {
   return { operational: stations.length, secondary: secondaryStations.length };
 }
 
+async function syncWeeklyVolcanoes() {
+  // El catálogo geográfico cambia mucho menos que el informe semanal.
+  // Leer primero el snapshot garantiza que un fallo no cree un archivo vacío.
+  const outputPath = path.join(outputDir, 'volcanoes.json.gz');
+  const volcanoes = JSON.parse(gunzipSync(await readFile(outputPath)).toString('utf8'));
+  if (!Array.isArray(volcanoes) || !volcanoes.length || volcanoes.some((v) => !v.id || !Number.isFinite(v.lat) || !Number.isFinite(v.lng))) {
+    throw new Error('El catálogo volcánico local no es válido');
+  }
+  let activityText;
+  if (process.env.EPISISMIC_VOLCANO_ACTIVITY_FILE) {
+    activityText = new TextDecoder('windows-1252').decode(await readFile(process.env.EPISISMIC_VOLCANO_ACTIVITY_FILE));
+  } else {
+    try {
+      activityText = await fetchText('https://volcano.si.edu/news/WeeklyVolcanoRSS.xml', 'windows-1252');
+    } catch (error) {
+      const message = `Smithsonian no está disponible: ${error.message}. Se conserva el informe anterior con sus fechas originales; no se ha actualizado la actividad.`;
+      console.warn(process.env.GITHUB_ACTIONS ? `::warning::${message.replace(/[\r\n]/g, ' ')}` : message);
+      if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY, `### Actividad volcánica no actualizada\n\n${message}\n`);
+      return { catalogued: volcanoes.length, weekly: volcanoes.filter((v) => v.weeklyActivity).length, skipped: true };
+    }
+  }
+  const weeklyActivity = parseWeeklyVolcanicActivity(activityText);
+  if (!/<rss[\s>]/i.test(activityText) || !weeklyActivity.size) {
+    throw new Error('El RSS volcánico no contiene informes reconocibles; se conserva el archivo anterior');
+  }
+  const fields = ['weeklyActivity', 'weeklyActivityLabel', 'weeklyReportPeriod', 'weeklyReportUpdatedAt', 'weeklyReportUrl'];
+  let matched = 0;
+  const updated = volcanoes.map((volcano) => {
+    const next = { ...volcano };
+    for (const field of fields) delete next[field];
+    const report = weeklyActivity.get(String(volcano.id));
+    if (report) { Object.assign(next, report); matched += 1; }
+    return next;
+  });
+  if (!matched) throw new Error('Ningún informe coincide con el catálogo volcánico; se conserva el archivo anterior');
+  await writeFile(outputPath, gzipSync(`${JSON.stringify(updated)}\n`, { level: 9 }));
+  return { catalogued: updated.length, weekly: matched };
+}
+
 async function syncVolcanoes() {
+  if (process.argv.includes('--weekly-activity-only')) return syncWeeklyVolcanoes();
   const url = 'https://webservices.volcano.si.edu/geoserver/GVP-VOTW/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=GVP-VOTW%3ASmithsonian_VOTW_Holocene_Volcanoes&outputFormat=application%2Fjson&maxFeatures=2000';
   const activityUrl = 'https://volcano.si.edu/news/WeeklyVolcanoRSS.xml';
   const [collectionText, activityText] = await Promise.all([
@@ -252,7 +292,7 @@ async function syncPlates() {
 await mkdir(outputDir, { recursive: true });
 if (process.argv.includes('--volcanoes-only')) {
   const volcanoCount = await syncVolcanoes();
-  console.log(`Volcanes sincronizados: ${volcanoCount.catalogued} holocenos y ${volcanoCount.weekly} con actividad semanal Smithsonian/USGS.`);
+  if (!volcanoCount.skipped) console.log(`Volcanes sincronizados: ${volcanoCount.catalogued} holocenos y ${volcanoCount.weekly} con actividad semanal Smithsonian/USGS.`);
 } else {
   const [stationCount, volcanoCount] = await Promise.all([syncStations(), syncVolcanoes(), syncPlates()]);
   console.log(`Geodatos sincronizados: ${stationCount.operational} estaciones operativas, ${stationCount.secondary} secundarias, ${volcanoCount.catalogued} volcanes (${volcanoCount.weekly} con actividad semanal) y PB2002.`);

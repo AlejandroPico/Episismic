@@ -2,11 +2,19 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.2.4` — edición estable y publicable
+**Versión actual:** `1.2.5` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.2.5
+
+- La actualización volcánica sigue siendo semanal (viernes, 02:20 UTC) y consulta únicamente el RSS de actividad; reutiliza el catálogo geográfico ya incluido.
+- Si Smithsonian rechaza la descarga (403), falla la red o se agota el límite de 30 segundos, se conserva íntegramente el informe anterior, con sus fechas originales. Actions muestra una advertencia y deja constancia de que no se ha actualizado; no se presenta el dato antiguo como recién descargado.
+- Un RSS inválido o sin coincidencias se rechaza sin sobrescribir los datos. Una actualización correcta elimina las clasificaciones de la semana anterior que ya no aparecen en el informe.
+- Pages se publica explícitamente tras el workflow semanal, porque un commit del bot con `GITHUB_TOKEN` no activa otro workflow de tipo `push`. Los artefactos temporales de Pages se conservan un día.
+- Se limitan los tiempos máximos de sincronización, publicación web y compilación nativa; las publicaciones nativas se serializan para evitar que modifiquen simultáneamente la misma release.
 
 ## Novedades de 1.2.4
 
@@ -208,7 +216,7 @@ npm run desktop:dev
 npm run desktop:build
 ```
 
-Cada actualización de `main` ejecuta pruebas, TypeScript, Vite y el despliegue de GitHub Pages mediante Actions.
+Cada actualización de código en `main` ejecuta pruebas, TypeScript, Vite y el despliegue de GitHub Pages mediante Actions; se omiten los cambios exclusivamente documentales. Los instaladores nativos se generan al cambiar los archivos de versión, las dependencias o `src-tauri`, o mediante ejecución manual.
 
 ## Versionado
 
@@ -233,4 +241,5 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 
 ## Aviso
 
-Episismic 1.2.4 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.2.5 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+
