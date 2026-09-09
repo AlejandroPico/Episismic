@@ -41,7 +41,7 @@ jobs:
       - name: Test
         run: |
           npm test
-          node --test scripts/sync-volcanoes.test.mjs
+          node --test scripts/check-volcano-sync.mjs
       - name: Build
         run: npm run build
       - name: Configure Pages
