@@ -14,7 +14,7 @@ Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, 
 - Si Smithsonian rechaza la descarga (403), falla la red o se agota el límite de 30 segundos, se conserva íntegramente el informe anterior, con sus fechas originales. Actions muestra una advertencia y deja constancia de que no se ha actualizado; no se presenta el dato antiguo como recién descargado.
 - Un RSS inválido o sin coincidencias se rechaza sin sobrescribir los datos. Una actualización correcta elimina las clasificaciones de la semana anterior que ya no aparecen en el informe.
 - Pages se publica explícitamente tras el workflow semanal, porque un commit del bot con `GITHUB_TOKEN` no activa otro workflow de tipo `push`. Los artefactos temporales de Pages se conservan un día.
-- Se limitan los tiempos máximos de sincronización, publicación web y compilación nativa; las publicaciones nativas se serializan para evitar que modifiquen simultáneamente la misma release.
+- Se limitan los tiempos máximos de sincronización, publicación web y compilación nativa; una nueva compilación nativa cancela la anterior de la misma rama para evitar trabajo duplicado. La release queda vinculada al commit compilado.
 
 ## Novedades de 1.2.4
 
@@ -242,4 +242,3 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 ## Aviso
 
 Episismic 1.2.5 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
-
