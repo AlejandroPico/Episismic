@@ -40,13 +40,10 @@ type ResolvedTheme = 'morning' | 'afternoon' | 'night';
 const GLOBE_THEME = {
   morning: {
     space: '#c8dcdf',
-    ocean: '#a6d3e8',
     politicalFill: '#d7dfd0',
     politicalBorder: '#678783',
     label: '#253534',
     labelHalo: 'rgba(244,248,241,.92)',
-    oceanLabel: '#1b465b',
-    oceanLabelHalo: 'rgba(240,250,255,.92)',
     volcanoFill: '#b94732',
     volcanoStroke: '#f5ddd4',
     volcanoLabel: '#8f3024',
@@ -56,13 +53,10 @@ const GLOBE_THEME = {
   },
   afternoon: {
     space: '#463942',
-    ocean: '#426b83',
     politicalFill: '#394746',
     politicalBorder: '#c0a98f',
     label: '#f2e9dc',
     labelHalo: 'rgba(34,25,27,.92)',
-    oceanLabel: '#eff8fb',
-    oceanLabelHalo: 'rgba(18,43,57,.95)',
     volcanoFill: '#ed704d',
     volcanoStroke: '#ffe0ca',
     volcanoLabel: '#ff936f',
@@ -72,13 +66,10 @@ const GLOBE_THEME = {
   },
   night: {
     space: '#050a0f',
-    ocean: '#12364c',
     politicalFill: '#172633',
     politicalBorder: '#8ca4b6',
     label: '#f4f7f5',
     labelHalo: 'rgba(2,9,12,.95)',
-    oceanLabel: '#d8f0ff',
-    oceanLabelHalo: 'rgba(3,19,32,.96)',
     volcanoFill: '#df5a3f',
     volcanoStroke: '#ffddcb',
     volcanoLabel: '#ff7b5c',
@@ -198,38 +189,6 @@ function graticuleGeoJson(): FeatureCollection {
   return asCollection(features);
 }
 
-function politicalOceanGeoJson(): FeatureCollection {
-  const features: FeatureCollection['features'] = [];
-  // Franjas estrechas evitan un polígono que atraviese de extremo a extremo el antimeridiano.
-  for (let west = -180; west < 180; west += 30) {
-    const east = west + 30;
-    const westEdge = Array.from({ length: 19 }, (_, index) => [west, -90 + index * 10]);
-    const eastEdge = Array.from({ length: 19 }, (_, index) => [east, 90 - index * 10]);
-    const ring = [...westEdge, ...eastEdge, westEdge[0]];
-    features.push({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] }, properties: {} });
-  }
-  return asCollection(features);
-}
-
-function marineLabelsGeoJson(): FeatureCollection {
-  const labels: Array<[string, number, number]> = [
-    ['Océano Pacífico', -145, 7], ['Océano Pacífico', 165, -10],
-    ['Océano Atlántico', -36, 3], ['Océano Índico', 79, -20],
-    ['Océano Ártico', 0, 81], ['Océano Austral', -75, -64],
-    ['Mar Mediterráneo', 18, 36], ['Mar Caribe', -76, 16],
-    ['Mar del Norte', 3, 56], ['Mar Báltico', 20, 58],
-    ['Mar Negro', 35, 43], ['Mar Rojo', 38, 20],
-    ['Mar Arábigo', 64, 16], ['Golfo de Bengala', 89, 14],
-    ['Mar de Japón', 135, 40], ['Mar de China Meridional', 114, 14],
-    ['Mar de Filipinas', 136, 20], ['Mar del Coral', 154, -18],
-    ['Mar de Tasmania', 160, -41], ['Mar de Bering', -176, 57],
-    ['Mar de los Sargazos', -53, 28], ['Golfo de México', -91, 24],
-  ];
-  return asCollection(labels.map(([name, lng, lat]) => ({
-    type: 'Feature', geometry: { type: 'Point', coordinates: [lng, lat] }, properties: { name },
-  })));
-}
-
 function globeOutlineGeoJson(center: { lat: number; lng: number }): FeatureCollection {
   const horizonDistanceKm = 6371.0088 * Math.PI * .4975;
   const coordinates = Array.from({ length: 181 }, (_, index) => destinationPoint(center, index * 2, horizonDistanceKm));
@@ -277,8 +236,6 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addSource('ocean-labels', { type: 'raster', tiles: [OCEAN_LABEL_TILES], tileSize: 256, minzoom: 0, maxzoom: 16, attribution: 'Ocean reference © Esri and contributors' });
   map.addSource('countries', { type: 'geojson', data: COUNTRIES_URL, attribution: 'Natural Earth' });
   map.addSource('places', { type: 'geojson', data: PLACES_URL, attribution: 'Natural Earth' });
-  map.addSource('political-ocean', { type: 'geojson', data: politicalOceanGeoJson() as never });
-  map.addSource('marine-labels', { type: 'geojson', data: marineLabelsGeoJson() as never });
   map.addSource('plate-boundaries', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/plate-boundaries.json`, attribution: 'PB2002 · Peter Bird / Nordpil' });
   map.addSource('plate-orogens', { type: 'geojson', data: `${import.meta.env.BASE_URL}data/plate-orogens.json`, attribution: 'PB2002 · Peter Bird / Nordpil' });
   map.addSource('graticule', { type: 'geojson', data: graticuleGeoJson() as never });
@@ -292,7 +249,6 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addLayer({ id: 'satellite-base', type: 'raster', source: 'satellite', layout: { visibility: 'none' }, paint: { 'raster-resampling': 'linear', 'raster-fade-duration': 0 } });
   map.addLayer({ id: 'relief-base', type: 'raster', source: 'relief', layout: { visibility: 'none' }, paint: { 'raster-resampling': 'linear', 'raster-fade-duration': 0, 'raster-saturation': -0.12 } });
   map.addLayer({ id: 'bathymetry-base', type: 'raster', source: 'bathymetry', layout: { visibility: 'none' }, paint: { 'raster-resampling': 'linear', 'raster-fade-duration': 0, 'raster-saturation': -0.08 } });
-  map.addLayer({ id: 'political-ocean-fill', type: 'fill', source: 'political-ocean', layout: { visibility: 'none' }, paint: { 'fill-color': GLOBE_THEME.night.ocean, 'fill-opacity': 1 } });
   map.addLayer({
     id: 'political-fill', type: 'fill', source: 'countries',
     paint: { 'fill-color': '#172633', 'fill-opacity': 0.99 },
@@ -352,9 +308,8 @@ function addSourceAndLayers(map: maplibregl.Map) {
   map.addLayer({ id: 's-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 's'], paint: { 'line-color': '#ff8a80', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 2.6, 8, 3.6, 16, 4.5], 'line-opacity': 0 } as never });
   map.addLayer({ id: 'surface-wave', type: 'line', source: 'wave', filter: ['==', ['get', 'waveType'], 'surface'], paint: { 'line-color': '#ffe08a', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 2.2, 8, 3.2, 16, 4.2], 'line-dasharray': [2, 1.4], 'line-opacity': 0 } as never });
 
-  map.addLayer({ id: 'country-labels', type: 'symbol', source: 'countries', minzoom: 0, maxzoom: 9, layout: { 'text-field': ['coalesce', ['get', 'NAME_ES'], ['get', 'ADMIN'], ['get', 'NAME']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 0, 9, 5, 12, 8, 15], 'text-transform': 'uppercase', 'text-letter-spacing': 0.05, 'text-allow-overlap': false }, paint: { 'text-color': '#253534', 'text-halo-color': 'rgba(244,248,241,.92)', 'text-halo-width': 0.8 } as never });
-  map.addLayer({ id: 'place-labels', type: 'symbol', source: 'places', minzoom: 3, filter: ['<=', ['to-number', ['get', 'scalerank']], 7], layout: { 'text-field': ['coalesce', ['get', 'name'], ['get', 'nameascii']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 10, 8, 12, 14, 15], 'text-allow-overlap': false }, paint: { 'text-color': '#253534', 'text-halo-color': 'rgba(244,248,241,.92)', 'text-halo-width': 0.85 } as never });
-  map.addLayer({ id: 'marine-labels', type: 'symbol', source: 'marine-labels', minzoom: 0, maxzoom: 8, layout: { 'text-field': ['get', 'name'], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 0, 10, 4, 12, 7, 14], 'text-letter-spacing': 0.08, 'text-allow-overlap': false }, paint: { 'text-color': GLOBE_THEME.night.oceanLabel, 'text-halo-color': GLOBE_THEME.night.oceanLabelHalo, 'text-halo-width': 0.9 } as never });
+  map.addLayer({ id: 'country-labels', type: 'symbol', source: 'countries', minzoom: 0, maxzoom: 9, layout: { 'text-field': ['coalesce', ['get', 'NAME_ES'], ['get', 'ADMIN'], ['get', 'NAME']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 0, 8, 5, 12, 8, 15], 'text-transform': 'uppercase', 'text-letter-spacing': 0.08, 'text-allow-overlap': false }, paint: { 'text-color': '#253534', 'text-halo-color': 'rgba(244,244,226,.88)', 'text-halo-width': 1.4 } as never });
+  map.addLayer({ id: 'place-labels', type: 'symbol', source: 'places', minzoom: 3, filter: ['<=', ['to-number', ['get', 'scalerank']], 7], layout: { 'text-field': ['coalesce', ['get', 'name'], ['get', 'nameascii']], 'text-font': ['Open Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 3, 9, 8, 12, 14, 15], 'text-allow-overlap': false }, paint: { 'text-color': '#eaf6f5', 'text-halo-color': 'rgba(2,9,12,.95)', 'text-halo-width': 1.6 } as never });
 }
 
 export function GlobeView({
@@ -641,13 +596,11 @@ export function GlobeView({
     const map = mapRef.current;
     if (!map || !ready) return;
     setVisibility(map, ['political-fill', 'political-border'], mapStyle === 'political');
-    setVisibility(map, ['political-ocean-fill'], mapStyle === 'political');
     setVisibility(map, ['satellite-base'], mapStyle === 'satellite');
     setVisibility(map, ['relief-base'], mapStyle === 'relief');
     setVisibility(map, ['bathymetry-base'], mapStyle === 'bathymetry');
     const palette = GLOBE_THEME[resolvedTheme];
     map.setPaintProperty('space', 'background-color', palette.space);
-    map.setPaintProperty('political-ocean-fill', 'fill-color', palette.ocean);
     map.setPaintProperty('political-fill', 'fill-color', palette.politicalFill);
     map.setPaintProperty('political-border', 'line-color', palette.politicalBorder);
     const flat = mapStyle === 'political';
@@ -665,8 +618,6 @@ export function GlobeView({
     map.setPaintProperty('country-labels', 'text-halo-color', flat ? palette.labelHalo : 'rgba(2,9,12,.95)');
     map.setPaintProperty('place-labels', 'text-color', flat ? palette.label : '#eaf6f5');
     map.setPaintProperty('place-labels', 'text-halo-color', flat ? palette.labelHalo : 'rgba(2,9,12,.95)');
-    map.setPaintProperty('marine-labels', 'text-color', palette.oceanLabel);
-    map.setPaintProperty('marine-labels', 'text-halo-color', palette.oceanLabelHalo);
   }, [mapStyle, ready, resolvedTheme]);
 
   useEffect(() => {
@@ -697,9 +648,9 @@ export function GlobeView({
     setVisibility(map, ['plate-lines', 'orogen-lines'], layers.plates);
     setVisibility(map, ['volcano-clusters', 'volcano-cluster-count', 'volcano-weekly-rings', 'volcano-new-activity-rings', 'volcano-points', 'volcano-labels'], layers.volcanoes);
     setVisibility(map, ['globe-outline-line'], layers.atmosphere && mapStyle === 'political');
-    setVisibility(map, ['reference-label-layer'], layers.labels && mapStyle === 'satellite');
+    setVisibility(map, ['reference-label-layer'], layers.labels && (mapStyle === 'political' || mapStyle === 'satellite'));
     setVisibility(map, ['ocean-label-layer'], layers.labels && mapStyle === 'bathymetry');
-    setVisibility(map, ['country-labels', 'place-labels', 'marine-labels'], layers.labels && mapStyle === 'political');
+    setVisibility(map, ['country-labels', 'place-labels'], false);
     setVisibility(map, ['graticule-lines'], layers.graticule);
   }, [layers, mapStyle, ready]);
 

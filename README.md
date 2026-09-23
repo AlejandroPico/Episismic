@@ -8,11 +8,9 @@ Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, 
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
 
-## Novedades de 1.2.6
+## Corrección de 1.2.6
 
-- En Político plano, el mar tiene un azul celeste de mañana, azul medio de tarde y azul profundo de noche; el espacio exterior mantiene el color propio del tema.
-- Los nombres de países y localidades se dibujan como texto vectorial en vez de ampliar las teselas rasterizadas, con contornos más finos y contraste adaptado al tema. Se incorporan etiquetas vectoriales para los principales océanos y mares.
-- Las otras vistas conservan sus fuentes de etiquetas cartográficas habituales.
+- Se restablece la representación anterior de Político plano mientras se corrige el relleno oceánico introducido en esta versión, que ocultaba continentes y nombres.
 
 ## Novedades de 1.2.5
 
