@@ -20,7 +20,7 @@
   --warm: #ffb84d;
   --danger: #ff5a64;
   --shadow: 0 22px 65px rgba(0, 0, 0, .38);
-  --globe-space: #050a0f;
+  --globe-space: #111823;
   --monitor-bg: #071318;
   --monitor-plot: #0d252b;
   --monitor-grid: rgba(151, 204, 199, .25);
@@ -46,7 +46,7 @@
   --warm: #c67113;
   --danger: #c93845;
   --shadow: 0 22px 65px rgba(18, 54, 52, .2);
-  --globe-space: #c8dcdf;
+  --globe-space: #edf4f0;
   --monitor-bg: #edf5f3;
   --monitor-plot: #dce9e6;
   --monitor-grid: rgba(27, 78, 78, .2);
@@ -71,7 +71,7 @@
   --accent-soft: rgba(123, 216, 203, .13);
   --warm: #ffb45c;
   --danger: #ff6f6f;
-  --globe-space: #463942;
+  --globe-space: #211e29;
   --monitor-bg: #1b2529;
   --monitor-plot: #29363a;
   --monitor-grid: rgba(255, 213, 159, .2);
