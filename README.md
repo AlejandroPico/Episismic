@@ -2,11 +2,17 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.2.6` — edición estable y publicable
+**Versión actual:** `1.2.7` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.2.7
+
+- Político plano utiliza el fondo cartográfico del propio globo para colorear el mar: celeste por la mañana, azul medio por la tarde y azul profundo por la noche. El espacio exterior conserva el color de cada tema y las tierras permanecen por encima del agua.
+- Se sustituyen las etiquetas rasterizadas de esa vista por textos vectoriales para los países, localidades disponibles y los principales mares y océanos, con contornos finos y contraste adaptado a cada paleta.
+- Las vistas satélite y batimetría conservan sus etiquetas anteriores.
 
 ## Corrección de 1.2.6
 
@@ -245,4 +251,4 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 
 ## Aviso
 
-Episismic 1.2.6 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.2.7 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
