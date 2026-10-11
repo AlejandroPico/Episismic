@@ -8,6 +8,16 @@ Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, 
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
 
+## Corrección del tema automático
+
+El modo Automático utiliza la fecha y la hora del sistema para estimar la posición solar en la ciudad de referencia de su zona horaria. Aplica Noche entre la puesta y la salida del sol, y Mañana o Tarde durante el día, antes o después del mediodía solar. La duración del día cambia con la estación y el hemisferio; el cambio de hora queda incluido en el reloj del equipo.
+
+Se recalcula cada minuto y al recuperar el foco o volver de una suspensión. No requiere acceso a la ubicación ni conexión: es una aproximación regional, no una medición de la luz en la ubicación exacta. Las zonas de desfase fijo o desconocidas usan Noche de 21:00 a 07:00 como alternativa. Los temas manuales permanecen fijos.
+
+Las coordenadas de referencia proceden de `zone.tab` y sus alias de `backward`, de la [base de zonas horarias de IANA](https://data.iana.org/time-zones/tzdb/) (dominio público). Se incluyen en la aplicación y pueden regenerarse con `node scripts/sync-theme-timezones.mjs`. El cálculo usa las [ecuaciones solares aproximadas de NOAA](https://gml.noaa.gov/grad/solcalc/solareqns.PDF).
+
+En móvil, la ficha de un terremoto puede minimizarse deslizando la cabecera hacia abajo o pulsando su flecha. Solo queda visible la cabecera; el mapa y las ondas siguen activos. Se vuelve a desplegar deslizando hacia arriba o pulsando la flecha, conservando la pestaña y sus controles. Al seleccionar otro terremoto, su ficha se abre desplegada.
+
 ## Corrección de 1.2.8
 
 - Político plano vuelve a usar el mar y las etiquetas originales. Las tierras se dibujan con opacidad completa para que el fondo del globo no oculte los continentes.
@@ -132,7 +142,7 @@ El antiguo objetivo 9 de niveles de detalle y agrupación se mantiene retirado. 
 - Cartografía Política, Satélite, Relieve y Batimetría.
 - Capas de terremotos, estaciones, placas tectónicas, volcanes, etiquetas, atmósfera, retícula, leyenda y ShakeMap estimado.
 - Catálogo deduplicado de USGS/ComCat, EMSC y GEOFON, actualizado cada 30 segundos.
-- Historial de una hora, 24 horas, siete días y 30 días.
+- Historial de una hora, 24 horas, siete días, 30 días y 90 días. La franja de 90 días consulta las tres fuentes en bloques de 30 días y se aplica también al mapa, al archivo local y a la distribución temporal.
 - Consulta histórica de hasta 5.000 eventos y persistencia SQLite en el navegador.
 - Más de 4.000 estaciones operativas anunciadas actualmente por EarthScope y ORFEUS, más un catálogo ampliado opcional de más de 76.000 estaciones históricas o sin directo confirmado.
 - Catálogo Smithsonian GVP de volcanes holocenos y límites tectónicos PB2002.

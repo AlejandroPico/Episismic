@@ -1,18 +1,12 @@
 import type { Earthquake, TimeWindow } from '../types';
 import { normalizeUsgsFeature, type UsgsCollection } from './usgs';
+import { windowStart } from '../utils/format';
 
-const USGS_FEEDS: Record<TimeWindow, string> = {
+const USGS_FEEDS: Record<Exclude<TimeWindow, 'quarter'>, string> = {
   hour: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson',
   day: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson',
   week: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson',
   month: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson',
-};
-
-const WINDOW_MS: Record<TimeWindow, number> = {
-  hour: 60 * 60_000,
-  day: 24 * 60 * 60_000,
-  week: 7 * 24 * 60 * 60_000,
-  month: 30 * 24 * 60 * 60_000,
 };
 
 interface EmscFeature {
@@ -27,7 +21,7 @@ interface EmscFeature {
 interface EmscCollection { features: EmscFeature[] }
 
 function eventLimit(window: TimeWindow) {
-  return window === 'month' ? 20000 : window === 'week' ? 12000 : window === 'day' ? 5000 : 1000;
+  return window === 'month' || window === 'quarter' ? 20000 : window === 'week' ? 12000 : window === 'day' ? 5000 : 1000;
 }
 
 async function fetchJson<T>(url: string, signal?: AbortSignal): Promise<T> {
@@ -36,15 +30,17 @@ async function fetchJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function fetchUsgs(window: TimeWindow, signal?: AbortSignal): Promise<Earthquake[]> {
-  const collection = await fetchJson<UsgsCollection>(USGS_FEEDS[window], signal);
+async function fetchUsgs(window: TimeWindow, start: string, end: string, signal?: AbortSignal): Promise<Earthquake[]> {
+  const query = new URLSearchParams({ format: 'geojson', orderby: 'time', limit: String(eventLimit(window)), starttime: start, endtime: end });
+  const url = window === 'quarter' ? `https://earthquake.usgs.gov/fdsnws/event/1/query?${query}` : USGS_FEEDS[window];
+  const collection = await fetchJson<UsgsCollection>(url, signal);
   return collection.features.filter((feature) => feature.geometry?.coordinates?.length >= 3).map(normalizeUsgsFeature);
 }
 
-async function fetchEmsc(window: TimeWindow, signal?: AbortSignal): Promise<Earthquake[]> {
+async function fetchEmsc(window: TimeWindow, start: string, end: string, signal?: AbortSignal): Promise<Earthquake[]> {
   const query = new URLSearchParams({
     format: 'json', orderby: 'time', limit: String(eventLimit(window)),
-    starttime: new Date(Date.now() - WINDOW_MS[window]).toISOString(),
+    starttime: start, endtime: end,
   });
   const collection = await fetchJson<EmscCollection>(`https://www.seismicportal.eu/fdsnws/event/1/query?${query}`, signal);
   return collection.features.map((feature) => {
@@ -67,10 +63,10 @@ async function fetchEmsc(window: TimeWindow, signal?: AbortSignal): Promise<Eart
   }).filter((event) => Number.isFinite(event.lat) && Number.isFinite(event.lng));
 }
 
-async function fetchGeofon(window: TimeWindow, signal?: AbortSignal): Promise<Earthquake[]> {
+async function fetchGeofon(window: TimeWindow, start: string, end: string, signal?: AbortSignal): Promise<Earthquake[]> {
   const query = new URLSearchParams({
     format: 'text', orderby: 'time', limit: String(eventLimit(window)),
-    starttime: new Date(Date.now() - WINDOW_MS[window]).toISOString(),
+    starttime: start, endtime: end,
   });
   const response = await fetch(`https://geofon.gfz-potsdam.de/fdsnws/event/1/query?${query}`, { signal, cache: 'no-store' });
   if (!response.ok) throw new Error(`GEOFON respondió ${response.status}`);
@@ -101,8 +97,19 @@ function distanceKm(a: Earthquake, b: Earthquake) {
 
 export function mergeEarthquakeCatalogs(events: Earthquake[]): Earthquake[] {
   const merged: Earthquake[] = [];
+  let recentStart = 0;
   for (const candidate of [...events].sort((a, b) => b.time - a.time)) {
-    const duplicate = merged.find((event) => Math.abs(event.time - candidate.time) <= 90_000 && Math.abs(event.magnitude - candidate.magnitude) <= 1.2 && distanceKm(event, candidate) <= 65);
+    // Sorted origins let us discard old comparison candidates permanently.
+    // Only events within 90 seconds can match, even in the 90-day catalog.
+    while (recentStart < merged.length && merged[recentStart].time - candidate.time > 90_000) recentStart++;
+    let duplicate: Earthquake | undefined;
+    for (let index = recentStart; index < merged.length; index++) {
+      const event = merged[index];
+      if (Math.abs(event.magnitude - candidate.magnitude) <= 1.2 && distanceKm(event, candidate) <= 65) {
+        duplicate = event;
+        break;
+      }
+    }
     if (!duplicate) { merged.push(candidate); continue; }
     duplicate.catalogs = [...new Set([...duplicate.catalogs, ...candidate.catalogs])];
     duplicate.solutions = [...(duplicate.solutions ?? []), ...(candidate.solutions ?? [])].filter((solution, index, all) =>
@@ -121,10 +128,22 @@ export function mergeEarthquakeCatalogs(events: Earthquake[]): Earthquake[] {
 }
 
 export async function fetchCombinedEarthquakes(window: TimeWindow, signal?: AbortSignal): Promise<{ events: Earthquake[]; sources: string[] }> {
-  const results = await Promise.allSettled([fetchUsgs(window, signal), fetchEmsc(window, signal), fetchGeofon(window, signal)]);
+  const now = Date.now();
+  const start = windowStart(window, now);
+  // Query 90 days in three 30-day blocks so a provider's per-query event cap
+  // does not truncate the entire interval to only its newest events.
+  const ranges = window === 'quarter' ? Array.from({ length: 3 }, (_, index) => ({
+    start: new Date(start + index * 2_592_000_000).toISOString(),
+    end: new Date(start + (index + 1) * 2_592_000_000).toISOString(),
+  })) : [{ start: new Date(start).toISOString(), end: new Date(now).toISOString() }];
+  const fetchSource = async (fetcher: typeof fetchUsgs) => {
+    const chunks = await Promise.all(ranges.map((range) => fetcher(window, range.start, range.end, signal)));
+    return chunks.flat();
+  };
+  const results = await Promise.allSettled([fetchSource(fetchUsgs), fetchSource(fetchEmsc), fetchSource(fetchGeofon)]);
   const labels = ['USGS', 'EMSC', 'GEOFON'];
   const sources = labels.filter((_, index) => results[index].status === 'fulfilled');
-  const events = results.flatMap((result) => result.status === 'fulfilled' ? result.value : []);
+  const events = results.flatMap((result) => result.status === 'fulfilled' ? result.value : []).filter((event) => event.time >= start && event.time <= now);
   if (!events.length) throw new Error('Ninguno de los catálogos sísmicos respondió');
   return { events: mergeEarthquakeCatalogs(events), sources };
 }

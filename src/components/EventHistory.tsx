@@ -16,6 +16,7 @@ interface EventHistoryProps {
 const windows: { id: TimeWindow; label: string }[] = [
   { id: 'hour', label: '1 h' }, { id: 'day', label: '24 h' },
   { id: 'week', label: '7 d' }, { id: 'month', label: '30 d' },
+  { id: 'quarter', label: '90 d' },
 ];
 
 export function EventHistory({ events, selected, status, timeWindow, onWindowChange, onSelect, onRefresh, onClose }: EventHistoryProps) {
@@ -39,7 +40,7 @@ export function EventHistory({ events, selected, status, timeWindow, onWindowCha
       </div>
       <div className="segmented" aria-label="Ventana temporal">
         {windows.map((item) => (
-          <button key={item.id} className={timeWindow === item.id ? 'active' : ''} onClick={() => onWindowChange(item.id)}>{item.label}</button>
+          <button key={item.id} className={timeWindow === item.id ? 'active' : ''} aria-pressed={timeWindow === item.id} onClick={() => onWindowChange(item.id)}>{item.label}</button>
         ))}
       </div>
       <div className="history-list">
