@@ -79,7 +79,11 @@ describe('theme refresh lifecycle', () => {
   function setup() {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-11T16:00:00+02:00'));
-    vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({ timeZone: 'Europe/Madrid' } as Intl.ResolvedDateTimeFormatOptions);
+    // Fake timers wrap DateTimeFormat differently across Node versions. Mock
+    // its factory so the returned object's timezone is independent of the host.
+    vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => ({
+      resolvedOptions: () => ({ timeZone: 'Europe/Madrid' }),
+    }) as Intl.DateTimeFormat);
     const root = { dataset: { theme: '' } };
     const doc = Object.assign(new EventTarget(), { documentElement: root });
     const win = Object.assign(new EventTarget(), { setInterval, clearInterval });
