@@ -153,7 +153,7 @@ function ArchivePanel({
   return <section className="control-section">
     <h3><Database size={16} /> Archivo sísmico</h3>
     <div className="archive-summary" aria-label="Resumen del catálogo visible">
-      <article><span>VENTANA</span><strong>{isHistorical ? 'ARCHIVO' : ({ hour: '1 HORA', day: '24 HORAS', week: '7 DÍAS', month: '30 DÍAS' })[timeWindow]}</strong></article>
+      <article><span>VENTANA</span><strong>{isHistorical ? 'ARCHIVO' : ({ hour: '1 HORA', day: '24 HORAS', week: '7 DÍAS', month: '30 DÍAS', quarter: '90 DÍAS' })[timeWindow]}</strong></article>
       <article><span>EVENTOS</span><strong>{visibleEventCount.toLocaleString('es-ES')}</strong></article>
       <article><span>MÁXIMO</span><strong style={{ color: strongestEvent ? magnitudeColor(strongestEvent.magnitude) : undefined }}>{strongestEvent ? formatMagnitude(strongestEvent.magnitude) : '—'}</strong></article>
       <article><span>ESTACIONES</span><strong>{stations.length.toLocaleString('es-ES')}</strong><small>{geodataReady ? 'FDSN DISPONIBLE' : 'CARGANDO RED'}</small></article>
@@ -224,6 +224,7 @@ function SettingsPanel(props: Pick<ControlPanelProps, 'theme' | 'autoFocus' | 'a
     </section>
     <section className="control-section">
       <h3>Tema</h3>
+      <p className="safety-note">Automático estima la luz solar con la fecha, la hora y la zona horaria del dispositivo.</p>
       <div className="theme-options">
         {(['automatic', 'morning', 'afternoon', 'night'] as ThemeMode[]).map((theme) => <button key={theme} className={props.theme === theme ? 'active' : ''} onClick={() => props.onTheme(theme)}>{({ automatic: 'Automático', morning: 'Mañana', afternoon: 'Tarde', night: 'Noche' })[theme]}</button>)}
       </div>

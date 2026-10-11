@@ -1,4 +1,4 @@
-import type { Earthquake } from '../types';
+import type { Earthquake, TimeWindow } from '../types';
 
 export function formatMagnitude(magnitude: number): string {
   return `M${magnitude.toFixed(1)}`;
@@ -43,8 +43,8 @@ export function eventRadius(event: Earthquake): number {
   return Math.max(0.08, Math.min(0.72, 0.055 * Math.pow(1.7, event.magnitude)));
 }
 
-export function windowStart(window: 'hour' | 'day' | 'week' | 'month', now = Date.now()): number {
-  const durations = { hour: 3_600_000, day: 86_400_000, week: 604_800_000, month: 2_592_000_000 };
+export function windowStart(window: TimeWindow, now = Date.now()): number {
+  const durations = { hour: 3_600_000, day: 86_400_000, week: 604_800_000, month: 2_592_000_000, quarter: 7_776_000_000 };
   return now - durations[window];
 }
 

@@ -1,4 +1,4 @@
-export type TimeWindow = 'hour' | 'day' | 'week' | 'month';
+export type TimeWindow = 'hour' | 'day' | 'week' | 'month' | 'quarter';
 export type ThemeMode = 'automatic' | 'morning' | 'afternoon' | 'night';
 export type MapStyle = 'political' | 'satellite' | 'relief' | 'bathymetry';
 export type HazardKind = 'earthquake' | 'volcano';

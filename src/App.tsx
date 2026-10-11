@@ -15,6 +15,7 @@ import type {
   Earthquake, Filters, MapLayerState, MapStyle, SeismicActivity, SeismicStation, ThemeMode, TimeWindow,
 } from './types';
 import { formatMagnitude, formatRelativeTime, haversineKm, magnitudeColor } from './utils/format';
+import { startThemeUpdates } from './utils/theme';
 
 const DEFAULT_LAYERS: MapLayerState = {
   earthquakes: true,
@@ -105,6 +106,7 @@ export default function App() {
     setPulseEvent(event);
     focus(event, event.magnitude >= 6 ? 1.05 : 1.28);
     setWavePaused(false);
+    if (window.innerWidth <= 900) { setHistoryOpen(false); setActivePanel(null); }
   }, [focus]);
 
   const selectStation = useCallback((station: SeismicStation) => {
@@ -183,15 +185,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const applyTheme = () => {
-      const hour = new Date().getHours();
-      const resolved = theme === 'automatic' ? (hour >= 7 && hour < 17 ? 'morning' : hour < 21 ? 'afternoon' : 'night') : theme;
-      document.documentElement.dataset.theme = resolved;
-    };
-    applyTheme();
-    const interval = window.setInterval(applyTheme, 60_000);
+    const stopThemeUpdates = startThemeUpdates(theme);
     localStorage.setItem('episismic:theme', JSON.stringify(theme));
-    return () => window.clearInterval(interval);
+    return stopThemeUpdates;
   }, [theme]);
 
   useEffect(() => {
