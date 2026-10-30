@@ -773,7 +773,7 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
 .compare-pin.active { color: var(--bg-deep); background: var(--accent); }
 .event-inspector-tabs { min-height: 34px; flex: 0 0 auto; display: flex; overflow-x: auto; border-bottom: 1px solid var(--line-strong); background: var(--panel-soft); scrollbar-width: none; }
 .event-inspector-tabs::-webkit-scrollbar { display: none; }
-.event-inspector .mobile-sheet-toggle { display: none; }
+
 .event-inspector-tabs button { min-width: max-content; flex: 1 0 auto; padding: 0 11px; border: 0; border-right: 1px solid var(--line); color: var(--text-soft); background: transparent; font: 600 7px/1 IBM Plex Mono,monospace; letter-spacing: .06em; cursor: pointer; }
 .event-inspector-tabs button:hover { color: var(--text); background: var(--accent-soft); }
 .event-inspector-tabs button.active { color: var(--accent); box-shadow: inset 0 -2px var(--accent); background: color-mix(in srgb,var(--accent) 8%,var(--panel-solid)); }
@@ -1537,19 +1537,39 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   .analysis-card > svg { height: 104px; }
 }
 
-/* The mobile event sheet leaves its title available while exposing the globe. */
+/* Detail sheets share the same compact header on touch and desktop. */
+.event-inspector > header, .station-inspector > header {
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+.inspector-dragging > header { cursor: grabbing; }
+.scientific-event-inspector.compact-event-inspector,
+.compact-station-inspector {
+  transform: translate(-50%, var(--sheet-drag-y, 0px));
+}
+.inspector-toggle { display: grid; }
+.scientific-event-inspector.compact-event-inspector.inspector-collapsed,
+.compact-station-inspector.inspector-collapsed {
+  height: auto;
+  max-height: none;
+}
+.inspector-collapsed > header { min-height: 54px; border-bottom: 0; }
+.inspector-collapsed .event-heading h2 { white-space: nowrap; max-height: none; }
+.inspector-collapsed .event-heading > p,
+.inspector-collapsed .event-mag-large small,
+.inspector-collapsed .compare-pin,
+.inspector-collapsed > .event-inspector-tabs,
+.inspector-collapsed > .event-inspector-content,
+.inspector-collapsed > .station-inspector-scroll { display: none; }
 @media (max-width: 900px) {
-  .scientific-event-inspector.compact-event-inspector {
-    transform: translateY(var(--sheet-drag-y, 0px));
-  }
-  .event-inspector > header {
+  .scientific-event-inspector.compact-event-inspector,
+  .compact-station-inspector { transform: translateY(var(--sheet-drag-y, 0px)); }
+  .event-inspector > header, .station-inspector > header {
     position: relative;
-    touch-action: none;
-    user-select: none;
     padding-top: 16px;
-    cursor: grab;
   }
-  .event-inspector > header::before {
+  .event-inspector > header::before, .station-inspector > header::before {
     content: "";
     position: absolute;
     top: 5px;
@@ -1560,9 +1580,7 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
     background: var(--text-soft);
     opacity: .55;
   }
-  .event-inspector .mobile-sheet-toggle { display: grid; }
-  .mobile-sheet-dragging > header { cursor: grabbing; }
-  .scientific-event-inspector.compact-event-inspector.mobile-sheet-collapsed {
+  .scientific-event-inspector.compact-event-inspector.inspector-collapsed {
     top: auto;
     bottom: calc(58px + env(safe-area-inset-bottom, 0px));
     left: 0;
@@ -1571,12 +1589,25 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
     height: auto;
     max-height: none;
   }
-  .mobile-sheet-collapsed > header { min-height: 54px; border-bottom: 0; }
-  .mobile-sheet-collapsed .event-heading h2 { white-space: nowrap; max-height: none; }
-  .mobile-sheet-collapsed .event-heading > p,
-  .mobile-sheet-collapsed .event-mag-large small,
-  .mobile-sheet-collapsed .compare-pin,
-  .mobile-sheet-collapsed > .event-inspector-tabs,
-  .mobile-sheet-collapsed > .event-inspector-content { display: none; }
-  .event-inspector-content { overscroll-behavior: contain; }
+  .event-inspector-content, .station-inspector-scroll { overscroll-behavior: contain; }
+}
+.volcano-popup-heading { grid-template-columns: 29px minmax(0,1fr) 28px; }
+.volcano-popup.inspector-collapsed > :not(.volcano-popup-heading),
+.volcano-popup.inspector-collapsed .volcano-popup-heading span { display: none; }
+.volcano-popup .inspector-toggle { width: 28px; height: 28px; padding: 0; }
+
+/* La enciclopedia ocupa toda la pantalla y mantiene su cabecera visible. */
+.control-panel.encyclopedia-panel {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  max-height: none;
+  border: 0;
+  background: var(--panel-solid);
+}
+.control-panel.encyclopedia-panel > .panel-header {
+  padding-top: max(10px, env(safe-area-inset-top, 0px));
+  padding-right: max(10px, env(safe-area-inset-right, 0px));
 }

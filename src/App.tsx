@@ -114,7 +114,8 @@ export default function App() {
     setSelectedEvent(null);
     setPulseEvent(null);
     focus(station, 0.92);
-    if (window.innerWidth < 820) setActivePanel(null);
+    setActivePanel(null);
+    if (window.innerWidth <= 900) setHistoryOpen(false);
   }, [focus]);
 
   const playEvent = useCallback((event: Earthquake) => {

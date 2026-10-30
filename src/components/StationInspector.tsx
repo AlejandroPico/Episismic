@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, Database, Download, ExternalLink, LocateFixed, RadioTower, X } from 'lucide-react';
+import { Activity, ChevronDown, ChevronUp, Database, Download, ExternalLink, LocateFixed, RadioTower, X } from 'lucide-react';
 import type { Earthquake, SeismicStation } from '../types';
 import { elevationContext, fdsnStationLinks, geographicContext, nearestStation, networkMembership, operationalSpan, stationAzimuthCoverage, stationDensity, stationGeoJson } from '../services/stationAnalysis';
 import { stationAssociationsCsv, stationEventSummary } from '../services/stationEventAnalysis';
 import { formatTravelTime } from '../services/travelTimes';
 import { formatDateTime, formatRelativeTime, magnitudeColor } from '../utils/format';
 import { RealStationMonitor } from './RealStationMonitor';
+import { useInspectorSheet } from '../hooks/useInspectorSheet';
 
 type StationTab = 'monitor' | 'events' | 'network' | 'metadata' | 'data';
 
@@ -31,6 +32,7 @@ export function StationInspector({ station, stations, events, onClose, onFocus, 
   const [minFrequency, setMinFrequency] = useState(.5);
   const [maxFrequency, setMaxFrequency] = useState(5);
   const [timeWindowSeconds, setTimeWindowSeconds] = useState(600);
+  const sheet = useInspectorSheet(station.id, 'station');
 
   useEffect(() => {
     setActiveTab('monitor');
@@ -51,11 +53,11 @@ export function StationInspector({ station, stations, events, onClose, onFocus, 
   const eventSummary = useMemo(() => stationEventSummary(station, events), [station, events]);
   const focusedAssociation = eventSummary.associations.find((item) => item.event.id === associationFocusId) ?? eventSummary.associations[0] ?? null;
 
-  return <section className="station-inspector compact-station-inspector">
-    <header>
+  return <section className={`station-inspector compact-station-inspector${sheet.collapsed ? ' inspector-collapsed' : ''}${sheet.dragY ? ' inspector-dragging' : ''}`} style={{ '--sheet-drag-y': `${sheet.dragY}px` } as React.CSSProperties} aria-label={`Detalles de ${station.name}`}>
+    <header {...sheet.headerGestures}>
       <div className="station-code"><span>{station.network}</span><strong>{station.code}</strong></div>
       <div className="event-heading"><p className="eyebrow">ESTACIÓN SÍSMICA · {station.status.toUpperCase()}</p><h2>{station.name}</h2><p>{station.country} · {station.source}</p></div>
-      <div className="panel-actions"><button className="icon-button" onClick={onFocus} title="Centrar estación"><LocateFixed size={18} /></button><button className="icon-button" onClick={onClose} title="Cerrar"><X size={18} /></button></div>
+      <div className="panel-actions"><button className="icon-button inspector-toggle" onClick={sheet.toggle} aria-expanded={!sheet.collapsed} aria-label={sheet.collapsed ? 'Expandir detalles' : 'Minimizar detalles'} title={sheet.collapsed ? 'Expandir detalles' : 'Minimizar detalles'}>{sheet.collapsed ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</button><button className="icon-button" onClick={onFocus} title="Centrar estación"><LocateFixed size={18} /></button><button className="icon-button" onClick={onClose} title="Cerrar"><X size={18} /></button></div>
     </header>
     <nav className="event-inspector-tabs station-inspector-tabs" role="tablist" aria-label="Secciones de la estación">{tabs.map((tab) => <button key={tab.id} role="tab" aria-selected={activeTab === tab.id} className={activeTab === tab.id ? 'active' : ''} onClick={() => setActiveTab(tab.id)}>{tab.label}</button>)}</nav>
     <div className="station-inspector-scroll">

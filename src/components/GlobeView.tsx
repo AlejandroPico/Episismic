@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Earthquake, MapLayerState, MapStyle, SeismicStation, Volcano } from '../types';
 import { waveRadiusKm } from '../services/travelTimes';
 import { estimateIntensityZones } from '../services/shakeMap';
+import { readInspectorCollapsed, saveInspectorCollapsed } from '../utils/inspectorPreference';
 
 const COUNTRIES_URL = `${import.meta.env.BASE_URL}data/countries.geojson`;
 const PLACES_URL = `${import.meta.env.BASE_URL}data/places.geojson`;
@@ -418,7 +419,23 @@ export function GlobeView({
           const location = document.createElement('span');
           location.textContent = [feature.properties?.region, feature.properties?.country].filter(Boolean).map(String).join(' · ');
           identity.append(title, location);
-          heading.append(symbol, identity);
+          const toggle = document.createElement('button');
+          toggle.className = 'icon-button inspector-toggle';
+          toggle.type = 'button';
+          const applyCollapsed = (collapsed: boolean) => {
+            content.classList.toggle('inspector-collapsed', collapsed);
+            toggle.setAttribute('aria-expanded', String(!collapsed));
+            toggle.setAttribute('aria-label', collapsed ? 'Expandir detalles' : 'Minimizar detalles');
+            toggle.title = collapsed ? 'Expandir detalles' : 'Minimizar detalles';
+            toggle.textContent = collapsed ? '⌃' : '⌄';
+          };
+          applyCollapsed(readInspectorCollapsed('volcano'));
+          toggle.addEventListener('click', () => {
+            const collapsed = !content.classList.contains('inspector-collapsed');
+            saveInspectorCollapsed('volcano', collapsed);
+            applyCollapsed(collapsed);
+          });
+          heading.append(symbol, identity, toggle);
           const activity = document.createElement('div');
           activity.className = `volcano-popup-activity ${weeklyActivity ? 'reported' : 'catalogued'}`;
           const activityMark = document.createElement('i');

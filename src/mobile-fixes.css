@@ -60,3 +60,13 @@
     box-shadow: 0 -8px 20px rgba(0, 0, 0, .16);
   }
 }
+
+@media (max-width: 900px) {
+  .station-inspector.inspector-collapsed {
+    inset: auto 0 calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+    height: auto;
+    border: 1px solid var(--line-strong);
+  }
+  .station-inspector.inspector-collapsed > header { min-height: 54px; }
+  .station-inspector.inspector-dragging { transform: translateY(var(--sheet-drag-y, 0px)); }
+}

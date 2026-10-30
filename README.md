@@ -2,11 +2,17 @@
 
 Observatorio sísmico mundial con globo 3D interactivo, catálogos multifuente, archivo histórico SQLite, estaciones FDSN, análisis científico, propagación de ondas y evaluación de impacto.
 
-**Versión actual:** `1.2.8` — edición estable y publicable
+**Versión actual:** `1.3.0` — edición estable y publicable
 
 - **Aplicación web:** <https://alejandropico.github.io/Episismic/>
 - **Código:** <https://github.com/AlejandroPico/Episismic>
 - **Descargas nativas:** <https://github.com/AlejandroPico/Episismic/releases>
+
+## Novedades de 1.3.0
+
+- Las fichas minimizadas conservan su estado al cambiar de terremoto, estación o volcán, y al cerrar y reabrir la aplicación.
+- La minimización está disponible en móvil y escritorio; los controles y las visualizaciones se conservan al volver a expandir.
+- El historial incluye una quinta franja de 90 días y el tema automático calcula el día y la noche según la fecha y la zona horaria del sistema.
 
 ## Corrección del tema automático
 
@@ -16,7 +22,7 @@ Se recalcula cada minuto y al recuperar el foco o volver de una suspensión. No 
 
 Las coordenadas de referencia proceden de `zone.tab` y sus alias de `backward`, de la [base de zonas horarias de IANA](https://data.iana.org/time-zones/tzdb/) (dominio público). Se incluyen en la aplicación y pueden regenerarse con `node scripts/sync-theme-timezones.mjs`. El cálculo usa las [ecuaciones solares aproximadas de NOAA](https://gml.noaa.gov/grad/solcalc/solareqns.PDF).
 
-En móvil, la ficha de un terremoto puede minimizarse deslizando la cabecera hacia abajo o pulsando su flecha. Solo queda visible la cabecera; el mapa y las ondas siguen activos. Se vuelve a desplegar deslizando hacia arriba o pulsando la flecha, conservando la pestaña y sus controles. Al seleccionar otro terremoto, su ficha se abre desplegada.
+Las fichas de terremotos y estaciones pueden minimizarse deslizando la cabecera hacia abajo o pulsando su flecha, tanto en móvil como en escritorio. Solo queda visible la cabecera; el mapa y las ondas siguen activos. Se vuelven a desplegar deslizando hacia arriba o pulsando la flecha, conservando la pestaña y sus controles. Las fichas de volcanes también incluyen una flecha para minimizar y expandir. Cada tipo de ficha recuerda su estado al seleccionar otro elemento, cerrar la ficha o volver a abrir la aplicación.
 
 ## Corrección de 1.2.8
 
@@ -266,4 +272,4 @@ Cada fuente conserva su atribución, prioridad, licencia y enlace original cuand
 
 ## Aviso
 
-Episismic 1.2.8 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
+Episismic 1.3.0 es una edición estable y publicable del proyecto abierto desarrollado por Alejandro Pico. Sus estimaciones científicas conservan carácter informativo y no deben utilizarse para decisiones de seguridad ni como sustituto de los organismos oficiales.
