@@ -68,3 +68,4 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+# La compilación empaqueta la interfaz web del mismo commit.

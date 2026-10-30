@@ -1611,3 +1611,4 @@ input[type="range"] { width: 100%; height: 2px; accent-color: var(--accent); }
   padding-top: max(10px, env(safe-area-inset-top, 0px));
   padding-right: max(10px, env(safe-area-inset-right, 0px));
 }
+.map-stage:has(.encyclopedia-panel) { z-index: 201; }
